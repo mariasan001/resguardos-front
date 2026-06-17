@@ -9,14 +9,17 @@ import {
   NotebookPen,
   Package2,
   Plus,
+  Trash2,
   UserRound,
 } from "lucide-react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import Link from "next/link";
 import type { ChangeEventHandler, ReactNode } from "react";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 
-import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import { createResguardoAction } from "@/features/resguardos/actions";
+import useActionToast from "@/hooks/useActionToast";
 import type {
   Accesorio,
   ActionResult,
@@ -33,6 +36,8 @@ const initialState: ActionResult = {
 const initialSectionValues = {
   idEstadoResguardo: "1",
 };
+
+gsap.registerPlugin(useGSAP);
 
 type SectionKey =
   | "equipo"
@@ -203,6 +208,7 @@ function Section({
 
   return (
     <section
+      data-motion-item
       className={`${styles.section} ${isOpen ? styles.sectionOpen : ""} ${
         isComplete ? styles.sectionComplete : ""
       }`}
@@ -251,6 +257,7 @@ export default function ResguardoCreateForm({
   catalogos,
   cancelHref = "/resguardos",
 }: ResguardoCreateFormProps) {
+  const formRef = useRef<HTMLFormElement | null>(null);
   const [state, formAction, pending] = useActionState(
     createResguardoAction,
     initialState,
@@ -259,6 +266,10 @@ export default function ResguardoCreateForm({
   const [openSection, setOpenSection] = useState<SectionKey>("equipo");
   const [formValues, setFormValues] =
     useState<Record<string, string>>(initialSectionValues);
+  useActionToast(state, {
+    successTitle: "Resguardo guardado",
+    errorTitle: "No fue posible guardar el resguardo",
+  });
 
   const accesorios = toCatalogOptions(catalogos.accesorios as Accesorio[]);
   const tiposBien = toCatalogOptions(catalogos.tiposBien);
@@ -303,8 +314,43 @@ export default function ResguardoCreateForm({
   const controlStatus = getSectionStatus("control", formValues, detalles);
   const extrasStatus = getSectionStatus("extras", formValues, detalles);
 
+  useGSAP(
+    () => {
+      if (!formRef.current) {
+        return;
+      }
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        gsap.set(formRef.current.querySelectorAll("[data-motion-item]"), {
+          autoAlpha: 1,
+          clearProps: "all",
+        });
+        return;
+      }
+
+      const items = formRef.current.querySelectorAll("[data-motion-item]");
+      if (!items.length) {
+        return;
+      }
+
+      gsap.fromTo(
+        items,
+        { autoAlpha: 0, y: 14 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.42,
+          ease: "power2.out",
+          stagger: 0.05,
+          clearProps: "opacity,visibility,transform",
+        },
+      );
+    },
+    { scope: formRef },
+  );
+
   return (
-    <form action={formAction} className={styles.form}>
+    <form ref={formRef} action={formAction} className={styles.form}>
       <input
         type="hidden"
         name="detallesPayload"
@@ -316,7 +362,7 @@ export default function ResguardoCreateForm({
         )}
       />
 
-      <div className={styles.topActions}>
+      <div className={styles.topActions} data-motion-item>
         <Link href={cancelHref} className={styles.cancelLink}>
           Cancelar
         </Link>
@@ -566,7 +612,16 @@ export default function ResguardoCreateForm({
           {detalles.length ? (
             <>
             {detalles.map((detalle, index) => (
-              <div key={detalle.id} className={styles.detailRow}>
+              <div key={detalle.id} className={styles.detailRow} data-motion-item>
+                <button
+                  type="button"
+                  className={styles.removeIconButton}
+                  onClick={() => removeDetalle(detalle.id)}
+                  aria-label={`Quitar accesorio ${index + 1}`}
+                  title="Quitar accesorio"
+                >
+                  <Trash2 size={16} strokeWidth={1.9} />
+                </button>
                 <SelectField
                   label={`Accesorio ${index + 1}`}
                   name={`detalle-accesorio-${index}`}
@@ -586,13 +641,6 @@ export default function ResguardoCreateForm({
                   }
                   span="half"
                 />
-                <button
-                  type="button"
-                  className={styles.removeButton}
-                  onClick={() => removeDetalle(detalle.id)}
-                >
-                  Quitar
-                </button>
               </div>
             ))}
             </>
@@ -602,6 +650,7 @@ export default function ResguardoCreateForm({
             type="button"
             className={styles.detailAddCard}
             onClick={addDetalle}
+            data-motion-item
           >
             <span className={styles.detailAddIcon}>
               <Plus size={18} strokeWidth={2} />
@@ -615,18 +664,7 @@ export default function ResguardoCreateForm({
         ) : null}
       </Section>
 
-      {state.message ? (
-        <FeedbackMessage
-          tone={state.success ? "success" : "error"}
-          message={
-            state.success && state.createdId
-              ? `${state.message} ID generado: ${state.createdId}.`
-              : state.message
-          }
-        />
-      ) : null}
-
-      <div className={styles.actions}>
+      <div className={styles.actions} data-motion-item>
         <Link href={cancelHref} className={styles.cancelLink}>
           Cancelar
         </Link>

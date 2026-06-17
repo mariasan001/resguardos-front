@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+import MotionItem from "@/components/ui/MotionItem";
 import styles from "@/components/ui/PageHeader.module.css";
 
 interface PageHeaderProps {
@@ -19,7 +20,7 @@ export default function PageHeader({
   actionLabel,
 }: PageHeaderProps) {
   return (
-    <section className={styles.header}>
+    <MotionItem as="section" className={styles.header}>
       <div className={styles.copy}>
         {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
         <h2 className={styles.title}>{title}</h2>
@@ -32,6 +33,6 @@ export default function PageHeader({
           <ArrowRight size={16} strokeWidth={2} />
         </Link>
       ) : null}
-    </section>
+    </MotionItem>
   );
 }

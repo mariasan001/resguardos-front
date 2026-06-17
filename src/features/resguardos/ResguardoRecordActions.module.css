@@ -1,0 +1,33 @@
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.primaryAction,
+.secondaryAction {
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.primaryAction {
+  border: 0;
+  background: var(--color-button-700);
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.secondaryAction {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--color-ink-700);
+}

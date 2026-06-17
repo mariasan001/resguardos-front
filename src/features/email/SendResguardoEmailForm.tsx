@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 
-import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import { sendResguardoEmailAction } from "@/features/email/actions";
+import useActionToast from "@/hooks/useActionToast";
 import type { ActionResult } from "@/lib/types/api";
 import styles from "@/features/email/SendResguardoEmailForm.module.css";
 
@@ -23,6 +23,10 @@ export default function SendResguardoEmailForm({
     sendResguardoEmailAction,
     initialState,
   );
+  useActionToast(state, {
+    successTitle: "Correo enviado",
+    errorTitle: "No fue posible enviar el correo",
+  });
 
   return (
     <form action={formAction} className={styles.form}>
@@ -45,13 +49,6 @@ export default function SendResguardoEmailForm({
       <button type="submit" className={styles.button} disabled={pending}>
         {pending ? "Enviando..." : "Cargar PDF y enviar correo"}
       </button>
-
-      {state.message ? (
-        <FeedbackMessage
-          tone={state.success ? "success" : "error"}
-          message={state.message}
-        />
-      ) : null}
     </form>
   );
 }

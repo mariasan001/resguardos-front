@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import type { NavigationItem } from "@/components/layout/AppShell";
+import MotionList from "@/components/ui/MotionList";
 import styles from "@/components/layout/SidebarNav.module.css";
 
 interface SidebarNavProps {
@@ -27,7 +28,7 @@ export default function SidebarNav({ navigation }: SidebarNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className={styles.nav} aria-label="Navegacion principal">
+    <MotionList as="nav" className={styles.nav} aria-label="Navegacion principal">
       {navigation.map((item) => {
         const active =
           item.href === "/"
@@ -39,6 +40,7 @@ export default function SidebarNav({ navigation }: SidebarNavProps) {
           <Link
             key={item.href}
             href={item.href}
+            data-motion-item
             className={active ? styles.navItemActive : styles.navItem}
           >
             <span className={styles.iconWrap}>
@@ -53,6 +55,6 @@ export default function SidebarNav({ navigation }: SidebarNavProps) {
           </Link>
         );
       })}
-    </nav>
+    </MotionList>
   );
 }

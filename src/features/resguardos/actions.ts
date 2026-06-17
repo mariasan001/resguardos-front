@@ -1,5 +1,7 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import type {
   ActionResult,
   CreateResguardoInput,
@@ -140,12 +142,7 @@ export async function createResguardoAction(
   try {
     const result = await createResguardo(mapInputToPayload(input));
     const createdId = Object.values(result)[0];
-
-    return {
-      success: true,
-      message: "Resguardo creado correctamente.",
-      createdId,
-    };
+    redirect(`/resguardos/${createdId}`);
   } catch (error) {
     return {
       success: false,

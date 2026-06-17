@@ -1,6 +1,7 @@
 import { Inbox } from "lucide-react";
 import type { ReactNode } from "react";
 
+import MotionItem from "@/components/ui/MotionItem";
 import styles from "@/components/ui/EmptyState.module.css";
 
 interface EmptyStateProps {
@@ -15,7 +16,7 @@ export default function EmptyState({
   actions,
 }: EmptyStateProps) {
   return (
-    <div className={styles.state}>
+    <MotionItem className={styles.state} variant="fade">
       <span className={styles.iconWrap}>
         <Inbox size={16} strokeWidth={1.8} />
       </span>
@@ -24,6 +25,6 @@ export default function EmptyState({
         <p className={styles.description}>{description}</p>
       </div>
       {actions ? <div className={styles.actions}>{actions}</div> : null}
-    </div>
+    </MotionItem>
   );
 }

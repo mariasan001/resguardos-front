@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 
-import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import { updateUsuarioEmailAction } from "@/features/usuarios/actions";
+import useActionToast from "@/hooks/useActionToast";
 import type { ActionResult } from "@/lib/types/api";
 import styles from "@/features/usuarios/UserEmailForm.module.css";
 
@@ -25,6 +25,10 @@ export default function UserEmailForm({
     updateUsuarioEmailAction,
     initialState,
   );
+  useActionToast(state, {
+    successTitle: "Correo actualizado",
+    errorTitle: "No fue posible actualizar el correo",
+  });
 
   return (
     <form action={formAction} className={styles.form}>
@@ -48,13 +52,6 @@ export default function UserEmailForm({
       <button type="submit" className={styles.button} disabled={pending}>
         {pending ? "Actualizando..." : "Guardar correo"}
       </button>
-
-      {state.message ? (
-        <FeedbackMessage
-          tone={state.success ? "success" : "error"}
-          message={state.message}
-        />
-      ) : null}
     </form>
   );
 }

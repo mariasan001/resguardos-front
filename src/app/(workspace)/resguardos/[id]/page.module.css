@@ -1,4 +1,10 @@
-.grid {
+.layout {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.mainColumn,
+.sideColumn {
   display: grid;
   gap: var(--space-5);
 }
@@ -28,7 +34,8 @@
 }
 
 @media (min-width: 64rem) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .layout {
+    grid-template-columns: minmax(0, 1.45fr) minmax(20rem, 0.9fr);
+    align-items: start;
   }
 }

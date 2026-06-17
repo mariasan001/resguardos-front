@@ -1,5 +1,6 @@
 import { FileText, LucideIcon, ShieldCheck, Users } from "lucide-react";
 
+import MotionItem from "@/components/ui/MotionItem";
 import styles from "@/components/ui/StatCard.module.css";
 
 interface StatCardProps {
@@ -24,7 +25,7 @@ export default function StatCard({
   const Icon = icon ? iconMap[icon] : FileText;
 
   return (
-    <article className={styles.card}>
+    <MotionItem as="article" className={styles.card} variant="scale">
       <div className={styles.top}>
         <span className={styles.label}>{label}</span>
         <span className={styles.iconWrap}>
@@ -33,6 +34,6 @@ export default function StatCard({
       </div>
       <strong className={styles.value}>{value}</strong>
       <p className={styles.helper}>{helper}</p>
-    </article>
+    </MotionItem>
   );
 }

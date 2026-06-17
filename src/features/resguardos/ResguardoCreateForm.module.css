@@ -274,17 +274,57 @@
 }
 
 .detailRow {
+  position: relative;
   display: grid;
   gap: 0.75rem;
-  padding: 0.75rem;
+  padding: 1rem 0.9rem 0.85rem;
   border-radius: 0.95rem;
   background: var(--surface-alt);
   border: 1px solid var(--border-subtle);
 }
 
+.removeIconButton {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(209, 67, 91, 0.16);
+  border-radius: 0.65rem;
+  background: var(--color-danger-50);
+  color: var(--color-danger-600);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
+}
+
+.removeIconButton:hover {
+  border-color: rgba(209, 67, 91, 0.28);
+  background: #ffe7eb;
+  transform: translateY(-1px);
+}
+
+.removeIconButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(209, 67, 91, 0.12);
+}
+
+.detailRow .fieldBlock:first-of-type {
+  padding-top: 0.5rem;
+}
+
+.detailRow .fieldBlock:first-of-type .label {
+  padding-right: 2.65rem;
+}
+
 .primaryButton,
 .secondaryButton,
-.removeButton,
 .cancelLink {
   min-height: 2.5rem;
   display: inline-flex;
@@ -297,8 +337,7 @@
 }
 
 .primaryButton,
-.secondaryButton,
-.removeButton {
+.secondaryButton {
   cursor: pointer;
 }
 
@@ -317,8 +356,7 @@
 }
 
 .primaryButton:disabled,
-.secondaryButton:disabled,
-.removeButton:disabled {
+.secondaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
@@ -346,6 +384,11 @@
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .detailList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 
   .spanFull {
@@ -397,5 +440,11 @@
   .detailRow {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+}
+
+@media (min-width: 96rem) {
+  .detailList {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
