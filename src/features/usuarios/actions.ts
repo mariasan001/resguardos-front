@@ -1,8 +1,8 @@
 "use server";
 
-import type { ActionResult } from "@/lib/types/api";
-import { updateUsuarioEmail } from "@/lib/services/usuarios.service";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { updateUsuarioEmail } from "@/lib/services/usuarios.service";
+import type { ActionResult } from "@/lib/types/api";
 
 export async function updateUsuarioEmailAction(
   _previousState: ActionResult,
@@ -14,7 +14,7 @@ export async function updateUsuarioEmailAction(
   if (!neyemp) {
     return {
       success: false,
-      message: "No se recibió la clave del empleado.",
+      message: "No se recibio la clave del empleado.",
     };
   }
 
@@ -22,7 +22,7 @@ export async function updateUsuarioEmailAction(
     return {
       success: false,
       message: "El correo es obligatorio.",
-      fieldErrors: { email: "Ingresa un correo electrónico." },
+      fieldErrors: { email: "Ingresa un correo electronico." },
     };
   }
 
@@ -31,13 +31,27 @@ export async function updateUsuarioEmailAction(
   if (!emailPattern.test(email)) {
     return {
       success: false,
-      message: "El correo no tiene un formato válido.",
-      fieldErrors: { email: "Usa un correo válido." },
+      message: "El correo no tiene un formato valido.",
+      fieldErrors: { email: "Usa un correo valido." },
     };
   }
 
   try {
-    await updateUsuarioEmail(neyemp, email);
+    const updatedUser = await updateUsuarioEmail(neyemp, email);
+
+    if (updatedUser.neyemp !== neyemp) {
+      return {
+        success: false,
+        message: "La respuesta no coincide con el usuario solicitado.",
+      };
+    }
+
+    if ((updatedUser.email ?? "").trim() !== email) {
+      return {
+        success: false,
+        message: "El backend no confirmo el correo actualizado.",
+      };
+    }
 
     return {
       success: true,

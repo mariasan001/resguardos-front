@@ -9,9 +9,14 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import type { NavigationItem } from "@/components/layout/AppShell";
 import MotionList from "@/components/ui/MotionList";
 import styles from "@/components/layout/SidebarNav.module.css";
+
+interface NavigationItem {
+  href: string;
+  label: string;
+  description?: string;
+}
 
 interface SidebarNavProps {
   navigation: NavigationItem[];

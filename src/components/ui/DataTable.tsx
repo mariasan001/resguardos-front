@@ -8,6 +8,8 @@ interface Column<T> {
   key: string;
   header: string;
   render: (item: T) => ReactNode;
+  headerClassName?: string;
+  cellClassName?: string;
 }
 
 interface DataTableProps<T> {
@@ -40,7 +42,9 @@ export default function DataTable<T>({
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key}>{column.header}</th>
+              <th key={column.key} className={column.headerClassName}>
+                {column.header}
+              </th>
             ))}
           </tr>
         </thead>
@@ -48,7 +52,9 @@ export default function DataTable<T>({
           {data.map((item) => (
             <tr key={keyExtractor(item)}>
               {columns.map((column) => (
-                <td key={column.key}>{column.render(item)}</td>
+                <td key={column.key} className={column.cellClassName}>
+                  {column.render(item)}
+                </td>
               ))}
             </tr>
           ))}

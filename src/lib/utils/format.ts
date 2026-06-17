@@ -27,8 +27,8 @@ export function formatUserLabel(user: AppUser) {
   return formatText(user.nombre, "Usuario sin nombre");
 }
 
-export function toUserOptions(users: AppUser[]): OptionItem[] {
-  return users.map((user) => ({
+export function toUserOption(user: AppUser): OptionItem {
+  return {
     value: user.neyemp ?? "",
     label: formatUserLabel(user),
     helper: [user.neyemp, user.adscripcion?.desAds].filter(Boolean).join(" · "),
@@ -43,7 +43,34 @@ export function toUserOptions(users: AppUser[]): OptionItem[] {
       .filter(Boolean)
       .join(" ")
       .toLowerCase(),
-  }));
+  };
+}
+
+export function toUserOptions(users: AppUser[]): OptionItem[] {
+  return users.map(toUserOption);
+}
+
+export function mergeUserOptionsWithUpdatedUsers(
+  options: OptionItem[],
+  updatedUsers: Record<string, AppUser>,
+) {
+  const nextOptions = options.map((option) => {
+    const updatedUser = updatedUsers[option.value];
+
+    return updatedUser ? toUserOption(updatedUser) : option;
+  });
+
+  Object.values(updatedUsers).forEach((user) => {
+    const neyemp = user.neyemp ?? "";
+
+    if (!neyemp || nextOptions.some((option) => option.value === neyemp)) {
+      return;
+    }
+
+    nextOptions.push(toUserOption(user));
+  });
+
+  return nextOptions;
 }
 
 export function getEstadoLabel(value?: number) {

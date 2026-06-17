@@ -11,6 +11,7 @@ import {
 import DataTable from "@/components/ui/DataTable";
 import EmptyState from "@/components/ui/EmptyState";
 import StatusBadge from "@/components/ui/StatusBadge";
+import ResguardoRowActions from "@/features/resguardos/ResguardoRowActions";
 import { getResguardos } from "@/lib/services/resguardos.service";
 import { filterResguardos, formatDate, formatText } from "@/lib/utils/format";
 import styles from "@/app/(resguardos-list)/resguardos/page.module.css";
@@ -237,6 +238,15 @@ export default async function ResguardosPage({
               key: "estado",
               header: "Estado",
               render: (item) => <StatusBadge value={item.idEstadoResguardo} />,
+            },
+            {
+              key: "acciones",
+              header: "Acciones",
+              headerClassName: styles.actionsHeader,
+              cellClassName: styles.actionsCell,
+              render: (item) => (
+                <ResguardoRowActions id={item.id} inventario={item.idInventario} />
+              ),
             },
           ]}
         />

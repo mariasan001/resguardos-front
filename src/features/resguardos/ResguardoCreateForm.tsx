@@ -28,10 +28,12 @@ import type {
   ResguardoCatalogSources,
   SelectOptionsSource,
 } from "@/lib/types/api";
+import { mergeUserOptionsWithUpdatedUsers } from "@/lib/utils/format";
 import {
   getOptionLabel,
   writePreviewResguardoDraft,
 } from "@/lib/utils/resguardo-draft";
+import { useUpdatedUsersCache } from "@/lib/utils/use-updated-users-cache";
 import {
   useIsHydrated,
   usePreviewResguardoDraft,
@@ -307,7 +309,18 @@ function ResguardoCreateFormContent({
   const sistemasOperativos = sources.sistemasOperativos.options;
   const colores = sources.colores.options;
   const procesadores = sources.procesadores.options;
-  const users = sources.usuarios.options;
+  const updatedUsers = useUpdatedUsersCache();
+  const users = useMemo(
+    () => mergeUserOptionsWithUpdatedUsers(sources.usuarios.options, updatedUsers),
+    [sources.usuarios.options, updatedUsers],
+  );
+  const userOptionsSource = useMemo(
+    () => ({
+      ...sources.usuarios,
+      options: users,
+    }),
+    [sources.usuarios, users],
+  );
   const estadoOptionsSource: SelectOptionsSource = {
     state: "ready",
     options: [
@@ -570,7 +583,7 @@ function ResguardoCreateFormContent({
           <UserComboboxField
             label="Usuario titular"
             name="usuarioTitularId"
-            source={sources.usuarios}
+            source={userOptionsSource}
             value={formValues.usuarioTitularId ?? ""}
             span="half"
             onChange={(event) => updateField("usuarioTitularId", event.target.value)}
@@ -578,7 +591,7 @@ function ResguardoCreateFormContent({
           <UserComboboxField
             label="Usuario que resguarda"
             name="usuarioResguardaId"
-            source={sources.usuarios}
+            source={userOptionsSource}
             value={formValues.usuarioResguardaId ?? ""}
             span="half"
             onChange={(event) =>
@@ -588,7 +601,7 @@ function ResguardoCreateFormContent({
           <UserComboboxField
             label="Usuario que asigna"
             name="usuarioAsignaId"
-            source={sources.usuarios}
+            source={userOptionsSource}
             value={formValues.usuarioAsignaId ?? ""}
             span="half"
             onChange={(event) => updateField("usuarioAsignaId", event.target.value)}

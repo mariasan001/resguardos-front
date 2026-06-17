@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import SignaturePad from "signature_pad";
 import {
@@ -20,6 +21,8 @@ interface ResguardoVerificationCardProps {
   initialSignatureDataUrl?: string;
   initialSignatureValidated?: boolean;
   confirmationPending?: boolean;
+  readOnly?: boolean;
+  backHref?: string;
   onTitularEmailChange?: (email: string) => void;
   onSignatureValidated?: (signatureDataUrl: string) => void;
   onReceptionConfirmed?: () => Promise<void> | void;
@@ -31,6 +34,8 @@ export default function ResguardoVerificationCard({
   initialSignatureDataUrl,
   initialSignatureValidated = false,
   confirmationPending = false,
+  readOnly = false,
+  backHref = "/resguardos/nuevo",
   onTitularEmailChange,
   onSignatureValidated,
   onReceptionConfirmed,
@@ -44,6 +49,10 @@ export default function ResguardoVerificationCard({
   const canConfirmReception = accepted && isSignatureValidated;
 
   useEffect(() => {
+    if (readOnly) {
+      return;
+    }
+
     const canvas = canvasRef.current;
     const container = containerRef.current;
 
@@ -112,7 +121,7 @@ export default function ResguardoVerificationCard({
       signaturePad.off();
       signaturePadRef.current = null;
     };
-  }, [initialSignatureDataUrl]);
+  }, [initialSignatureDataUrl, readOnly]);
 
   function clearSignature() {
     const signaturePad = signaturePadRef.current;
@@ -188,47 +197,70 @@ export default function ResguardoVerificationCard({
         <div className={styles.signatureCopy}>
           <p className={styles.signatureLabel}>Firma del titular</p>
           <p className={styles.signatureHint}>
-            Firma aqui para dejar constancia de recepcion.
+            {readOnly
+              ? "Consulta la firma registrada para este resguardo."
+              : "Firma aqui para dejar constancia de recepcion."}
           </p>
         </div>
 
         <div className={styles.canvasWrap} ref={containerRef}>
-          {!isSigned ? (
+          {readOnly && initialSignatureDataUrl ? (
+            <div className={styles.signaturePreview}>
+              <Image
+                src={initialSignatureDataUrl}
+                alt="Firma del titular"
+                width={960}
+                height={300}
+                className={styles.signaturePreviewImage}
+                unoptimized
+              />
+            </div>
+          ) : !isSigned ? (
             <div className={styles.canvasPlaceholder}>
               <PenLine size={18} strokeWidth={1.9} />
-              Firma dentro del recuadro
+              {readOnly ? "No hay firma disponible" : "Firma dentro del recuadro"}
             </div>
           ) : null}
-          <canvas
-            ref={canvasRef}
-            className={styles.canvas}
-          />
+          {readOnly ? null : (
+            <canvas
+              ref={canvasRef}
+              className={styles.canvas}
+            />
+          )}
         </div>
 
-        <div className={styles.signatureActionRow}>
-          <div className={styles.signatureActions}>
-            <button
-              type="button"
-              className={styles.clearButton}
-              onClick={clearSignature}
-            >
-              <Eraser size={15} strokeWidth={1.9} />
-              Limpiar firma
-            </button>
-
-            <button
-              type="button"
-              className={styles.validateButton}
-              onClick={confirmSignature}
-            >
-              Confirmar firma
-            </button>
+        {readOnly ? (
+          <div className={styles.signatureReadOnlyRow}>
+            <span className={`${styles.signatureStatus} ${signatureStatusClass}`}>
+              {signatureStatus}
+            </span>
           </div>
+        ) : (
+          <div className={styles.signatureActionRow}>
+            <div className={styles.signatureActions}>
+              <button
+                type="button"
+                className={styles.clearButton}
+                onClick={clearSignature}
+              >
+                <Eraser size={15} strokeWidth={1.9} />
+                Limpiar firma
+              </button>
 
-          <span className={`${styles.signatureStatus} ${signatureStatusClass}`}>
-            {signatureStatus}
-          </span>
-        </div>
+              <button
+                type="button"
+                className={styles.validateButton}
+                onClick={confirmSignature}
+              >
+                Confirmar firma
+              </button>
+            </div>
+
+            <span className={`${styles.signatureStatus} ${signatureStatusClass}`}>
+              {signatureStatus}
+            </span>
+          </div>
+        )}
 
         <div className={styles.signatureMeta}>
           <div className={styles.metaItem}>
@@ -237,50 +269,58 @@ export default function ResguardoVerificationCard({
           </div>
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Correo del titular</span>
-            <input
-              className={styles.metaInput}
-              type="email"
-              value={titularEmail}
-              placeholder="correo@institucion.gob.mx"
-              onChange={(event) => onTitularEmailChange?.(event.target.value)}
-            />
+            {readOnly ? (
+              <strong className={styles.metaValue}>{titularEmail.trim() || "—"}</strong>
+            ) : (
+              <input
+                className={styles.metaInput}
+                type="email"
+                value={titularEmail}
+                placeholder="correo@institucion.gob.mx"
+                onChange={(event) => onTitularEmailChange?.(event.target.value)}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      <label className={styles.checkRow}>
-        <input
-          className={styles.checkbox}
-          type="checkbox"
-          checked={accepted}
-          onChange={(event) => setAccepted(event.target.checked)}
-        />
-        <span>
-          Confirmo que el equipo, sus datos y accesorios corresponden con la entrega
-          recibida por el titular.
-        </span>
-      </label>
+      {readOnly ? null : (
+        <>
+          <label className={styles.checkRow}>
+            <input
+              className={styles.checkbox}
+              type="checkbox"
+              checked={accepted}
+              onChange={(event) => setAccepted(event.target.checked)}
+            />
+            <span>
+              Confirmo que el equipo, sus datos y accesorios corresponden con la entrega
+              recibida por el titular.
+            </span>
+          </label>
 
-      {!canConfirmReception ? (
-        <p className={styles.validationHint}>
-          Captura la firma y confirma la recepcion para continuar.
-        </p>
-      ) : null}
+          {!canConfirmReception ? (
+            <p className={styles.validationHint}>
+              Captura la firma y confirma la recepcion para continuar.
+            </p>
+          ) : null}
 
-      <div className={styles.actions}>
-        <Link href="/resguardos/nuevo" className={styles.backButton}>
-          Volver a revision
-        </Link>
-        <button
-          type="button"
-          className={styles.confirmButton}
-          onClick={confirmReception}
-          disabled={!canConfirmReception || confirmationPending}
-        >
-          <ShieldCheck size={16} strokeWidth={1.9} />
-          {confirmationPending ? "Guardando..." : "Confirmar recepcion"}
-        </button>
-      </div>
+          <div className={styles.actions}>
+            <Link href={backHref} className={styles.backButton}>
+              Volver a revision
+            </Link>
+            <button
+              type="button"
+              className={styles.confirmButton}
+              onClick={confirmReception}
+              disabled={!canConfirmReception || confirmationPending}
+            >
+              <ShieldCheck size={16} strokeWidth={1.9} />
+              {confirmationPending ? "Guardando..." : "Confirmar recepcion"}
+            </button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

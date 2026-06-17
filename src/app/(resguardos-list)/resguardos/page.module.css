@@ -220,6 +220,20 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.actionsHeader,
+.actionsCell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.actionsHeader {
+  text-align: right;
+}
+
+.actionsCell {
+  padding-right: 0.85rem;
+}
+
 @media (min-width: 48rem) {
   .headerRow {
     flex-direction: row;
