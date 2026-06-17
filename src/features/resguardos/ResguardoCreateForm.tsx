@@ -644,7 +644,11 @@ export default function ResguardoCreateForm({
               </div>
             ))}
             </>
-          ) : null}
+          ) : (
+            <div className={styles.emptyAccessoriesCard}>
+              <p className={styles.emptyAccessories}>No se han agregado accesorios.</p>
+            </div>
+          )}
 
           <button
             type="button"
@@ -658,10 +662,6 @@ export default function ResguardoCreateForm({
             <span className={styles.detailAddLabel}>Nuevo accesorio</span>
           </button>
         </div>
-
-        {!detalles.length ? (
-          <p className={styles.emptyAccessories}>No se han agregado accesorios.</p>
-        ) : null}
       </Section>
 
       <div className={styles.actions} data-motion-item>

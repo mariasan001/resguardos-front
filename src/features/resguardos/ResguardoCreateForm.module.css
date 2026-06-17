@@ -214,6 +214,18 @@
   color: var(--color-ink-500);
   font-size: var(--text-sm);
   line-height: 1.45;
+  text-align: center;
+}
+
+.emptyAccessoriesCard {
+  min-height: 10.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 0.95rem;
+  background: var(--surface-alt);
 }
 
 .detailList {
