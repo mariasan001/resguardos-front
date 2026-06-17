@@ -24,16 +24,25 @@ export function formatText(value?: string, fallback = "Sin dato") {
 }
 
 export function formatUserLabel(user: AppUser) {
-  const name = formatText(user.nombre, "Usuario sin nombre");
-  const key = formatText(user.neyemp, "Sin clave");
-  return `${name} · ${key}`;
+  return formatText(user.nombre, "Usuario sin nombre");
 }
 
 export function toUserOptions(users: AppUser[]): OptionItem[] {
   return users.map((user) => ({
     value: user.neyemp ?? "",
     label: formatUserLabel(user),
-    helper: user.adscripcion?.desAds,
+    helper: [user.neyemp, user.adscripcion?.desAds].filter(Boolean).join(" · "),
+    email: user.email,
+    searchText: [
+      user.nombre,
+      user.neyemp,
+      user.email,
+      user.adscripcion?.desAds,
+      user.puesto?.des_neccat,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
   }));
 }
 

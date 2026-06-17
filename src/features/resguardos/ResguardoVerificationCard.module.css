@@ -1,7 +1,7 @@
 .card {
   display: grid;
-  gap: 1rem;
-  padding: 1.1rem;
+  gap: 0.8rem;
+  padding: 0.95rem;
   border: 1px solid var(--border-subtle);
   border-radius: 1rem;
   background: var(--surface-card);
@@ -12,23 +12,23 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.9rem;
   flex-wrap: wrap;
 }
 
 .titleBlock {
   display: flex;
   align-items: flex-start;
-  gap: 0.8rem;
+  gap: 0.65rem;
 }
 
 .iconWrap {
-  width: 2rem;
-  height: 2rem;
+  width: 1.8rem;
+  height: 1.8rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.8rem;
+  border-radius: 0.7rem;
   border: 1px solid var(--border-subtle);
   background: var(--surface-alt);
   color: var(--color-ink-700);
@@ -36,102 +36,60 @@
 
 .title {
   color: var(--color-ink-900);
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.2;
 }
 
 .description {
-  margin-top: 0.2rem;
+  margin-top: 0.12rem;
   color: var(--color-ink-600);
-  font-size: var(--text-sm);
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
-.readyBadge {
+.readyBadge,
+.signatureStatus {
   min-height: 1.75rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
-  padding: 0 0.65rem;
+  padding: 0 0.7rem;
   border-radius: 999px;
-  border: 1px solid #cdeedb;
-  background: var(--color-success-50);
-  color: var(--color-success-600);
   font-size: 0.74rem;
   font-weight: var(--font-weight-semibold);
-}
-
-.checkRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.95rem 1rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.9rem;
-  background: var(--surface-alt);
-  color: var(--color-ink-700);
-  font-size: var(--text-sm);
-  line-height: 1.5;
-}
-
-.checkbox {
-  width: 1rem;
-  height: 1rem;
-  margin-top: 0.15rem;
-  accent-color: var(--color-button-700);
 }
 
 .signatureBlock {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
-.signatureHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+.signatureCopy {
+  display: grid;
+  gap: 0.12rem;
 }
 
 .signatureLabel {
   color: var(--color-ink-900);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: var(--font-weight-semibold);
 }
 
 .signatureHint {
-  margin-top: 0.15rem;
   color: var(--color-ink-600);
-  font-size: 0.8rem;
-}
-
-.clearButton,
-.confirmButton {
-  min-height: 2.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  border-radius: var(--radius-pill);
-  padding: 0 1rem;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.clearButton {
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-card);
-  color: var(--color-ink-700);
+  font-size: 0.76rem;
 }
 
 .canvasWrap {
   position: relative;
-  min-height: 220px;
+  min-height: 200px;
   border: 1px dashed var(--border-strong);
-  border-radius: 1rem;
-  background: linear-gradient(to bottom, rgba(248, 250, 252, 0.7), #fff);
+  border-radius: 0.95rem;
+  background:
+    linear-gradient(to bottom, rgba(248, 250, 252, 0.75), rgba(255, 255, 255, 0.98)),
+    var(--surface-card);
   overflow: hidden;
 }
 
@@ -143,45 +101,191 @@
   justify-content: center;
   gap: 0.45rem;
   color: var(--color-ink-500);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   pointer-events: none;
 }
 
 .canvas {
   width: 100%;
-  height: 220px;
+  height: 200px;
   display: block;
   touch-action: none;
   cursor: crosshair;
 }
 
-.signatureMeta {
+.signatureActionRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
-  color: var(--color-ink-600);
-  font-size: 0.78rem;
 }
 
-.actions {
+.signatureActions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
+.clearButton,
+.validateButton,
+.confirmButton,
+.backButton {
+  min-height: 2.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: var(--radius-pill);
+  padding: 0 0.95rem;
+  font-size: 0.84rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.clearButton,
+.backButton {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--color-ink-700);
+}
+
+.validateButton,
 .confirmButton {
   border: 0;
   background: var(--color-button-700);
   color: var(--color-white);
 }
 
+.clearButton,
+.validateButton,
+.confirmButton {
+  cursor: pointer;
+}
+
+.confirmButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.signatureStatusPending {
+  background: var(--surface-alt);
+  color: var(--color-ink-600);
+}
+
+.signatureStatusCaptured {
+  background: rgba(236, 244, 255, 0.95);
+  border-color: rgba(115, 145, 189, 0.22);
+  color: #5a7396;
+}
+
+.signatureStatusValidated {
+  background: var(--color-success-50);
+  border-color: #cdeedb;
+  color: var(--color-success-600);
+}
+
+.signatureMeta {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metaItem {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.85rem;
+  background: var(--surface-alt);
+}
+
+.metaLabel {
+  color: var(--color-ink-600);
+  font-size: 0.73rem;
+  line-height: 1.3;
+}
+
+.metaValue {
+  color: var(--color-ink-900);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.metaInput {
+  width: 100%;
+  min-height: 2.45rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+  color: var(--color-ink-900);
+  font-size: 0.82rem;
+}
+
+.metaInput:focus {
+  outline: none;
+  border-color: rgba(17, 24, 39, 0.26);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.06);
+}
+
+.metaInput::placeholder {
+  color: var(--color-ink-500);
+}
+
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.85rem;
+  background: var(--surface-alt);
+  color: var(--color-ink-700);
+  font-size: 0.8rem;
+  line-height: 1.42;
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.12rem;
+  accent-color: #3f8c5c;
+}
+
+.validationHint {
+  color: var(--color-ink-500);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 48rem) {
   .card {
-    padding: 1rem;
+    padding: 0.9rem;
   }
 
-  .checkRow {
-    padding: 0.85rem 0.9rem;
+  .canvasWrap {
+    min-height: 176px;
+  }
+
+  .canvas {
+    height: 176px;
+  }
+
+  .signatureMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: flex-end;
   }
 }

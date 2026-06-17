@@ -1,5 +1,5 @@
 import { backendRequest } from "@/lib/api/backend-client";
-import type { Resguardo } from "@/lib/types/api";
+import type { CreateResguardoResponse, Resguardo } from "@/lib/types/api";
 
 export function getResguardos() {
   return backendRequest<Resguardo[]>("/api/resguardos/all");
@@ -14,7 +14,7 @@ export function getResguardoById(id: number) {
 }
 
 export function createResguardo(payload: Resguardo) {
-  return backendRequest<Record<string, number>>("/api/resguardos", {
+  return backendRequest<CreateResguardoResponse>("/api/resguardos", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

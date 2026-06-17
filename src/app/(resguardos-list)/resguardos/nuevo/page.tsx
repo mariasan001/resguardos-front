@@ -2,16 +2,132 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import ResguardoCreateForm from "@/features/resguardos/ResguardoCreateForm";
-import { getCatalogosBundle } from "@/lib/services/catalogos.service";
+import {
+  getAccesorios,
+  getColoresMateriales,
+  getModelos,
+  getProcesadores,
+  getSistemasOperativos,
+  getTiposBien,
+} from "@/lib/services/catalogos.service";
 import { getUsuarios } from "@/lib/services/usuarios.service";
+import type { OptionItem, SelectOptionsSource } from "@/lib/types/api";
 import { toUserOptions } from "@/lib/utils/format";
 import styles from "@/app/(resguardos-list)/resguardos/nuevo/page.module.css";
 
+function buildOptionsSource(
+  result: PromiseSettledResult<OptionItem[]>,
+  emptyMessage: string,
+  errorMessage: string,
+): SelectOptionsSource {
+  if (result.status === "rejected") {
+    return {
+      options: [],
+      state: "error",
+      message: errorMessage,
+    };
+  }
+
+  if (!result.value.length) {
+    return {
+      options: [],
+      state: "empty",
+      message: emptyMessage,
+    };
+  }
+
+  return {
+    options: result.value,
+    state: "ready",
+  };
+}
+
 export default async function NuevoResguardoPage() {
-  const [usuarios, catalogos] = await Promise.all([
-    getUsuarios(),
-    getCatalogosBundle(),
+  const [
+    usuariosResult,
+    accesoriosResult,
+    coloresResult,
+    modelosResult,
+    procesadoresResult,
+    sistemasOperativosResult,
+    tiposBienResult,
+  ] = await Promise.allSettled([
+    getUsuarios().then(toUserOptions),
+    getAccesorios().then((items) =>
+      items.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.descAccesorio ?? "Sin descripcion",
+      })),
+    ),
+    getColoresMateriales().then((items) =>
+      items.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.descMaterial ?? "Sin descripcion",
+      })),
+    ),
+    getModelos().then((items) =>
+      items.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.descModelo ?? "Sin descripcion",
+      })),
+    ),
+    getProcesadores().then((items) =>
+      items.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.descProcesador ?? "Sin descripcion",
+      })),
+    ),
+    getSistemasOperativos().then((items) =>
+      items.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.descSo ?? "Sin descripcion",
+      })),
+    ),
+    getTiposBien().then((items) =>
+      items.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.descTipoBien ?? "Sin descripcion",
+      })),
+    ),
   ]);
+
+  const sources = {
+    usuarios: buildOptionsSource(
+      usuariosResult,
+      "No hay usuarios disponibles por ahora.",
+      "No fue posible cargar los usuarios.",
+    ),
+    accesorios: buildOptionsSource(
+      accesoriosResult,
+      "No hay accesorios disponibles por ahora.",
+      "No fue posible cargar el catalogo de accesorios.",
+    ),
+    colores: buildOptionsSource(
+      coloresResult,
+      "No hay colores o materiales disponibles por ahora.",
+      "No fue posible cargar el catalogo de color o material.",
+    ),
+    modelos: buildOptionsSource(
+      modelosResult,
+      "No hay modelos disponibles por ahora.",
+      "No fue posible cargar el catalogo de modelos.",
+    ),
+    procesadores: buildOptionsSource(
+      procesadoresResult,
+      "No hay procesadores disponibles por ahora.",
+      "No fue posible cargar el catalogo de procesadores.",
+    ),
+    sistemasOperativos: buildOptionsSource(
+      sistemasOperativosResult,
+      "No hay sistemas operativos disponibles por ahora.",
+      "No fue posible cargar el catalogo de sistemas operativos.",
+    ),
+    tiposBien: buildOptionsSource(
+      tiposBienResult,
+      "No hay tipos de bien disponibles por ahora.",
+      "No fue posible cargar el catalogo de tipos de bien.",
+    ),
+  };
 
   return (
     <section className={styles.page}>
@@ -30,11 +146,7 @@ export default async function NuevoResguardoPage() {
       </div>
 
       <section className={styles.formShell}>
-        <ResguardoCreateForm
-          users={toUserOptions(usuarios)}
-          catalogos={catalogos}
-          cancelHref="/resguardos"
-        />
+        <ResguardoCreateForm sources={sources} cancelHref="/resguardos" />
       </section>
     </section>
   );

@@ -79,6 +79,8 @@ export interface Resguardo {
   detalles?: DetalleResguardo[];
 }
 
+export type CreateResguardoResponse = Record<string, number>;
+
 export interface CatalogosBundle {
   accesorios: Accesorio[];
   colores: CatColorMaterial[];
@@ -93,14 +95,36 @@ export interface OptionItem {
   value: string;
   label: string;
   helper?: string;
+  searchText?: string;
+  email?: string;
 }
 
-export interface ResguardoDetailInput {
+export type SelectOptionsState = "ready" | "empty" | "error";
+
+export interface SelectOptionsSource {
+  options: OptionItem[];
+  state: SelectOptionsState;
+  message?: string;
+}
+
+export interface ResguardoCatalogSources {
+  accesorios: SelectOptionsSource;
+  colores: SelectOptionsSource;
+  modelos: SelectOptionsSource;
+  procesadores: SelectOptionsSource;
+  sistemasOperativos: SelectOptionsSource;
+  tiposBien: SelectOptionsSource;
+  usuarios: SelectOptionsSource;
+}
+
+export interface PreviewAccesorioDraft {
+  id: string;
   accesorioId: string;
+  accesorioLabel: string;
   numeroSerie: string;
 }
 
-export interface CreateResguardoInput {
+export interface PreviewResguardoDraft {
   idInventario: string;
   marca: string;
   resguardo: string;
@@ -111,20 +135,34 @@ export interface CreateResguardoInput {
   numeroSerie: string;
   mac: string;
   idEstadoResguardo: string;
-  tipoBienId: string;
-  modeloId: string;
-  sistemaOperativoId: string;
-  colorMaterialId: string;
-  procesadorId: string;
-  usuarioTitularId: string;
-  usuarioResguardaId: string;
-  usuarioAsignaId: string;
-  detalles: ResguardoDetailInput[];
+  estadoLabel: string;
+  tipoBienLabel: string;
+  modeloLabel: string;
+  sistemaOperativoLabel: string;
+  colorMaterialLabel: string;
+  procesadorLabel: string;
+  usuarioTitularLabel: string;
+  usuarioTitularHelper?: string;
+  usuarioTitularEmail?: string;
+  usuarioResguardaLabel: string;
+  usuarioResguardaHelper?: string;
+  usuarioAsignaLabel: string;
+  usuarioAsignaHelper?: string;
+  signatureDataUrl?: string;
+  createdResguardoId?: number;
+  tipoBienId?: string;
+  modeloId?: string;
+  sistemaOperativoId?: string;
+  colorMaterialId?: string;
+  procesadorId?: string;
+  usuarioTitularId?: string;
+  usuarioResguardaId?: string;
+  usuarioAsignaId?: string;
+  detalles: PreviewAccesorioDraft[];
 }
 
 export interface ActionResult {
   success: boolean;
   message: string;
   fieldErrors?: Record<string, string>;
-  createdId?: number;
 }

@@ -33,7 +33,7 @@ export default async function ResguardoDetailPage({
         <div className={styles.mainColumn}>
           <ResguardoVerificationCard
             titular={formatText(resguardo.usuarioTitular?.nombre, "Titular asignado")}
-            inventario={formatText(resguardo.idInventario)}
+            titularEmail={resguardo.usuarioTitular?.email ?? ""}
           />
 
           <Panel

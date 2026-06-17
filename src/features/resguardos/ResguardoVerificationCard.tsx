@@ -1,6 +1,14 @@
 "use client";
 
-import { CheckCircle2, Eraser, FileCheck2, PenLine } from "lucide-react";
+import Link from "next/link";
+import SignaturePad from "signature_pad";
+import {
+  CheckCircle2,
+  Eraser,
+  FileCheck2,
+  PenLine,
+  ShieldCheck,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { notify } from "@/lib/utils/notify";
@@ -8,19 +16,32 @@ import styles from "@/features/resguardos/ResguardoVerificationCard.module.css";
 
 interface ResguardoVerificationCardProps {
   titular: string;
-  inventario: string;
+  titularEmail?: string;
+  initialSignatureDataUrl?: string;
+  initialSignatureValidated?: boolean;
+  confirmationPending?: boolean;
+  onTitularEmailChange?: (email: string) => void;
+  onSignatureValidated?: (signatureDataUrl: string) => void;
+  onReceptionConfirmed?: () => Promise<void> | void;
 }
 
 export default function ResguardoVerificationCard({
   titular,
-  inventario,
+  titularEmail = "",
+  initialSignatureDataUrl,
+  initialSignatureValidated = false,
+  confirmationPending = false,
+  onTitularEmailChange,
+  onSignatureValidated,
+  onReceptionConfirmed,
 }: ResguardoVerificationCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const drawingRef = useRef(false);
-  const movedRef = useRef(false);
-  const [isSigned, setIsSigned] = useState(false);
+  const signaturePadRef = useRef<SignaturePad | null>(null);
+  const [isSigned, setIsSigned] = useState(Boolean(initialSignatureDataUrl));
+  const [isSignatureValidated, setIsSignatureValidated] = useState(initialSignatureValidated);
   const [accepted, setAccepted] = useState(false);
+  const canConfirmReception = accepted && isSignatureValidated;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -30,114 +51,117 @@ export default function ResguardoVerificationCard({
       return;
     }
 
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    const rect = container.getBoundingClientRect();
-    canvas.width = rect.width * ratio;
-    canvas.height = 220 * ratio;
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = "220px";
+    const signaturePad = new SignaturePad(canvas, {
+      backgroundColor: "rgba(255,255,255,0)",
+      penColor: "rgba(28, 34, 43, 0.8)",
+      minWidth: 0.18,
+      maxWidth: 1.1,
+      minDistance: 0.2,
+      throttle: 0,
+      velocityFilterWeight: 0.86,
+    });
 
-    const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
+    signaturePadRef.current = signaturePad;
 
-    context.scale(ratio, ratio);
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.lineWidth = 2;
-    context.strokeStyle = "#0f172a";
-  }, []);
-
-  function getPoint(event: React.PointerEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      return null;
-    }
-
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+    const handleBeginStroke = () => {
+      setIsSignatureValidated(false);
     };
-  }
 
-  function startDrawing(event: React.PointerEvent<HTMLCanvasElement>) {
-    const context = canvasRef.current?.getContext("2d");
-    const point = getPoint(event);
+    const handleEndStroke = () => {
+      setIsSigned(!signaturePad.isEmpty());
+    };
 
-    if (!context || !point) {
-      return;
+    const resizeCanvas = () => {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = container.getBoundingClientRect();
+      const canvasHeight = window.matchMedia("(max-width: 48rem)").matches ? 176 : 200;
+      const existingData = signaturePad.toData();
+
+      canvas.width = rect.width * ratio;
+      canvas.height = canvasHeight * ratio;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${canvasHeight}px`;
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return;
+      }
+
+      context.scale(ratio, ratio);
+
+      if (existingData.length) {
+        signaturePad.fromData(existingData);
+      } else {
+        signaturePad.clear();
+      }
+    };
+
+    signaturePad.addEventListener("beginStroke", handleBeginStroke);
+    signaturePad.addEventListener("endStroke", handleEndStroke);
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    if (initialSignatureDataUrl) {
+      signaturePad.fromDataURL(initialSignatureDataUrl).catch(() => undefined);
     }
 
-    drawingRef.current = true;
-    movedRef.current = false;
-    canvasRef.current?.setPointerCapture(event.pointerId);
-    context.beginPath();
-    context.moveTo(point.x, point.y);
-  }
-
-  function draw(event: React.PointerEvent<HTMLCanvasElement>) {
-    if (!drawingRef.current) {
-      return;
-    }
-
-    const context = canvasRef.current?.getContext("2d");
-    const point = getPoint(event);
-
-    if (!context || !point) {
-      return;
-    }
-
-    movedRef.current = true;
-    context.lineTo(point.x, point.y);
-    context.stroke();
-    setIsSigned(true);
-  }
-
-  function endDrawing(event: React.PointerEvent<HTMLCanvasElement>) {
-    drawingRef.current = false;
-    canvasRef.current?.releasePointerCapture(event.pointerId);
-
-    if (movedRef.current) {
-      setIsSigned(true);
-    }
-  }
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      signaturePad.removeEventListener("beginStroke", handleBeginStroke);
+      signaturePad.removeEventListener("endStroke", handleEndStroke);
+      signaturePad.off();
+      signaturePadRef.current = null;
+    };
+  }, [initialSignatureDataUrl]);
 
   function clearSignature() {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d");
+    const signaturePad = signaturePadRef.current;
 
-    if (!canvas || !context) {
+    if (!signaturePad) {
       return;
     }
 
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    signaturePad.clear();
     setIsSigned(false);
+    setIsSignatureValidated(false);
   }
 
-  function confirmReception() {
-    if (!accepted) {
-      notify.warning(
-        "Confirma la información",
-        "Marca la validación antes de confirmar la recepción del resguardo.",
-      );
-      return;
-    }
+  function confirmSignature() {
+    const signaturePad = signaturePadRef.current;
 
-    if (!isSigned) {
+    if (!isSigned || !signaturePad || signaturePad.isEmpty()) {
       notify.warning(
         "Falta la firma",
-        "Solicita la firma del titular para completar la validación del resguardo.",
+        "Solicita la firma del titular antes de validar la recepcion.",
       );
       return;
     }
 
-    notify.success(
-      "Validación lista",
-      `El formato del resguardo ${inventario} quedó revisado para ${titular}.`,
-    );
+    const signatureDataUrl = signaturePad.toDataURL("image/png");
+    setIsSignatureValidated(true);
+    onSignatureValidated?.(signatureDataUrl);
+    notify.success("Firma validada", `La firma del titular para ${titular} fue validada.`);
   }
+
+  async function confirmReception() {
+    if (!canConfirmReception || confirmationPending) {
+      return;
+    }
+
+    await onReceptionConfirmed?.();
+  }
+
+  const signatureStatus = isSignatureValidated
+    ? "Validado"
+    : isSigned
+      ? "Firma capturada"
+      : "Pendiente";
+
+  const signatureStatusClass = isSignatureValidated
+    ? styles.signatureStatusValidated
+    : isSigned
+      ? styles.signatureStatusCaptured
+      : styles.signatureStatusPending;
 
   return (
     <section className={styles.card}>
@@ -147,20 +171,81 @@ export default function ResguardoVerificationCard({
             <FileCheck2 size={18} strokeWidth={1.9} />
           </span>
           <div>
-            <h2 className={styles.title}>Validación y firma de recepción</h2>
+            <h2 className={styles.title}>Validacion y firma de recepcion</h2>
             <p className={styles.description}>
-              Verifica la información del resguardo antes de recabar la firma del
-              titular.
+              Revisa los datos del resguardo y recaba la firma del titular.
             </p>
           </div>
         </div>
 
-        {accepted && isSigned ? (
-          <span className={styles.readyBadge}>
-            <CheckCircle2 size={14} strokeWidth={2} />
-            Listo para resguardo
+        <span className={`${styles.readyBadge} ${signatureStatusClass}`}>
+          <CheckCircle2 size={14} strokeWidth={2} />
+          {signatureStatus}
+        </span>
+      </div>
+
+      <div className={styles.signatureBlock}>
+        <div className={styles.signatureCopy}>
+          <p className={styles.signatureLabel}>Firma del titular</p>
+          <p className={styles.signatureHint}>
+            Firma aqui para dejar constancia de recepcion.
+          </p>
+        </div>
+
+        <div className={styles.canvasWrap} ref={containerRef}>
+          {!isSigned ? (
+            <div className={styles.canvasPlaceholder}>
+              <PenLine size={18} strokeWidth={1.9} />
+              Firma dentro del recuadro
+            </div>
+          ) : null}
+          <canvas
+            ref={canvasRef}
+            className={styles.canvas}
+          />
+        </div>
+
+        <div className={styles.signatureActionRow}>
+          <div className={styles.signatureActions}>
+            <button
+              type="button"
+              className={styles.clearButton}
+              onClick={clearSignature}
+            >
+              <Eraser size={15} strokeWidth={1.9} />
+              Limpiar firma
+            </button>
+
+            <button
+              type="button"
+              className={styles.validateButton}
+              onClick={confirmSignature}
+            >
+              Confirmar firma
+            </button>
+          </div>
+
+          <span className={`${styles.signatureStatus} ${signatureStatusClass}`}>
+            {signatureStatus}
           </span>
-        ) : null}
+        </div>
+
+        <div className={styles.signatureMeta}>
+          <div className={styles.metaItem}>
+            <span className={styles.metaLabel}>Titular</span>
+            <strong className={styles.metaValue}>{titular}</strong>
+          </div>
+          <div className={styles.metaItem}>
+            <span className={styles.metaLabel}>Correo del titular</span>
+            <input
+              className={styles.metaInput}
+              type="email"
+              value={titularEmail}
+              placeholder="correo@institucion.gob.mx"
+              onChange={(event) => onTitularEmailChange?.(event.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       <label className={styles.checkRow}>
@@ -171,56 +256,29 @@ export default function ResguardoVerificationCard({
           onChange={(event) => setAccepted(event.target.checked)}
         />
         <span>
-          Confirmo que el equipo, sus datos y accesorios corresponden con la
-          entrega recibida por el titular.
+          Confirmo que el equipo, sus datos y accesorios corresponden con la entrega
+          recibida por el titular.
         </span>
       </label>
 
-      <div className={styles.signatureBlock}>
-        <div className={styles.signatureHeader}>
-          <div>
-            <p className={styles.signatureLabel}>Firma del titular</p>
-            <p className={styles.signatureHint}>
-              Firma aquí para dejar constancia de recepción.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className={styles.clearButton}
-            onClick={clearSignature}
-          >
-            <Eraser size={15} strokeWidth={1.9} />
-            Limpiar
-          </button>
-        </div>
-
-        <div className={styles.canvasWrap} ref={containerRef}>
-          {!isSigned ? (
-            <div className={styles.canvasPlaceholder}>
-              <PenLine size={18} strokeWidth={1.9} />
-              Firma del titular
-            </div>
-          ) : null}
-          <canvas
-            ref={canvasRef}
-            className={styles.canvas}
-            onPointerDown={startDrawing}
-            onPointerMove={draw}
-            onPointerUp={endDrawing}
-            onPointerLeave={endDrawing}
-          />
-        </div>
-
-        <div className={styles.signatureMeta}>
-          <span>{titular}</span>
-          <span>Inventario {inventario}</span>
-        </div>
-      </div>
+      {!canConfirmReception ? (
+        <p className={styles.validationHint}>
+          Captura la firma y confirma la recepcion para continuar.
+        </p>
+      ) : null}
 
       <div className={styles.actions}>
-        <button type="button" className={styles.confirmButton} onClick={confirmReception}>
-          Confirmar recepción
+        <Link href="/resguardos/nuevo" className={styles.backButton}>
+          Volver a revision
+        </Link>
+        <button
+          type="button"
+          className={styles.confirmButton}
+          onClick={confirmReception}
+          disabled={!canConfirmReception || confirmationPending}
+        >
+          <ShieldCheck size={16} strokeWidth={1.9} />
+          {confirmationPending ? "Guardando..." : "Confirmar recepcion"}
         </button>
       </div>
     </section>
