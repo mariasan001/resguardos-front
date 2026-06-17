@@ -1,0 +1,24 @@
+.panel {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.title {
+  color: var(--color-ink-900);
+  font-size: var(--text-xl);
+}
+
+.description {
+  color: var(--color-ink-600);
+  line-height: 1.6;
+}

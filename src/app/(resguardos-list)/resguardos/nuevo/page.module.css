@@ -1,0 +1,59 @@
+.page {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.headerRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.heading {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.title {
+  color: var(--color-ink-900);
+  font-size: clamp(1.45rem, 2vw, 1.85rem);
+  line-height: 1.08;
+}
+
+.description {
+  color: var(--color-ink-600);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.backLink {
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--color-ink-700);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.formShell {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 48rem) {
+  .headerRow {
+    flex-direction: row;
+    align-items: center;
+  }
+}

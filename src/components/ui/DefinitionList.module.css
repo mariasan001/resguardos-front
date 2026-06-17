@@ -1,0 +1,28 @@
+.list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.row {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.term {
+  color: var(--color-ink-600);
+  font-size: var(--text-sm);
+}
+
+.description {
+  color: var(--color-ink-900);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+  margin: 0;
+}

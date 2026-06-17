@@ -1,0 +1,53 @@
+.page {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.hero,
+.card,
+.table {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, var(--color-gray-150), var(--color-white), var(--color-gray-150));
+}
+
+.hero::after,
+.card::after,
+.table::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.4s infinite;
+}
+
+.hero {
+  min-height: 12rem;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card {
+  min-height: 9rem;
+}
+
+.table {
+  min-height: 22rem;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (min-width: 48rem) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

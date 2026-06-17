@@ -1,0 +1,25 @@
+.message {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.success {
+  color: var(--color-success-600);
+  background: var(--color-success-50);
+  border-color: #cdeedb;
+}
+
+.error {
+  color: var(--color-danger-600);
+  background: var(--color-danger-50);
+  border-color: #ffd5dc;
+}
+
+.info {
+  color: var(--color-accent-700);
+  background: var(--color-accent-50);
+  border-color: #d7e3ff;
+}
