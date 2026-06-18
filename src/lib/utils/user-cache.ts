@@ -2,9 +2,10 @@ import type { AppUser } from "@/lib/types/api";
 
 const USER_CACHE_STORAGE_KEY = "updatedUsuariosByNeyemp";
 const USER_CACHE_CHANGE_EVENT = "updated-usuarios-change";
+const EMPTY_UPDATED_USERS_CACHE: Record<string, AppUser> = {};
 
 let cachedSerializedUsers: string | null | undefined;
-let cachedUsers: Record<string, AppUser> = {};
+let cachedUsers: Record<string, AppUser> = EMPTY_UPDATED_USERS_CACHE;
 
 function isUserRecord(value: unknown): value is Record<string, AppUser> {
   return typeof value === "object" && value !== null;
@@ -19,8 +20,8 @@ export function readUpdatedUsersCache() {
 
   if (!serialized) {
     cachedSerializedUsers = null;
-    cachedUsers = {};
-    return {};
+    cachedUsers = EMPTY_UPDATED_USERS_CACHE;
+    return cachedUsers;
   }
 
   if (serialized === cachedSerializedUsers) {
@@ -29,13 +30,13 @@ export function readUpdatedUsersCache() {
 
   try {
     const parsed = JSON.parse(serialized) as unknown;
-    cachedUsers = isUserRecord(parsed) ? parsed : {};
+    cachedUsers = isUserRecord(parsed) ? parsed : EMPTY_UPDATED_USERS_CACHE;
     cachedSerializedUsers = serialized;
     return cachedUsers;
   } catch {
     cachedSerializedUsers = serialized;
-    cachedUsers = {};
-    return {};
+    cachedUsers = EMPTY_UPDATED_USERS_CACHE;
+    return cachedUsers;
   }
 }
 

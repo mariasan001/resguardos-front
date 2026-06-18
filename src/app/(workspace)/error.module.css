@@ -1,0 +1,18 @@
+.retryButton {
+  width: fit-content;
+  min-height: 2.875rem;
+  padding: 0 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-button-700);
+  color: var(--color-white);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    opacity var(--transition-base);
+}
+
+.retryButton:hover {
+  background: var(--color-button-800);
+}

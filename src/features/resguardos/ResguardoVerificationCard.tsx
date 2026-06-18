@@ -272,6 +272,7 @@ export default function ResguardoVerificationCard({
                 type="button"
                 className={styles.clearButton}
                 onClick={clearSignature}
+                disabled={confirmationPending}
               >
                 <Eraser size={15} strokeWidth={1.9} />
                 Limpiar firma
@@ -281,6 +282,7 @@ export default function ResguardoVerificationCard({
                 type="button"
                 className={styles.validateButton}
                 onClick={confirmSignature}
+                disabled={confirmationPending}
               >
                 Confirmar firma
               </button>
@@ -307,6 +309,7 @@ export default function ResguardoVerificationCard({
                 type="email"
                 value={titularEmail}
                 placeholder="correo@institucion.gob.mx"
+                disabled={confirmationPending}
                 onChange={(event) => onTitularEmailChange?.(event.target.value)}
               />
             )}
@@ -316,11 +319,14 @@ export default function ResguardoVerificationCard({
 
       {readOnly ? null : (
         <>
-          <label className={styles.checkRow}>
+          <label
+            className={`${styles.checkRow} ${confirmationPending ? styles.checkRowDisabled : ""}`}
+          >
             <input
               className={styles.checkbox}
               type="checkbox"
               checked={accepted}
+              disabled={confirmationPending}
               onChange={(event) => setAccepted(event.target.checked)}
             />
             <span>
@@ -336,7 +342,16 @@ export default function ResguardoVerificationCard({
           ) : null}
 
           <div className={styles.actions}>
-            <Link href={backHref} className={styles.backButton}>
+            <Link
+              href={backHref}
+              className={`${styles.backButton} ${confirmationPending ? styles.actionDisabled : ""}`}
+              aria-disabled={confirmationPending}
+              onClick={(event) => {
+                if (confirmationPending) {
+                  event.preventDefault();
+                }
+              }}
+            >
               Volver a revision
             </Link>
             <button

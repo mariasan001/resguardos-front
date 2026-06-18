@@ -306,6 +306,13 @@
   line-height: 1.45;
 }
 
+.pdfStateActions {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .pdfPreviewFrame {
   min-height: 42rem;
   border: 1px solid var(--border-subtle);

@@ -17,10 +17,12 @@ function mapDetalles(detalles: PreviewAccesorioDraft[]) {
 export function mapPreviewDraftToResguardoPayload(
   draft: PreviewResguardoDraft,
 ): Resguardo {
+  const referenciaInterna = draft.referenciaInterna || draft.resguardo || "";
+
   return {
     idInventario: draft.idInventario || undefined,
     marca: draft.marca || undefined,
-    resguardo: draft.resguardo || undefined,
+    resguardo: referenciaInterna || undefined,
     fechaAsignacion: draft.fechaAsignacion || undefined,
     observaciones: draft.observaciones || undefined,
     telefono: draft.telefono || undefined,
@@ -79,7 +81,7 @@ export function mapResguardoToPreviewDraft(
   return {
     idInventario: resguardo.idInventario ?? "",
     marca: resguardo.marca ?? "",
-    resguardo: resguardo.resguardo ?? "",
+    referenciaInterna: resguardo.resguardo ?? "",
     fechaAsignacion: resguardo.fechaAsignacion ?? "",
     observaciones: resguardo.observaciones ?? "",
     telefono: resguardo.telefono ?? "",

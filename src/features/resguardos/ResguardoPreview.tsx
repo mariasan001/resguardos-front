@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, Mail } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import ResguardoSummary from "@/features/resguardos/ResguardoSummary";
 import ResguardoVerificationCard from "@/features/resguardos/ResguardoVerificationCard";
@@ -100,6 +100,7 @@ export default function ResguardoPreview() {
   const hydrated = useIsHydrated();
   const draft = usePreviewResguardoDraft();
   const pdfCardRef = useRef<HTMLElement | null>(null);
+  const autoPreparedPdfIdRef = useRef<number | null>(null);
   const [confirmationPending, setConfirmationPending] = useState(false);
   const [submissionStage, setSubmissionStage] = useState<SubmissionStage>("idle");
   const [signatureRetry, setSignatureRetry] = useState<SignatureRetryState | null>(null);
@@ -134,6 +135,28 @@ export default function ResguardoPreview() {
       });
     });
   }, [generatedPdf]);
+
+  const prepareGeneratedPdfOnResume = useEffectEvent((resguardoId: number) => {
+    autoPreparedPdfIdRef.current = resguardoId;
+    void prepareGeneratedPdf(resguardoId).catch(() => undefined);
+  });
+
+  useEffect(() => {
+    if (!draft?.createdResguardoId) {
+      autoPreparedPdfIdRef.current = null;
+      return;
+    }
+
+    if (generatedPdf?.resguardoId === draft.createdResguardoId) {
+      return;
+    }
+
+    if (autoPreparedPdfIdRef.current === draft.createdResguardoId) {
+      return;
+    }
+
+    prepareGeneratedPdfOnResume(draft.createdResguardoId);
+  }, [draft?.createdResguardoId, generatedPdf?.resguardoId]);
 
   if (!hydrated) {
     return <section className={styles.emptyState} aria-busy="true" />;
@@ -385,6 +408,14 @@ export default function ResguardoPreview() {
     }
   }
 
+  async function handleRetryPdfPreview() {
+    if (!generatedResguardoId || pdfPreviewPending) {
+      return;
+    }
+
+    await prepareGeneratedPdf(generatedResguardoId).catch(() => undefined);
+  }
+
   const statusToneClass =
     submissionStage === "success"
       ? styles.statusCardSuccess
@@ -496,6 +527,16 @@ export default function ResguardoPreview() {
                   <p className={styles.pdfStateText}>
                     {pdfPreviewError ?? "Vuelve a intentarlo para generar la vista previa."}
                   </p>
+                  <div className={styles.pdfStateActions}>
+                    <button
+                      type="button"
+                      className={styles.retryButton}
+                      onClick={handleRetryPdfPreview}
+                      disabled={pdfPreviewPending}
+                    >
+                      Reintentar vista previa
+                    </button>
+                  </div>
                 </div>
               )}
             </section>

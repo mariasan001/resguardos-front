@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-
 import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import Panel from "@/components/ui/Panel";
+import styles from "@/app/(workspace)/error.module.css";
 
 export default function Error({
   error,
@@ -12,10 +11,6 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <Panel
       title="No pudimos cargar esta seccion"
@@ -25,17 +20,7 @@ export default function Error({
       <button
         type="button"
         onClick={reset}
-        style={{
-          width: "fit-content",
-          minHeight: "2.875rem",
-          padding: "0 1.25rem",
-          borderRadius: "999px",
-          border: "0",
-          background: "var(--color-button-700)",
-          color: "var(--color-white)",
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
+        className={styles.retryButton}
       >
         Reintentar
       </button>

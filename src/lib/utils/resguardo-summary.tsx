@@ -18,6 +18,10 @@ function formatValue(value?: string, fallback = EMPTY_VALUE) {
   return value?.trim() ? value : fallback;
 }
 
+function getDraftReferenciaInterna(draft: PreviewResguardoDraft) {
+  return draft.referenciaInterna || draft.resguardo || "";
+}
+
 export function buildDraftSummarySections(
   draft: PreviewResguardoDraft,
 ): ResguardoSummarySection[] {
@@ -38,7 +42,6 @@ export function buildDraftSummarySections(
       items: [
         { label: "Inventario", value: formatValue(draft.idInventario) },
         { label: "Marca", value: formatValue(draft.marca) },
-        { label: "Folio", value: formatValue(draft.resguardo) },
         {
           label: "Fecha de asignacion",
           value: draft.fechaAsignacion ? formatDate(draft.fechaAsignacion) : EMPTY_VALUE,
@@ -92,7 +95,10 @@ export function buildDraftSummarySections(
       title: "Ubicacion y control",
       icon: <MapPinHouse size={16} strokeWidth={1.9} />,
       items: [
-        { label: "Area / referencia", value: formatValue(draft.resguardo) },
+        {
+          label: "Referencia interna",
+          value: formatValue(getDraftReferenciaInterna(draft)),
+        },
         { label: "Telefono", value: formatValue(draft.telefono) },
         { label: "Observaciones", value: formatValue(draft.observaciones) },
       ],
@@ -125,7 +131,6 @@ export function buildResguardoSummarySections(
       items: [
         { label: "Inventario", value: formatValue(resguardo.idInventario) },
         { label: "Marca", value: formatValue(resguardo.marca) },
-        { label: "Folio", value: formatValue(resguardo.resguardo) },
         {
           label: "Fecha de asignacion",
           value: resguardo.fechaAsignacion
@@ -193,7 +198,7 @@ export function buildResguardoSummarySections(
       title: "Ubicacion y control",
       icon: <MapPinHouse size={16} strokeWidth={1.9} />,
       items: [
-        { label: "Area / referencia", value: formatValue(resguardo.resguardo) },
+        { label: "Referencia interna", value: formatValue(resguardo.resguardo) },
         { label: "Telefono", value: formatValue(resguardo.telefono) },
         { label: "Observaciones", value: formatValue(resguardo.observaciones) },
       ],

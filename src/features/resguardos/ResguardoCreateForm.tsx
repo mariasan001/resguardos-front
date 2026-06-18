@@ -162,7 +162,7 @@ function getSectionStatus(
       };
     case "ubicacion":
       return {
-        completed: getCount(values, ["telefono", "resguardo"]),
+        completed: getCount(values, ["telefono", "referenciaInterna"]),
         total: 2,
       };
     case "control":
@@ -307,7 +307,8 @@ function ResguardoCreateFormContent({
     ...initialSectionValues,
     idInventario: initialDraft?.idInventario ?? "",
     marca: initialDraft?.marca ?? "",
-    resguardo: initialDraft?.resguardo ?? "",
+    referenciaInterna:
+      initialDraft?.referenciaInterna ?? initialDraft?.resguardo ?? "",
     fechaAsignacion: initialDraft?.fechaAsignacion ?? "",
     observaciones: initialDraft?.observaciones ?? "",
     telefono: initialDraft?.telefono ?? "",
@@ -391,7 +392,7 @@ function ResguardoCreateFormContent({
     const draft: PreviewResguardoDraft = {
       idInventario: formValues.idInventario ?? "",
       marca: formValues.marca ?? "",
-      resguardo: formValues.resguardo ?? "",
+      referenciaInterna: formValues.referenciaInterna ?? "",
       fechaAsignacion: formValues.fechaAsignacion ?? "",
       observaciones: formValues.observaciones ?? "",
       telefono: formValues.telefono ?? "",
@@ -533,13 +534,6 @@ function ResguardoCreateFormContent({
             span="third"
             onChange={(event) => updateField("numeroSerie", event.target.value)}
           />
-          <Field
-            label="Folio de resguardo"
-            name="resguardo"
-            value={formValues.resguardo ?? ""}
-            span="third"
-            onChange={(event) => updateField("resguardo", event.target.value)}
-          />
         </div>
       </Section>
 
@@ -646,12 +640,12 @@ function ResguardoCreateFormContent({
       >
         <div className={styles.grid}>
           <Field
-            label="Referencia de area"
-            name="resguardo"
-            value={formValues.resguardo ?? ""}
+            label="Referencia interna"
+            name="referenciaInterna"
+            value={formValues.referenciaInterna ?? ""}
             span="half"
-            placeholder="Folio o referencia interna"
-            onChange={(event) => updateField("resguardo", event.target.value)}
+            placeholder="Referencia de area o control interno"
+            onChange={(event) => updateField("referenciaInterna", event.target.value)}
           />
           <Field
             label="Telefono de contacto"

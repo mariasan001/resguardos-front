@@ -134,7 +134,7 @@ export interface PreviewAccesorioDraft {
 export interface PreviewResguardoDraft {
   idInventario: string;
   marca: string;
-  resguardo: string;
+  referenciaInterna: string;
   fechaAsignacion: string;
   observaciones: string;
   telefono: string;
@@ -155,6 +155,7 @@ export interface PreviewResguardoDraft {
   usuarioResguardaHelper?: string;
   usuarioAsignaLabel: string;
   usuarioAsignaHelper?: string;
+  resguardo?: string;
   signatureDataUrl?: string;
   createdResguardoId?: number;
   tipoBienId?: string;

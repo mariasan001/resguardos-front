@@ -8,12 +8,12 @@ import {
   subscribePreviewResguardoDraft,
 } from "@/lib/utils/resguardo-draft";
 
+function subscribeHydration() {
+  return () => undefined;
+}
+
 export function useIsHydrated() {
-  return useSyncExternalStore(
-    subscribePreviewResguardoDraft,
-    () => true,
-    () => false,
-  );
+  return useSyncExternalStore(subscribeHydration, () => true, () => false);
 }
 
 export function usePreviewResguardoDraft(): PreviewResguardoDraft | null {
