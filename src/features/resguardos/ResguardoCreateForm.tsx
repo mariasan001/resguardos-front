@@ -22,14 +22,16 @@ import type { ChangeEventHandler, ReactNode } from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type {
+  AppUser,
   OptionItem,
   PreviewAccesorioDraft,
   PreviewResguardoDraft,
   ResguardoCatalogSources,
   SelectOptionsSource,
 } from "@/lib/types/api";
-import { mergeUserOptionsWithUpdatedUsers } from "@/lib/utils/format";
+import { mergeUserOptionsWithUpdatedUsers, toUserOption } from "@/lib/utils/format";
 import {
+  clearPreviewResguardoDraft,
   getOptionLabel,
   writePreviewResguardoDraft,
 } from "@/lib/utils/resguardo-draft";
@@ -42,6 +44,15 @@ import styles from "@/features/resguardos/ResguardoCreateForm.module.css";
 
 const initialSectionValues = {
   idEstadoResguardo: "1",
+};
+
+const FIXED_ASSIGN_USER: AppUser = {
+  neyemp: "998619208",
+  nombre: "DELGADILLO RAMIREZ CHRISTOPHER",
+  adscripcion: {
+    necads: "23400004060100L",
+    desAds: "SUBDIRECCION DE DESARROLLO TECNOLOGICO",
+  },
 };
 
 gsap.registerPlugin(useGSAP);
@@ -63,6 +74,7 @@ interface DetalleItem {
 interface ResguardoCreateFormProps {
   sources: ResguardoCatalogSources;
   cancelHref?: string;
+  preserveDraft?: boolean;
 }
 
 interface ResguardoCreateFormContentProps extends ResguardoCreateFormProps {
@@ -253,15 +265,25 @@ function Section({
 }
 
 export default function ResguardoCreateForm(props: ResguardoCreateFormProps) {
+  const { preserveDraft = false } = props;
   const hydrated = useIsHydrated();
   const draft = usePreviewResguardoDraft();
-  const formKey = hydrated && draft ? "draft-loaded" : "draft-empty";
+  const effectiveDraft = preserveDraft ? draft : null;
+  const formKey = hydrated && effectiveDraft ? "draft-loaded" : "draft-empty";
+
+  useEffect(() => {
+    if (!hydrated || preserveDraft) {
+      return;
+    }
+
+    clearPreviewResguardoDraft();
+  }, [hydrated, preserveDraft]);
 
   return (
     <ResguardoCreateFormContent
       key={formKey}
       {...props}
-      initialDraft={hydrated ? draft : null}
+      initialDraft={hydrated ? effectiveDraft : null}
     />
   );
 }
@@ -301,7 +323,7 @@ function ResguardoCreateFormContent({
     procesadorId: initialDraft?.procesadorId ?? "",
     usuarioTitularId: initialDraft?.usuarioTitularId ?? "",
     usuarioResguardaId: initialDraft?.usuarioResguardaId ?? "",
-    usuarioAsignaId: initialDraft?.usuarioAsignaId ?? "",
+    usuarioAsignaId: FIXED_ASSIGN_USER.neyemp ?? "",
   });
   const accesorios = sources.accesorios.options;
   const tiposBien = sources.tiposBien.options;
@@ -313,6 +335,12 @@ function ResguardoCreateFormContent({
   const users = useMemo(
     () => mergeUserOptionsWithUpdatedUsers(sources.usuarios.options, updatedUsers),
     [sources.usuarios.options, updatedUsers],
+  );
+  const fixedAssignOption = useMemo(
+    () =>
+      users.find((option) => option.value === FIXED_ASSIGN_USER.neyemp) ??
+      toUserOption(FIXED_ASSIGN_USER),
+    [users],
   );
   const userOptionsSource = useMemo(
     () => ({
@@ -598,13 +626,11 @@ function ResguardoCreateFormContent({
               updateField("usuarioResguardaId", event.target.value)
             }
           />
-          <UserComboboxField
+          <StaticUserField
             label="Usuario que asigna"
-            name="usuarioAsignaId"
-            source={userOptionsSource}
-            value={formValues.usuarioAsignaId ?? ""}
+            value={fixedAssignOption.label}
+            helper={fixedAssignOption.helper}
             span="half"
-            onChange={(event) => updateField("usuarioAsignaId", event.target.value)}
           />
         </div>
       </Section>
@@ -796,6 +822,28 @@ function DateField({
         onChange={onChange}
         {...(value !== undefined ? { value } : {})}
       />
+    </label>
+  );
+}
+
+function StaticUserField({
+  label,
+  value,
+  helper,
+  span = "full",
+}: {
+  label: string;
+  value: string;
+  helper?: string;
+  span?: BaseFieldProps["span"];
+}) {
+  return (
+    <label className={`${styles.fieldBlock} ${getSpanClass(span)}`}>
+      <span className={styles.label}>{label}</span>
+      <div className={styles.staticUserField}>
+        <span className={styles.staticUserValue}>{value}</span>
+      </div>
+      {helper ? <span className={styles.fieldHint}>{helper}</span> : null}
     </label>
   );
 }

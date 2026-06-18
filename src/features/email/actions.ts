@@ -36,11 +36,11 @@ export async function sendResguardoEmailAction(
   }
 
   try {
-    const responseMessage = await uploadPdfAndSendEmail(resguardoId, archivo);
+    await uploadPdfAndSendEmail(resguardoId, archivo);
 
     return {
       success: true,
-      message: responseMessage || "Archivo enviado correctamente.",
+      message: "Archivo enviado correctamente.",
     };
   } catch (error) {
     return {

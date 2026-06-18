@@ -266,6 +266,25 @@
   color: var(--color-ink-500);
 }
 
+.staticUserField {
+  min-height: 2.7rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.8rem;
+  background: var(--surface-alt);
+  color: var(--color-ink-900);
+}
+
+.staticUserValue {
+  display: block;
+  width: 100%;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.35;
+}
+
 .comboboxChevron,
 .comboboxClear {
   position: absolute;

@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, CircleCheck, CircleX, Info, X } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleX, Info, LoaderCircle, X } from "lucide-react";
 import { Toaster, type ToasterProps } from "sonner";
 
 const icons: NonNullable<ToasterProps["icons"]> = {
@@ -8,6 +8,7 @@ const icons: NonNullable<ToasterProps["icons"]> = {
   info: <Info size={18} strokeWidth={1.9} />,
   warning: <CircleAlert size={18} strokeWidth={1.9} />,
   error: <CircleX size={18} strokeWidth={1.9} />,
+  loading: <LoaderCircle size={18} strokeWidth={1.9} />,
   close: <X size={16} strokeWidth={2} />,
 };
 
@@ -34,6 +35,7 @@ export default function AppToaster() {
           error: "app-toast--error",
           info: "app-toast--info",
           warning: "app-toast--warning",
+          loading: "app-toast--loading",
         },
       }}
     />

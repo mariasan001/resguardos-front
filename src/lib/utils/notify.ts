@@ -15,4 +15,10 @@ export const notify = {
   warning(title: string, description?: string) {
     return toast.warning(title, { description });
   },
+  loading(title: string, description?: string) {
+    return toast.loading(title, { description });
+  },
+  dismiss(toastId?: string | number) {
+    return toast.dismiss(toastId);
+  },
 };

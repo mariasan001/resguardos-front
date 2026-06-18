@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 import ResguardoVerificationCard from "@/features/resguardos/ResguardoVerificationCard";
-import { readResguardoSignature } from "@/lib/utils/resguardo-signature";
+import { ApiError } from "@/lib/api/errors";
+import { getResguardoFirma } from "@/lib/services/resguardos.service";
+import { blobToDataUrl } from "@/lib/utils/file";
 
 interface ResguardoDetailVerificationProps {
   resguardoId: number;
@@ -16,10 +18,43 @@ export default function ResguardoDetailVerification({
   titular,
   titularEmail,
 }: ResguardoDetailVerificationProps) {
-  const signatureDataUrl = useMemo(
-    () => readResguardoSignature(resguardoId) ?? undefined,
-    [resguardoId],
-  );
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSignature() {
+      try {
+        const blob = await getResguardoFirma(resguardoId);
+        const dataUrl = await blobToDataUrl(blob);
+
+        if (!cancelled) {
+          setSignatureDataUrl(dataUrl);
+        }
+      } catch (error) {
+        if (
+          error instanceof ApiError &&
+          (error.status === 404 || error.status === 410)
+        ) {
+          if (!cancelled) {
+            setSignatureDataUrl(undefined);
+          }
+
+          return;
+        }
+
+        if (!cancelled) {
+          setSignatureDataUrl(undefined);
+        }
+      }
+    }
+
+    void loadSignature();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resguardoId]);
 
   return (
     <ResguardoVerificationCard

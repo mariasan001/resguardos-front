@@ -1,4 +1,9 @@
-import type { PreviewAccesorioDraft, PreviewResguardoDraft, Resguardo } from "@/lib/types/api";
+import type {
+  CreateResguardoResponse,
+  PreviewAccesorioDraft,
+  PreviewResguardoDraft,
+  Resguardo,
+} from "@/lib/types/api";
 
 function mapDetalles(detalles: PreviewAccesorioDraft[]) {
   return detalles
@@ -47,16 +52,24 @@ export function mapPreviewDraftToResguardoPayload(
   };
 }
 
-export function extractCreatedResguardoId(
-  response: Record<string, number>,
-): number | null {
-  for (const value of Object.values(response)) {
-    if (typeof value === "number" && Number.isFinite(value)) {
+export function extractCreatedResguardoId(response: CreateResguardoResponse): number {
+  const preferredKeys = ["id", "resguardoId", "idResguardo"] as const;
+
+  for (const key of preferredKeys) {
+    const value = response[key];
+
+    if (typeof value === "number" && Number.isInteger(value) && value > 0) {
       return value;
     }
   }
 
-  return null;
+  for (const value of Object.values(response)) {
+    if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+      return value;
+    }
+  }
+
+  throw new Error("No fue posible identificar el id del resguardo creado.");
 }
 
 export function mapResguardoToPreviewDraft(

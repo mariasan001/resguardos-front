@@ -42,7 +42,17 @@ function buildOptionsSource(
   };
 }
 
-export default async function NuevoResguardoPage() {
+interface NuevoResguardoPageProps {
+  searchParams: Promise<{
+    continue?: string;
+  }>;
+}
+
+export default async function NuevoResguardoPage({
+  searchParams,
+}: NuevoResguardoPageProps) {
+  const params = await searchParams;
+  const preserveDraft = params.continue === "1";
   const [
     usuariosResult,
     accesoriosResult,
@@ -146,7 +156,11 @@ export default async function NuevoResguardoPage() {
       </div>
 
       <section className={styles.formShell}>
-        <ResguardoCreateForm sources={sources} cancelHref="/resguardos" />
+        <ResguardoCreateForm
+          sources={sources}
+          cancelHref="/resguardos"
+          preserveDraft={preserveDraft}
+        />
       </section>
     </section>
   );

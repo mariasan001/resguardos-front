@@ -123,6 +123,204 @@
   line-height: 1.5;
 }
 
+.statusCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.statusCardInfo {
+  border-color: var(--border-subtle);
+}
+
+.statusCardSuccess {
+  border-color: rgba(41, 120, 72, 0.18);
+  background: #fbfefc;
+}
+
+.statusCardError {
+  border-color: rgba(176, 52, 52, 0.18);
+  background: #fffaf9;
+}
+
+.statusCopy {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.statusTitle {
+  color: var(--color-ink-900);
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.statusText {
+  color: var(--color-ink-600);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.statusActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.retryButton {
+  min-height: 2.3rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--color-ink-900);
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    background-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.retryButton:hover {
+  border-color: var(--border-focus);
+  background: var(--surface-alt);
+}
+
+.retryButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.pdfCard {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.pdfHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pdfCopy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.pdfTitle {
+  color: var(--color-ink-900);
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.pdfText {
+  color: var(--color-ink-600);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pdfActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.downloadPdfButton,
+.primaryPdfButton {
+  min-height: 2.3rem;
+  padding: 0 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--color-button-700);
+  border-radius: 999px;
+  background: var(--color-button-700);
+  color: var(--color-white);
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    opacity var(--transition-base);
+}
+
+.primaryPdfButton:hover {
+  background: var(--color-button-800);
+  border-color: var(--color-button-800);
+}
+
+.downloadPdfButton {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-card);
+  color: var(--color-ink-900);
+  box-shadow: var(--shadow-sm);
+}
+
+.downloadPdfButton:hover {
+  border-color: var(--color-ink-700);
+  background: var(--surface-alt);
+}
+
+.downloadPdfButton:disabled,
+.primaryPdfButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.pdfState {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
+  background: var(--surface-alt);
+}
+
+.pdfStateTitle {
+  color: var(--color-ink-900);
+  font-size: 0.88rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+
+.pdfStateText {
+  color: var(--color-ink-600);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.pdfPreviewFrame {
+  min-height: 42rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.95rem;
+  overflow: hidden;
+  background: #eef2f7;
+}
+
+.pdfPreview {
+  width: 100%;
+  height: 42rem;
+  border: 0;
+  background: var(--color-white);
+}
+
 @media (min-width: 64rem) {
   .sections {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -130,5 +328,30 @@
 
   .definitionListTwoColumns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 48rem) {
+  .statusCard {
+    display: grid;
+    align-items: start;
+  }
+
+  .pdfHeader {
+    display: grid;
+  }
+
+  .pdfActions {
+    justify-content: start;
+  }
+
+  .pdfPreviewFrame,
+  .pdfPreview {
+    min-height: 34rem;
+    height: 34rem;
+  }
+
+  .statusActions {
+    justify-content: start;
   }
 }

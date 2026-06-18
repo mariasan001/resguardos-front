@@ -13,7 +13,10 @@ export default function PreviewResguardoPage() {
           </p>
         </div>
 
-        <ResguardoRecordActions editHref="/resguardos/nuevo" exitHref="/resguardos" />
+        <ResguardoRecordActions
+          editHref="/resguardos/nuevo?continue=1"
+          exitHref="/resguardos"
+        />
       </div>
 
       <ResguardoPreview />

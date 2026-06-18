@@ -77,9 +77,16 @@ export interface Resguardo {
   colorMaterial?: CatColorMaterial;
   procesador?: CatProcesador;
   detalles?: DetalleResguardo[];
+  firmaPath?: string;
+  firmaNombreArchivo?: string;
+  firmaContentType?: string;
+  firmaSizeBytes?: number;
+  fechaFirma?: string;
+  firmaUrl?: string;
 }
 
-export type CreateResguardoResponse = Record<string, number>;
+export type CreateResguardoResponse = Record<string, unknown>;
+export type UploadResguardoFirmaResponse = Record<string, unknown>;
 
 export interface CatalogosBundle {
   accesorios: Accesorio[];

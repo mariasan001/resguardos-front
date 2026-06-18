@@ -53,6 +53,17 @@ export function writePreviewResguardoDraft(draft: PreviewResguardoDraft) {
   window.dispatchEvent(new Event(RESGUARDO_DRAFT_CHANGE_EVENT));
 }
 
+export function clearPreviewResguardoDraft() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  cachedSerializedDraft = null;
+  cachedParsedDraft = null;
+  window.localStorage.removeItem(RESGUARDO_DRAFT_STORAGE_KEY);
+  window.dispatchEvent(new Event(RESGUARDO_DRAFT_CHANGE_EVENT));
+}
+
 export function patchPreviewResguardoDraft(
   patch: Partial<PreviewResguardoDraft>,
 ) {
