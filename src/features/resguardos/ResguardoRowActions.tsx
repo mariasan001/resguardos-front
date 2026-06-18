@@ -14,7 +14,10 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import styles from "@/features/resguardos/ResguardoRowActions.module.css";
+import { getResguardoById } from "@/lib/services/resguardos.service";
+import { generateResguardoPdf } from "@/lib/services/resguardo-pdf.service";
 import { notify } from "@/lib/utils/notify";
+import { mapResguardoToPreviewDraft } from "@/lib/utils/resguardo-payload";
 import { readResguardoSignature } from "@/lib/utils/resguardo-signature";
 
 interface ResguardoRowActionsProps {
@@ -33,6 +36,7 @@ export default function ResguardoRowActions({
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const hasValidId = typeof id === "number" && Number.isFinite(id);
 
   useEffect(() => {
@@ -129,12 +133,46 @@ export default function ResguardoRowActions({
     setSignatureOpen(true);
   }
 
-  function handlePdfSoon() {
+  async function handleDownloadPdf() {
     setOpen(false);
-    notify.info(
-      "PDF pendiente",
-      "La descarga de PDF estara disponible proximamente.",
-    );
+
+    if (!hasValidId) {
+      notify.warning(
+        "Resguardo no disponible",
+        "Este registro aun no tiene un identificador valido para descargar el PDF.",
+      );
+      return;
+    }
+
+    setDownloadingPdf(true);
+
+    try {
+      const resguardo = await getResguardoById(id);
+      const signature = readResguardoSignature(id) ?? undefined;
+      const draft = mapResguardoToPreviewDraft(resguardo, signature);
+      const pdf = await generateResguardoPdf({
+        createdResguardoId: id,
+        draft,
+        resguardo,
+      });
+
+      const downloadUrl = URL.createObjectURL(pdf.blob);
+      const anchor = document.createElement("a");
+      anchor.href = downloadUrl;
+      anchor.download = pdf.filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      const description =
+        error instanceof Error
+          ? error.message
+          : "No fue posible generar el PDF del resguardo.";
+      notify.error("No fue posible descargar el PDF", description);
+    } finally {
+      setDownloadingPdf(false);
+    }
   }
 
   function handleEmailSoon() {
@@ -195,9 +233,14 @@ export default function ResguardoRowActions({
                 Ver firma
               </button>
 
-              <button type="button" className={styles.menuItem} onClick={handlePdfSoon}>
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+              >
                 <Download size={15} strokeWidth={1.9} />
-                Descargar PDF
+                {downloadingPdf ? "Generando PDF..." : "Descargar PDF"}
               </button>
 
               <button type="button" className={styles.menuItem} onClick={handleEmailSoon}>
