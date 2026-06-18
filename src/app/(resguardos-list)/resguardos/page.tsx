@@ -20,8 +20,11 @@ interface ResguardosPageProps {
   searchParams: Promise<{
     q?: string;
     estado?: string;
+    page?: string;
   }>;
 }
+
+const PAGE_SIZE = 5;
 
 function getStatusCounts(total: Awaited<ReturnType<typeof getResguardos>>) {
   const activos = total.filter((item) => item.idEstadoResguardo === 1).length;
@@ -42,10 +45,40 @@ export default async function ResguardosPage({
   const params = await searchParams;
   const q = params.q ?? "";
   const estado = params.estado ?? "";
+  const requestedPage = Number(params.page ?? "1");
   const resguardos = await getResguardos();
   const filtered = filterResguardos(resguardos, q, estado);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Number.isFinite(requestedPage)
+    ? Math.min(Math.max(Math.trunc(requestedPage), 1), totalPages)
+    : 1;
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginated = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const visibleFrom = filtered.length ? pageStart + 1 : 0;
+  const visibleTo = pageStart + paginated.length;
   const counts = getStatusCounts(resguardos);
   const hasActiveFilters = Boolean(q.trim() || estado);
+
+  function buildPageHref(page: number) {
+    const search = new URLSearchParams();
+
+    if (q.trim()) {
+      search.set("q", q);
+    }
+
+    if (estado) {
+      search.set("estado", estado);
+    }
+
+    if (page > 1) {
+      search.set("page", String(page));
+    }
+
+    const query = search.toString();
+    return query ? `/resguardos?${query}` : "/resguardos";
+  }
+
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   const summaryCards = [
     {
@@ -168,7 +201,7 @@ export default async function ResguardosPage({
         </div>
 
         <DataTable
-          data={filtered}
+          data={paginated}
           keyExtractor={(item) => String(item.id ?? item.idInventario)}
           emptyTitle="Sin coincidencias"
           emptyDescription="No hay resguardos con los filtros actuales."
@@ -250,6 +283,47 @@ export default async function ResguardosPage({
             },
           ]}
         />
+
+        {filtered.length > PAGE_SIZE ? (
+          <div className={styles.pagination}>
+            <p className={styles.paginationSummary}>
+              Mostrando {visibleFrom}-{visibleTo} de {filtered.length}
+            </p>
+
+            <nav className={styles.paginationNav} aria-label="Paginacion de resguardos">
+              <Link
+                href={buildPageHref(currentPage - 1)}
+                className={`${styles.paginationButton} ${currentPage === 1 ? styles.paginationDisabled : ""}`}
+                aria-disabled={currentPage === 1}
+                tabIndex={currentPage === 1 ? -1 : undefined}
+              >
+                Anterior
+              </Link>
+
+              <div className={styles.paginationPages}>
+                {pageNumbers.map((page) => (
+                  <Link
+                    key={page}
+                    href={buildPageHref(page)}
+                    className={`${styles.paginationButton} ${page === currentPage ? styles.paginationCurrent : ""}`}
+                    aria-current={page === currentPage ? "page" : undefined}
+                  >
+                    {page}
+                  </Link>
+                ))}
+              </div>
+
+              <Link
+                href={buildPageHref(currentPage + 1)}
+                className={`${styles.paginationButton} ${currentPage === totalPages ? styles.paginationDisabled : ""}`}
+                aria-disabled={currentPage === totalPages}
+                tabIndex={currentPage === totalPages ? -1 : undefined}
+              >
+                Siguiente
+              </Link>
+            </nav>
+          </div>
+        ) : null}
       </section>
     </section>
   );

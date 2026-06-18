@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 
 import type { PreviewResguardoDraft, Resguardo } from "@/lib/types/api";
+import { trimSignatureDataUrl } from "@/lib/utils/signature";
 
 const EMPTY_VALUE = "\u2014";
 const PAGE_WIDTH = 210;
@@ -10,6 +11,8 @@ const FIRST_PAGE_RIGHT = 194;
 const FIRST_PAGE_WIDTH = FIRST_PAGE_RIGHT - FIRST_PAGE_LEFT;
 const FIRST_PAGE_RIGHT_BLOCK_X = 150;
 const PAGE_FOOTER_Y = 278;
+const CONTENT_PAGE_BOTTOM = 262;
+const CONTINUATION_PAGE_TOP = 18;
 const NORMATIVE_LEFT = 18;
 const NORMATIVE_WIDTH = 174;
 const MAROON: [number, number, number] = [133, 25, 53];
@@ -143,20 +146,155 @@ function drawSectionBar(doc: jsPDF, y: number, title: string) {
   doc.text(title, FIRST_PAGE_LEFT + 2.5, y + 5.1);
 }
 
-function drawLabelValueRow(
+function drawContinuationPageBase(doc: jsPDF) {
+  doc.addPage();
+  drawTopRibbon(doc);
+}
+
+function ensureContentPageSpace(
+  doc: jsPDF,
+  nextY: number,
+  requiredHeight: number,
+) {
+  if (nextY + requiredHeight <= CONTENT_PAGE_BOTTOM) {
+    return nextY;
+  }
+
+  drawContinuationPageBase(doc);
+  return CONTINUATION_PAGE_TOP;
+}
+
+function drawWrappedLabelValueRow(
   doc: jsPDF,
   labelX: number,
+  labelWidth: number,
   valueX: number,
+  valueWidth: number,
   y: number,
   label: string,
   value: string,
+  lineHeight = 4.8,
+  options?: {
+    labelFontSize?: number;
+    valueFontSize?: number;
+    minValueFontSize?: number;
+    maxValueLines?: number;
+  },
 ) {
-  setFont(doc, "normal", 8.3);
+  const labelFontSize = options?.labelFontSize ?? 8.3;
+  let valueFontSize = options?.valueFontSize ?? 8.1;
+  const minValueFontSize = options?.minValueFontSize ?? valueFontSize;
+  const maxValueLines = options?.maxValueLines ?? Number.POSITIVE_INFINITY;
+
+  setFont(doc, "normal", labelFontSize);
   doc.setTextColor(...LABEL_COLOR);
-  doc.text(label, labelX, y);
-  setFont(doc, "bold", 8.1);
+  const labelLines = doc.splitTextToSize(label, labelWidth) as string[];
+  let valueLines: string[] = [];
+
+  while (valueFontSize >= minValueFontSize) {
+    setFont(doc, "bold", valueFontSize);
+    valueLines = doc.splitTextToSize(value, valueWidth) as string[];
+
+    if (valueLines.length <= maxValueLines || valueFontSize === minValueFontSize) {
+      break;
+    }
+
+    valueFontSize = Number((valueFontSize - 0.2).toFixed(2));
+  }
+
+  setFont(doc, "normal", labelFontSize);
+  doc.text(labelLines, labelX, y);
+  setFont(doc, "bold", valueFontSize);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text(value, valueX, y);
+  doc.text(valueLines, valueX, y);
+
+  return y + Math.max(labelLines.length, valueLines.length) * lineHeight + 1.2;
+}
+
+function drawSectionRows(
+  doc: jsPDF,
+  y: number,
+  title: string,
+  rows: Array<[string, string]>,
+) {
+  let currentY = ensureContentPageSpace(doc, y, 10);
+  drawSectionBar(doc, currentY, title);
+  currentY += 11.6;
+
+  rows.forEach(([label, value]) => {
+    currentY = ensureContentPageSpace(doc, currentY, 8);
+    currentY = drawWrappedLabelValueRow(
+      doc,
+      FIRST_PAGE_LEFT + 2,
+      66,
+      108,
+      78,
+      currentY,
+      label,
+      value,
+      4.6,
+      {
+        labelFontSize: 8,
+        valueFontSize: 7.9,
+        minValueFontSize: 7.1,
+        maxValueLines: 2,
+      },
+    );
+  });
+
+  return currentY;
+}
+
+function drawCommentsBlock(doc: jsPDF, y: number, text: string) {
+  let currentY = ensureContentPageSpace(doc, y, 14);
+
+  setFont(doc, "bold", 9.6);
+  doc.setTextColor(...TEXT_COLOR);
+  doc.text("Comentarios:", FIRST_PAGE_LEFT, currentY);
+
+  const commentLines = doc.splitTextToSize(text, FIRST_PAGE_WIDTH - 6) as string[];
+  const boxHeight = Math.max(26, commentLines.length * 4.7 + 6);
+  currentY = ensureContentPageSpace(doc, currentY + 3, boxHeight + 4);
+
+  if (currentY !== y + 3) {
+    setFont(doc, "bold", 9.6);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text("Comentarios:", FIRST_PAGE_LEFT, currentY - 3);
+  }
+
+  doc.setDrawColor(...LIGHT_BORDER);
+  doc.roundedRect(FIRST_PAGE_LEFT, currentY, FIRST_PAGE_WIDTH, boxHeight, 2.2, 2.2);
+  setFont(doc, "normal", 8.2);
+  doc.text(commentLines, FIRST_PAGE_LEFT + 2, currentY + 5.6);
+
+  return currentY + boxHeight;
+}
+
+function drawContentFooter(doc: jsPDF, y: number, footerLegal: string) {
+  const availableHeight = Math.max(CONTENT_PAGE_BOTTOM - y, 10);
+  let fontSize = 5.7;
+  let lineHeight = 2.85;
+  let footerLines: string[] = [];
+  let footerHeight = 0;
+
+  while (fontSize >= 5) {
+    setFont(doc, "normal", fontSize);
+    footerLines = doc.splitTextToSize(footerLegal, FIRST_PAGE_WIDTH) as string[];
+    footerHeight = footerLines.length * lineHeight;
+
+    if (footerHeight <= availableHeight) {
+      break;
+    }
+
+    fontSize = Number((fontSize - 0.15).toFixed(2));
+    lineHeight = Math.max(2.55, lineHeight - 0.08);
+  }
+
+  setFont(doc, "normal", fontSize);
+  doc.setTextColor(...TEXT_COLOR);
+  const footerStartY = y + Math.max((availableHeight - footerHeight) / 2, 0);
+  doc.text(footerLines, FIRST_PAGE_LEFT, footerStartY);
+  return footerStartY + footerHeight;
 }
 
 function drawNormativePageBase(doc: jsPDF, fondoDataUrl: string, cintaDataUrl: string) {
@@ -242,20 +380,33 @@ function drawSignatureBlock(
   subtitle: string,
 ) {
   if (signatureDataUrl) {
-    doc.addImage(signatureDataUrl, "PNG", x + 11, y, width - 22, 18);
+    const imageProps = doc.getImageProperties(signatureDataUrl);
+    const maxImageWidth = width - 6;
+    const maxImageHeight = 24;
+    let renderWidth = maxImageWidth;
+    let renderHeight = (imageProps.height / imageProps.width) * renderWidth;
+
+    if (renderHeight > maxImageHeight) {
+      renderHeight = maxImageHeight;
+      renderWidth = (imageProps.width / imageProps.height) * renderHeight;
+    }
+
+    const renderX = x + (width - renderWidth) / 2;
+    const renderY = y + Math.max((maxImageHeight - renderHeight) / 2, 0);
+    doc.addImage(signatureDataUrl, "PNG", renderX, renderY, renderWidth, renderHeight, undefined, "FAST");
   }
 
   doc.setDrawColor(116, 116, 116);
   doc.setLineDashPattern([1.6, 1.6], 0);
-  doc.line(x, y + 21, x + width, y + 21);
+  doc.line(x, y + 25.5, x + width, y + 25.5);
   doc.setLineDashPattern([], 0);
 
   setFont(doc, "bold", 9);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text(name, x + width / 2, y + 26, { align: "center" });
+  doc.text(name, x + width / 2, y + 30.6, { align: "center" });
 
   setFont(doc, "normal", 8.2);
-  doc.text(subtitle, x + width / 2, y + 30.5, { align: "center" });
+  doc.text(subtitle, x + width / 2, y + 35.1, { align: "center" });
 }
 
 function getEntregaName(draft: PreviewResguardoDraft) {
@@ -281,6 +432,10 @@ export async function generateResguardoPdf({
     getBinaryAsset("/fonts/Poppins-Regular.ttf"),
     getBinaryAsset("/fonts/Poppins-Bold.ttf"),
   ]);
+  const [trimmedTitularSignatureDataUrl, trimmedEntregaSignatureDataUrl] = await Promise.all([
+    draft.signatureDataUrl ? trimSignatureDataUrl(draft.signatureDataUrl) : Promise.resolve(undefined),
+    trimSignatureDataUrl(firmaEntregaDataUrl),
+  ]);
 
   const doc = new jsPDF({
     unit: "mm",
@@ -293,7 +448,7 @@ export async function generateResguardoPdf({
   const titularName = getValue(draft.usuarioTitularLabel).toUpperCase();
   const resguardaName = getValue(draft.usuarioResguardaLabel || draft.usuarioTitularLabel).toUpperCase();
   const entregaName = getValue(getEntregaName(draft)).toUpperCase();
-  const accesorios =
+  const accesorios: Array<[string, string]> =
     resguardo.detalles?.map((detalle) => [
       getValue(detalle.accesorio?.descAccesorio),
       getValue(detalle.numeroSerie),
@@ -304,7 +459,7 @@ export async function generateResguardoPdf({
 
   setFont(doc, "bold", 7.6);
   doc.setTextColor(...MAROON);
-  doc.text("Informacion General", FIRST_PAGE_LEFT, 37);
+  doc.text("Información General", FIRST_PAGE_LEFT, 37);
 
   setFont(doc, "bold", 10.8);
   doc.setTextColor(...TEXT_COLOR);
@@ -318,28 +473,91 @@ export async function generateResguardoPdf({
 
   setFont(doc, "bold", 8.2);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text("Direccion General de Personal", FIRST_PAGE_RIGHT_BLOCK_X, 16.3);
+  doc.text("Dirección General de Personal", FIRST_PAGE_RIGHT_BLOCK_X, 16.3);
   setFont(doc, "normal", 6.6);
-  doc.text("Direccion de Sistemas y", FIRST_PAGE_RIGHT_BLOCK_X, 20.3);
-  doc.text("Tecnologias De La Informacion.", FIRST_PAGE_RIGHT_BLOCK_X, 24);
-  doc.text("Subdireccion de Desarrollo Tecnologico", FIRST_PAGE_RIGHT_BLOCK_X, 27.7);
+  doc.text("Dirección de Sistemas y", FIRST_PAGE_RIGHT_BLOCK_X, 20.3);
+  doc.text("Tecnologías De La Información.", FIRST_PAGE_RIGHT_BLOCK_X, 24);
+  doc.text("Subdirección de Desarrollo Tecnológico", FIRST_PAGE_RIGHT_BLOCK_X, 27.7);
   doc.text(generatedDate, FIRST_PAGE_RIGHT_BLOCK_X, 34.9);
 
   setFont(doc, "bold", 8.1);
   doc.setTextColor(...MAROON);
-  doc.text("Informacion", 140, 51.5);
+  doc.text("Información", 132, 51.5);
 
-  drawLabelValueRow(doc, FIRST_PAGE_LEFT, 58, 56.8, "Clave del Servidor:", getValue(resguardo.usuarioTitular?.neyemp));
-  drawLabelValueRow(doc, FIRST_PAGE_LEFT, 58, 62.1, "Adscripcion:", getValue(resguardo.usuarioTitular?.adscripcion?.necads));
-  drawLabelValueRow(doc, FIRST_PAGE_LEFT, 58, 67.4, "Direccion y/o Area:", getValue(resguardo.usuarioTitular?.adscripcion?.desAds));
+  let topInfoLeftY = 56.8;
+  topInfoLeftY = drawWrappedLabelValueRow(
+    doc,
+    FIRST_PAGE_LEFT,
+    34,
+    58,
+    60,
+    topInfoLeftY,
+    "Clave del Servidor:",
+    getValue(resguardo.usuarioTitular?.neyemp),
+  );
+  topInfoLeftY = drawWrappedLabelValueRow(
+    doc,
+    FIRST_PAGE_LEFT,
+    34,
+    58,
+    60,
+    topInfoLeftY,
+    "Adscripción:",
+    getValue(resguardo.usuarioTitular?.adscripcion?.necads),
+  );
 
-  drawLabelValueRow(doc, 132, 170, 56.8, "IP:", getValue(resguardo.ip));
-  drawLabelValueRow(doc, 132, 170, 62.1, "Marca:", getValue(resguardo.marca));
-  drawLabelValueRow(doc, 132, 170, 67.4, "Folio de Resguardo:", folioId);
+  let topInfoRightY = 56.8;
+  topInfoRightY = drawWrappedLabelValueRow(
+    doc,
+    132,
+    24,
+    168,
+    24,
+    topInfoRightY,
+    "IP:",
+    getValue(resguardo.ip),
+  );
+  topInfoRightY = drawWrappedLabelValueRow(
+    doc,
+    132,
+    24,
+    168,
+    24,
+    topInfoRightY,
+    "Marca:",
+    getValue(resguardo.marca),
+  );
+  topInfoRightY = drawWrappedLabelValueRow(
+    doc,
+    132,
+    32,
+    168,
+    24,
+    topInfoRightY,
+    "Folio de Resguardo:",
+    folioId,
+  );
 
-  drawSectionBar(doc, 77, "Caracteristicas");
-  const featureLabelX = FIRST_PAGE_LEFT + 4;
-  const featureValueX = 116;
+  const areaBottomY = drawWrappedLabelValueRow(
+    doc,
+    FIRST_PAGE_LEFT,
+    34,
+    58,
+    56,
+    topInfoLeftY + 0.8,
+    "Dirección y/o Área:",
+    getValue(resguardo.usuarioTitular?.adscripcion?.desAds),
+    4.55,
+    {
+      labelFontSize: 8.1,
+      valueFontSize: 7.25,
+      minValueFontSize: 6.7,
+      maxValueLines: 3,
+    },
+  );
+
+  let y = Math.max(areaBottomY, topInfoRightY) + 1.8;
+
   const featureRows: Array<[string, string]> = [
     ["Sistema Operativo:", getValue(resguardo.sistemaOperativo?.descSo || draft.sistemaOperativoLabel)],
     ["Tipo de Bien:", getValue(resguardo.tipoBien?.descTipoBien || draft.tipoBienLabel)],
@@ -350,43 +568,28 @@ export async function generateResguardoPdf({
     ["Procesador:", getValue(resguardo.procesador?.descProcesador || draft.procesadorLabel)],
   ];
 
-  let y = 88;
-  featureRows.forEach(([label, value]) => {
-    drawLabelValueRow(doc, featureLabelX, featureValueX, y, label, value);
-    y += 5.9;
-  });
+  y += 2.4;
+  y = drawSectionRows(doc, y, "Características", featureRows);
 
-  const accesoriosHeaderY = y + 4;
-  drawSectionBar(doc, accesoriosHeaderY, "Accesorios");
-  y = accesoriosHeaderY + 11;
-  if (accesorios.length) {
-    accesorios.forEach(([label, serie]) => {
-      drawLabelValueRow(doc, featureLabelX, featureValueX, y, `${label}`, serie);
-      y += 5.9;
-    });
-  } else {
-    drawLabelValueRow(doc, featureLabelX, featureValueX, y, "Sin accesorios:", EMPTY_VALUE);
-    y += 5.9;
-  }
-
-  setFont(doc, "bold", 9.6);
-  doc.setTextColor(...TEXT_COLOR);
-  doc.text("Comentarios:", FIRST_PAGE_LEFT, 165.5);
-
-  doc.setDrawColor(...LIGHT_BORDER);
-  doc.roundedRect(FIRST_PAGE_LEFT, 168.5, FIRST_PAGE_WIDTH, 30, 2.2, 2.2);
-  setFont(doc, "normal", 8.2);
-  doc.text(
-    doc.splitTextToSize(getValue(resguardo.observaciones || draft.observaciones), FIRST_PAGE_WIDTH - 4),
-    FIRST_PAGE_LEFT + 2,
-    174,
+  y += 2.2;
+  y = drawSectionRows(
+    doc,
+    y,
+    "Accesorios",
+    accesorios.length ? accesorios : [["Sin accesorios:", EMPTY_VALUE]],
   );
+
+  y += 2;
+  y = drawCommentsBlock(doc, y, getValue(resguardo.observaciones || draft.observaciones));
+
+  y += 2.4;
+  y = ensureContentPageSpace(doc, y, 47);
 
   drawSignatureBlock(
     doc,
-    draft.signatureDataUrl,
+    trimmedTitularSignatureDataUrl,
     35,
-    214,
+    y,
     56,
     resguardaName,
     "Nombre y Persona de quien resguarda",
@@ -394,9 +597,9 @@ export async function generateResguardoPdf({
 
   drawSignatureBlock(
     doc,
-    firmaEntregaDataUrl,
+    trimmedEntregaSignatureDataUrl,
     120,
-    214,
+    y,
     56,
     entregaName,
     "Nombre y Persona de quien entrega",
@@ -405,21 +608,21 @@ export async function generateResguardoPdf({
   setFont(doc, "normal", 6.4);
   doc.setTextColor(...TEXT_COLOR);
   const footerLegal =
-    "Los datos personales recabados seran utilizados exclusivamente para fines administrativos y de control interno por la Direccion de Sistemas y Tecnologias de la Informacion. Seran resguardados conforme a la Ley General de Proteccion de Datos Personales en Posesion de Sujetos Obligados, garantizando su confidencialidad y seguridad.";
-  doc.text(doc.splitTextToSize(footerLegal, FIRST_PAGE_WIDTH), FIRST_PAGE_LEFT, 265);
+    "Los datos personales recabados serán utilizados exclusivamente para fines administrativos y de control interno por la Dirección de Sistemas y Tecnologías de la Información. Serán resguardados conforme a la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados, garantizando su confidencialidad y seguridad.";
+  drawContentFooter(doc, y + 42, footerLegal);
 
   drawNormativePageBase(doc, fondoDataUrl, cintaDataUrl);
 
   setFont(doc, "normal", 6.2);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text("Direccion General de Personal", 152, 10.4);
-  doc.text("Direccion de Sistemas y", 152, 14.1);
-  doc.text("Tecnologias De La Informacion.", 152, 17.8);
-  doc.text("Subdireccion de Desarrollo Tecnologico", 152, 21.5);
+  doc.text("Dirección General de Personal", 152, 10.4);
+  doc.text("Dirección de Sistemas y", 152, 14.1);
+  doc.text("Tecnologías De La Información.", 152, 17.8);
+  doc.text("Subdirección de Desarrollo Tecnológico", 152, 21.5);
 
   setFont(doc, "normal", 8.5);
   doc.text(
-    "“2025. Bicentenario de la vida municipal en el Estado de Mexico”",
+    "\"2025. Bicentenario de la vida municipal en el Estado de Mexico\"",
     PAGE_WIDTH / 2,
     40,
     { align: "center" },
