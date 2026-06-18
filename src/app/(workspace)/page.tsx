@@ -34,6 +34,7 @@ export default async function DashboardPage() {
         description="Vista general del sistema."
         actionHref={ROUTES.resguardosNuevo}
         actionLabel="Registrar resguardo"
+        compact
       />
 
       <section className={styles.stats}>
@@ -42,23 +43,26 @@ export default async function DashboardPage() {
           value={String(totalResguardos)}
           helper="Total"
           icon="resguardos"
+          compact
         />
         <StatCard
           label="Resguardos activos"
           value={String(activos)}
           helper="Activos"
           icon="activos"
+          compact
         />
         <StatCard
           label="Usuarios disponibles"
           value={String(usuarios.length)}
           helper="Usuarios"
           icon="usuarios"
+          compact
         />
       </section>
 
       <section className={styles.grid}>
-        <Panel title="Acciones" description="Accesos rapidos.">
+        <Panel title="Acciones" description="Accesos rapidos." compact>
           <div className={styles.actionList}>
             <Link href={ROUTES.resguardosNuevo} className={styles.actionCard}>
               <strong>Alta de resguardo</strong>
@@ -75,7 +79,7 @@ export default async function DashboardPage() {
           </div>
         </Panel>
 
-        <Panel title="Estado" description="Resumen tecnico.">
+        <Panel title="Estado" description="Resumen tecnico." compact>
           <ul className={styles.notes}>
             <li>API conectada</li>
             <li>Tipos listos</li>
@@ -84,7 +88,7 @@ export default async function DashboardPage() {
         </Panel>
       </section>
 
-      <Panel title="Recientes" description="Ultimos registros.">
+      <Panel title="Recientes" description="Ultimos registros." compact>
         <div className={styles.recentList}>
           {recientes.length ? (
             recientes.map((resguardo) => (

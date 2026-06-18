@@ -8,6 +8,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+.cardCompact {
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
 .top {
   display: flex;
   align-items: center;
@@ -18,6 +23,10 @@
 .label {
   color: var(--color-ink-600);
   font-size: var(--text-sm);
+}
+
+.labelCompact {
+  font-size: 0.82rem;
 }
 
 .iconWrap {
@@ -32,13 +41,26 @@
   border: 1px solid #d7e3ff;
 }
 
+.iconWrapCompact {
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
 .value {
   color: var(--color-ink-900);
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-size: clamp(1.65rem, 3.5vw, 2.15rem);
   line-height: 1;
+}
+
+.valueCompact {
+  font-size: clamp(1.45rem, 2.8vw, 1.82rem);
 }
 
 .helper {
   color: var(--color-ink-600);
   font-size: var(--text-sm);
+}
+
+.helperCompact {
+  font-size: 0.82rem;
 }

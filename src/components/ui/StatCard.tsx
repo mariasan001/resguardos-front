@@ -8,6 +8,7 @@ interface StatCardProps {
   value: string;
   helper: string;
   icon?: "resguardos" | "activos" | "usuarios";
+  compact?: boolean;
 }
 
 const iconMap: Record<NonNullable<StatCardProps["icon"]>, LucideIcon> = {
@@ -21,19 +22,24 @@ export default function StatCard({
   value,
   helper,
   icon,
+  compact = false,
 }: StatCardProps) {
   const Icon = icon ? iconMap[icon] : FileText;
 
   return (
-    <MotionItem as="article" className={styles.card} variant="scale">
+    <MotionItem
+      as="article"
+      className={`${styles.card} ${compact ? styles.cardCompact : ""}`}
+      variant="scale"
+    >
       <div className={styles.top}>
-        <span className={styles.label}>{label}</span>
-        <span className={styles.iconWrap}>
+        <span className={`${styles.label} ${compact ? styles.labelCompact : ""}`}>{label}</span>
+        <span className={`${styles.iconWrap} ${compact ? styles.iconWrapCompact : ""}`}>
           <Icon size={18} strokeWidth={1.9} />
         </span>
       </div>
-      <strong className={styles.value}>{value}</strong>
-      <p className={styles.helper}>{helper}</p>
+      <strong className={`${styles.value} ${compact ? styles.valueCompact : ""}`}>{value}</strong>
+      <p className={`${styles.helper} ${compact ? styles.helperCompact : ""}`}>{helper}</p>
     </MotionItem>
   );
 }

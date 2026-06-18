@@ -10,6 +10,7 @@ interface PageHeaderProps {
   description: string;
   actionHref?: string;
   actionLabel?: string;
+  compact?: boolean;
 }
 
 export default function PageHeader({
@@ -18,17 +19,27 @@ export default function PageHeader({
   description,
   actionHref,
   actionLabel,
+  compact = false,
 }: PageHeaderProps) {
   return (
-    <MotionItem as="section" className={styles.header}>
-      <div className={styles.copy}>
-        {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
-        <h2 className={styles.title}>{title}</h2>
-        <p className={styles.description}>{description}</p>
+    <MotionItem
+      as="section"
+      className={`${styles.header} ${compact ? styles.headerCompact : ""}`}
+    >
+      <div className={`${styles.copy} ${compact ? styles.copyCompact : ""}`}>
+        {eyebrow ? (
+          <span className={`${styles.eyebrow} ${compact ? styles.eyebrowCompact : ""}`}>
+            {eyebrow}
+          </span>
+        ) : null}
+        <h2 className={`${styles.title} ${compact ? styles.titleCompact : ""}`}>{title}</h2>
+        <p className={`${styles.description} ${compact ? styles.descriptionCompact : ""}`}>
+          {description}
+        </p>
       </div>
 
       {actionHref && actionLabel ? (
-        <Link href={actionHref} className={styles.action}>
+        <Link href={actionHref} className={`${styles.action} ${compact ? styles.actionCompact : ""}`}>
           {actionLabel}
           <ArrowRight size={16} strokeWidth={2} />
         </Link>

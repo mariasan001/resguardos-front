@@ -8,9 +8,18 @@
   box-shadow: var(--shadow-sm);
 }
 
+.panelCompact {
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
 .header {
   display: grid;
   gap: var(--space-2);
+}
+
+.headerCompact {
+  gap: var(--space-1);
 }
 
 .title {
@@ -18,7 +27,16 @@
   font-size: var(--text-xl);
 }
 
+.titleCompact {
+  font-size: 1.06rem;
+}
+
 .description {
   color: var(--color-ink-600);
   line-height: 1.6;
+}
+
+.descriptionCompact {
+  font-size: 0.9rem;
+  line-height: 1.45;
 }

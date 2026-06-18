@@ -18,7 +18,7 @@
 
 .title {
   color: var(--color-ink-900);
-  font-size: clamp(1.45rem, 2vw, 1.85rem);
+  font-size: clamp(1.3rem, 1.8vw, 1.68rem);
   line-height: 1.08;
 }
 

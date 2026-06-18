@@ -17,6 +17,20 @@
   backdrop-filter: blur(10px);
 }
 
+.logoWrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  margin-left: var(--space-4);
+}
+
+.logoImage {
+  width: clamp(9rem, 22vw, 15rem);
+  height: auto;
+  object-fit: contain;
+}
+
 .kicker {
   color: var(--color-ink-600);
   font-size: var(--text-xs);

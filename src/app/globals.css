@@ -3,7 +3,7 @@
     "Poppins", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
   --color-white: #ffffff;
-  --color-black: #111827;
+  --color-black: #7a3248;
   --color-ink-900: #0f172a;
   --color-ink-800: #1e293b;
   --color-ink-700: #334155;
@@ -28,8 +28,8 @@
   --color-wine-500: #8c4358;
   --color-wine-600: #7a3248;
   --color-wine-700: #65263a;
-  --color-button-700: #111827;
-  --color-button-800: #0f172a;
+  --color-button-700: #7a3248;
+  --color-button-800: #65263a;
 
   --color-success-50: #eefbf3;
   --color-success-600: #1f8f5f;
@@ -57,19 +57,19 @@
   --radius-pill: 999px;
 
   --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-7: 2rem;
-  --space-8: 2.5rem;
+  --space-2: 0.4375rem;
+  --space-3: 0.6875rem;
+  --space-4: 0.9375rem;
+  --space-5: 1.125rem;
+  --space-6: 1.375rem;
+  --space-7: 1.75rem;
+  --space-8: 2.125rem;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.1875rem;
 
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -86,6 +86,7 @@
 
 html {
   min-height: 100%;
+  font-size: 13.5px;
 }
 
 body {

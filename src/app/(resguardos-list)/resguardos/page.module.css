@@ -18,7 +18,7 @@
 
 .title {
   color: var(--color-ink-900);
-  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  font-size: clamp(1.28rem, 1.8vw, 1.65rem);
   line-height: 1.1;
 }
 
@@ -109,7 +109,7 @@
 
 .statValue {
   color: var(--color-ink-900);
-  font-size: clamp(1.35rem, 1.8vw, 1.7rem);
+  font-size: clamp(1.22rem, 1.55vw, 1.5rem);
   line-height: 1;
   letter-spacing: -0.03em;
 }
@@ -122,22 +122,22 @@
 
 .toneNeutral .statIconWrap,
 .toneNeutral .statState {
-  color: var(--color-accent-700);
+  color: #5f6657;
 }
 
 .toneSuccess .statIconWrap,
 .toneSuccess .statState {
-  color: var(--color-success-600);
+  color: #586b34;
 }
 
 .toneWarning .statIconWrap,
 .toneWarning .statState {
-  color: var(--color-warning-600);
+  color: #8a7442;
 }
 
 .toneDanger .statIconWrap,
 .toneDanger .statState {
-  color: var(--color-danger-600);
+  color: #6d5a45;
 }
 
 .toolbar,
@@ -216,7 +216,7 @@
 }
 
 .primaryLink {
-  color: var(--color-accent-700);
+  color: var(--color-ink-900);
   font-weight: var(--font-weight-semibold);
 }
 

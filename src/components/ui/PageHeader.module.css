@@ -14,6 +14,15 @@
   gap: var(--space-2);
 }
 
+.headerCompact {
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.copyCompact {
+  gap: var(--space-1);
+}
+
 .eyebrow {
   color: var(--color-accent-700);
   font-size: var(--text-xs);
@@ -22,16 +31,29 @@
   text-transform: uppercase;
 }
 
+.eyebrowCompact {
+  font-size: 0.7rem;
+}
+
 .title {
-  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  font-size: clamp(1.55rem, 3.2vw, 2.05rem);
   line-height: 1.08;
   color: var(--color-ink-900);
+}
+
+.titleCompact {
+  font-size: clamp(1.4rem, 2.6vw, 1.82rem);
 }
 
 .description {
   max-width: 46rem;
   color: var(--color-ink-600);
   line-height: 1.65;
+}
+
+.descriptionCompact {
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .action {
@@ -50,6 +72,11 @@
   transition:
     background-color var(--transition-base),
     box-shadow var(--transition-base);
+}
+
+.actionCompact {
+  min-height: 2.6rem;
+  font-size: 0.92rem;
 }
 
 .action:hover {
