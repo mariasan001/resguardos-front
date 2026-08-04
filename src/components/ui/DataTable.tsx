@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import EmptyState from "@/components/ui/EmptyState";
-import MotionList from "@/components/ui/MotionList";
 import styles from "@/components/ui/DataTable.module.css";
 
 interface Column<T> {
@@ -37,7 +36,7 @@ export default function DataTable<T>({
   }
 
   return (
-    <MotionList className={styles.wrapper} selector="tbody tr" stagger={0.045}>
+    <div className={styles.wrapper}>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -60,6 +59,6 @@ export default function DataTable<T>({
           ))}
         </tbody>
       </table>
-    </MotionList>
+    </div>
   );
 }

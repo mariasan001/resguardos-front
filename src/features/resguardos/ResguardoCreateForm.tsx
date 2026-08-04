@@ -14,8 +14,6 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ChangeEventHandler, ReactNode } from "react";
@@ -54,8 +52,6 @@ const FIXED_ASSIGN_USER: AppUser = {
     desAds: "SUBDIRECCION DE DESARROLLO TECNOLOGICO",
   },
 };
-
-gsap.registerPlugin(useGSAP);
 
 type SectionKey =
   | "equipo"
@@ -294,7 +290,6 @@ function ResguardoCreateFormContent({
   initialDraft,
 }: ResguardoCreateFormContentProps) {
   const router = useRouter();
-  const formRef = useRef<HTMLDivElement | null>(null);
   const [detalles, setDetalles] = useState<DetalleItem[]>(
     initialDraft?.detalles?.map((detalle) => ({
       id: detalle.id || nextDetailId(),
@@ -450,44 +445,8 @@ function ResguardoCreateFormContent({
   const controlStatus = getSectionStatus("control", formValues, detalles);
   const extrasStatus = getSectionStatus("extras", formValues, detalles);
 
-  useGSAP(
-    () => {
-      if (!formRef.current) {
-        return;
-      }
-
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        gsap.set(formRef.current.querySelectorAll("[data-motion-item]"), {
-          opacity: 1,
-          clearProps: "opacity,transform",
-        });
-        return;
-      }
-
-      const items = formRef.current.querySelectorAll("[data-motion-item]");
-      if (!items.length) {
-        return;
-      }
-
-      // Use opacity only — autoAlpha sets visibility:hidden and can block section clicks.
-      gsap.fromTo(
-        items,
-        { opacity: 0, y: 14 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.42,
-          ease: "power2.out",
-          stagger: 0.05,
-          clearProps: "opacity,transform",
-        },
-      );
-    },
-    { scope: formRef },
-  );
-
   return (
-    <div ref={formRef} className={styles.form}>
+    <div className={styles.form}>
       <Section
         icon={<Package2 size={16} strokeWidth={1.9} />}
         title="Datos del equipo"

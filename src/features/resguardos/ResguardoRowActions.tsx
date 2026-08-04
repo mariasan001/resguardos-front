@@ -84,32 +84,14 @@ export default function ResguardoRowActions({
       }
     }
 
-    // Ignore scroll that happens while focusing the trigger inside overflow containers
-    // (capture:true was closing the menu immediately on click).
-    function handleScroll(event: Event) {
-      const target = event.target;
-      if (
-        target instanceof Node &&
-        (wrapperRef.current?.contains(target) || menuRef.current?.contains(target))
-      ) {
-        return;
-      }
-
-      if (target === document || target === document.documentElement || target === document.body) {
-        closeMenu();
-      }
-    }
-
     document.addEventListener("mousedown", handlePointerDown);
     window.addEventListener("keydown", handleEscape);
     window.addEventListener("resize", closeMenu);
-    window.addEventListener("scroll", handleScroll, true);
 
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
       window.removeEventListener("resize", closeMenu);
-      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [open]);
 
