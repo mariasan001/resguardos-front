@@ -1,5 +1,5 @@
 export const ROUTES = {
-  dashboard: "/",
+  dashboard: "/resguardos",
   resguardos: "/resguardos",
   resguardosNuevo: "/resguardos/nuevo",
   usuarios: "/usuarios",

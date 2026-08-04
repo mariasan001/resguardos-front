@@ -61,6 +61,10 @@ export default function ResguardoRowActions({
   const hasValidId = typeof id === "number" && Number.isFinite(id);
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
     const closeMenu = () => setOpen(false);
 
     function handlePointerDown(event: MouseEvent) {
@@ -77,22 +81,52 @@ export default function ResguardoRowActions({
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpen(false);
-        setSignatureOpen(false);
+      }
+    }
+
+    // Ignore scroll that happens while focusing the trigger inside overflow containers
+    // (capture:true was closing the menu immediately on click).
+    function handleScroll(event: Event) {
+      const target = event.target;
+      if (
+        target instanceof Node &&
+        (wrapperRef.current?.contains(target) || menuRef.current?.contains(target))
+      ) {
+        return;
+      }
+
+      if (target === document || target === document.documentElement || target === document.body) {
+        closeMenu();
       }
     }
 
     document.addEventListener("mousedown", handlePointerDown);
     window.addEventListener("keydown", handleEscape);
     window.addEventListener("resize", closeMenu);
-    window.addEventListener("scroll", closeMenu, true);
+    window.addEventListener("scroll", handleScroll, true);
 
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
       window.removeEventListener("resize", closeMenu);
-      window.removeEventListener("scroll", closeMenu, true);
+      window.removeEventListener("scroll", handleScroll, true);
     };
-  }, []);
+  }, [open]);
+
+  useEffect(() => {
+    if (!signatureOpen) {
+      return;
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSignatureOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [signatureOpen]);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current || !menuRef.current) {
@@ -412,6 +446,11 @@ export default function ResguardoRowActions({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={`Acciones para ${inventario?.trim() || "resguardo"}`}
+          onMouseDown={(event) => {
+            // Prevent the table overflow container from scrolling the trigger
+            // into view on focus, which was closing the menu right away.
+            event.preventDefault();
+          }}
           onClick={() => setOpen((current) => !current)}
         >
           <MoreHorizontal size={16} strokeWidth={2} />

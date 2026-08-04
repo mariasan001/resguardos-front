@@ -458,8 +458,8 @@ function ResguardoCreateFormContent({
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         gsap.set(formRef.current.querySelectorAll("[data-motion-item]"), {
-          autoAlpha: 1,
-          clearProps: "all",
+          opacity: 1,
+          clearProps: "opacity,transform",
         });
         return;
       }
@@ -469,16 +469,17 @@ function ResguardoCreateFormContent({
         return;
       }
 
+      // Use opacity only — autoAlpha sets visibility:hidden and can block section clicks.
       gsap.fromTo(
         items,
-        { autoAlpha: 0, y: 14 },
+        { opacity: 0, y: 14 },
         {
-          autoAlpha: 1,
+          opacity: 1,
           y: 0,
           duration: 0.42,
           ease: "power2.out",
           stagger: 0.05,
-          clearProps: "opacity,visibility,transform",
+          clearProps: "opacity,transform",
         },
       );
     },

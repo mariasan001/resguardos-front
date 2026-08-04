@@ -36,8 +36,8 @@ export default function MotionList({
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         gsap.set(ref.current.querySelectorAll(selector), {
-          autoAlpha: 1,
-          clearProps: "all",
+          opacity: 1,
+          clearProps: "opacity,transform",
         });
         return;
       }
@@ -47,17 +47,17 @@ export default function MotionList({
         return;
       }
 
+      // Opacity-only: transforms on <tr> are unreliable and can block interaction.
       gsap.fromTo(
         items,
-        { autoAlpha: 0, y: 12 },
+        { opacity: 0 },
         {
-          autoAlpha: 1,
-          y: 0,
+          opacity: 1,
           duration: 0.42,
           delay,
           stagger,
           ease: "power2.out",
-          clearProps: "opacity,visibility,transform",
+          clearProps: "opacity",
         },
       );
     },

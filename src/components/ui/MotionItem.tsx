@@ -36,28 +36,28 @@ export default function MotionItem({
       }
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        gsap.set(ref.current, { autoAlpha: 1, clearProps: "all" });
+        gsap.set(ref.current, { opacity: 1, clearProps: "opacity,transform" });
         return;
       }
 
       const from =
         variant === "scale"
-          ? { autoAlpha: 0, scale: 0.985, y: 10 }
+          ? { opacity: 0, scale: 0.985, y: 10 }
           : variant === "fade"
-            ? { autoAlpha: 0 }
-            : { autoAlpha: 0, y: 14 };
+            ? { opacity: 0 }
+            : { opacity: 0, y: 14 };
 
       gsap.fromTo(
         ref.current,
         from,
         {
-          autoAlpha: 1,
+          opacity: 1,
           y: 0,
           scale: 1,
           duration,
           delay,
           ease: "power2.out",
-          clearProps: "opacity,visibility,transform",
+          clearProps: "opacity,transform",
         },
       );
     },
