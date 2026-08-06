@@ -1,6 +1,3 @@
-import { isValueExpired } from "next/dist/client/components/segment-cache/cache-map";
-import { text } from "stream/consumers";
-
 /**
  * React DevTools (installHook.js) reporta en consola el error
  * "We are cleaning up async info that was not on the parent Suspense boundary"
@@ -23,7 +20,6 @@ function isKnownDevtoolsNoise(value: unknown): boolean {
   if (!text) {
     return false;
   }
-
 
   const normalized = text.toLowerCase();
   return KNOWN_MARKERS.some((marker) => normalized.includes(marker));

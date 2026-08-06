@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resguardos Front
 
-## Getting Started
+Frontend de **resguardos de cómputo**: alta, firma, PDF, email, catálogos y usuarios.
 
-First, run the development server:
+**Next.js 16** · **React 19** · TypeScript · CSS Modules
+
+## Setup
 
 ```bash
+cp .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```env
+BACKEND_API_URL=http://localhost:9999
+AUTH_SECRET=change-this-secret-before-production
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`AUTH_SECRET` es obligatorio en producción.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Comando | Uso |
+|---------|-----|
+| `npm run dev` | Dev (localhost:3000) |
+| `npm run dev:lan` | Dev en red (`:3001`) |
+| `npm run build` / `start` | Producción |
+| `npm run lint` | ESLint |
+| `npm run test` | Vitest |
+| `npm run typecheck` | TypeScript |
 
-To learn more about Next.js, take a look at the following resources:
+## Roles
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **admin** — todo (dashboard, listado, usuarios, catálogos)
+- **encargado** — alta, preview, detalle por ID y firma
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sesión: cookie `httpOnly` firmada. JWT del backend no se expone al browser.
 
-## Deploy on Vercel
+## Estructura
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+src/app          rutas + proxies BFF
+src/features     flujos de negocio
+src/components   shell / UI
+src/lib          auth, api, services
+docs/            arquitectura
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Flujo
+
+Captura → preview/firma → POST + firma → PDF → descarga/email
+
+Detalle: [docs/frontend-architecture.md](./docs/frontend-architecture.md)

@@ -1,36 +1,20 @@
 import { NextResponse } from "next/server";
 
-import { rejectUnauthenticatedRequest } from "@/lib/auth/api-authorization";
+import { authorizeApiRequest } from "@/lib/auth/api-authorization";
 import { getBackendAuthHeaders } from "@/lib/auth/backend-headers";
+import { rolesForApiCapability } from "@/lib/auth/permissions";
 import { getBackendBaseUrl } from "@/lib/config/env";
 import { getResguardos } from "@/lib/services/resguardos.server";
 import type { Resguardo } from "@/lib/types/api";
-import { getNextInventoryId } from "@/lib/utils/inventory-id";
-
-let inventoryAssignmentQueue = Promise.resolve();
-
-async function withInventoryLock<T>(operation: () => Promise<T>) {
-  const previous = inventoryAssignmentQueue;
-  let release: () => void = () => undefined;
-
-  inventoryAssignmentQueue = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-
-  await previous;
-
-  try {
-    return await operation();
-  } finally {
-    release();
-  }
-}
+import { resolveInventoryId } from "@/lib/utils/inventory-id";
 
 export async function POST(request: Request) {
-  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+  const { error } = await authorizeApiRequest(
+    rolesForApiCapability("createResguardo"),
+  );
 
-  if (unauthorizedResponse) {
-    return unauthorizedResponse;
+  if (error) {
+    return error;
   }
 
   let body: Resguardo;
@@ -50,36 +34,34 @@ export async function POST(request: Request) {
     );
   }
 
-  return withInventoryLock(async () => {
-    const existingResguardos = await getResguardos();
-    const idInventario = getNextInventoryId(existingResguardos);
-    const response = await fetch(
-      new URL("/api/resguardos", getBackendBaseUrl()),
-      {
-        method: "POST",
-        cache: "no-store",
-        headers: await getBackendAuthHeaders({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({
-          ...body,
-          idInventario,
-        }),
-      },
-    );
+  const existingResguardos = await getResguardos();
+  const idInventario = resolveInventoryId(body.idInventario, existingResguardos);
+  const response = await fetch(
+    new URL("/api/resguardos", getBackendBaseUrl()),
+    {
+      method: "POST",
+      cache: "no-store",
+      headers: await getBackendAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({
+        ...body,
+        idInventario,
+      }),
+    },
+  );
 
-    const contentType = response.headers.get("content-type") ?? "";
-    const payload = contentType.includes("application/json")
-      ? await response.json()
-      : await response.text();
+  const contentType = response.headers.get("content-type") ?? "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
 
-    const responsePayload =
-      payload && typeof payload === "object" && !Array.isArray(payload)
-        ? { ...payload, idInventario }
-        : payload;
+  const responsePayload =
+    payload && typeof payload === "object" && !Array.isArray(payload)
+      ? { ...payload, idInventario }
+      : payload;
 
-    return NextResponse.json(responsePayload, {
-      status: response.status,
-    });
+  return NextResponse.json(responsePayload, {
+    status: response.status,
   });
 }

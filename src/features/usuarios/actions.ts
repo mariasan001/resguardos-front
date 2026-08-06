@@ -2,6 +2,7 @@
 
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { serverBackendRequest } from "@/lib/api/server-backend";
+import { canUseApiCapability } from "@/lib/auth/permissions";
 import { getSession } from "@/lib/auth/session";
 import type { ActionResult, AppUser } from "@/lib/types/api";
 
@@ -11,7 +12,7 @@ export async function updateUsuarioEmailAction(
 ): Promise<ActionResult> {
   const session = await getSession();
 
-  if (!session) {
+  if (!session || !canUseApiCapability(session.role, "updateUserEmail")) {
     return {
       success: false,
       message: "No tienes permiso para actualizar correos de usuarios.",

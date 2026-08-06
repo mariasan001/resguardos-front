@@ -173,24 +173,37 @@ La aplicacion contempla dos perfiles:
 
 - `admin`: dashboard, consulta y edicion de resguardos, alta de resguardos,
   usuarios y administracion de catalogos;
-- `capturista`: acceso exclusivo al flujo de alta y vista previa de un nuevo
-  resguardo.
+- `encargado`: alta de resguardo, preview, consulta por ID, firma y envio
+  de email desde el flujo de creacion (sin listado global, dashboard ni
+  administracion de catalogos/usuarios).
 
 La sesion se guarda en una cookie `httpOnly`, `sameSite=lax` y firmada con
-HMAC-SHA256. `src/proxy.ts` realiza el redireccionamiento optimista por ruta,
-mientras los layouts, paginas sensibles y route handlers vuelven a comprobar
-la sesion en servidor.
+HMAC-SHA256. El JWT del backend viaja embebido en esa cookie y los proxies
+BFF lo reenvian como `Authorization: Bearer`.
 
-Mientras no exista el proveedor de identidad definitivo,
-`src/lib/auth/provider.ts` usa cuentas configurables por variables de entorno.
-La UI, la sesion y los permisos no dependen de ese proveedor, por lo que la
-integracion futura debe sustituir unicamente `authenticateUser`.
+`src/proxy.ts` realiza el redireccionamiento optimista por ruta. Layouts,
+paginas sensibles y route handlers vuelven a comprobar sesion y rol en
+servidor (`requireSession` / `requireRole` / `authorizeApiRequest`).
 
-Variables temporales documentadas en `.env.example`:
+El login real vive en `src/lib/auth/provider.ts` contra
+`POST /api/auth/login` del backend. Variables de entorno:
 
-- `AUTH_SECRET`;
-- `MOCK_ADMIN_USERNAME` y `MOCK_ADMIN_PASSWORD`;
-- `MOCK_CAPTURISTA_USERNAME` y `MOCK_CAPTURISTA_PASSWORD`.
+- `BACKEND_API_URL`;
+- `AUTH_SECRET` (obligatorio en produccion).
+
+### Capacidades BFF (`src/lib/auth/permissions.ts`)
+
+| Capacidad | Roles |
+|-----------|--------|
+| create / read resguardo, firma, email, email de usuario, lectura catalogos | admin + encargado |
+| updateResguardo (PUT) | solo admin |
+
+## Inventario (`idInventario`)
+
+El frontend sugiere y resuelve un folio `DGP-INV-#######` con
+`resolveInventoryId` (prefiere el candidato del formulario si es valido y
+libre). No hay cola in-memory: no es segura en cluster. La asignacion
+atomica multi-instancia debe implementarse en el backend.
 
 ## Servicios y contratos usados
 
@@ -199,6 +212,7 @@ Variables temporales documentadas en `.env.example`:
 - `getResguardos()`
 - `getResguardoById(id)`
 - `createResguardo(payload)`
+- `updateResguardo(id, payload)` (admin)
 - `uploadResguardoFirma(id, file)`
 - `getResguardoFirma(id)`
 
@@ -219,13 +233,14 @@ Campo semantico relevante:
 
 ## Route handlers internos
 
-Estos endpoints viven en `src/app/api` y actuan como proxy hacia el backend configurado en `BACKEND_API_URL`:
+Estos endpoints viven en `src/app/api` y actuan como proxy hacia el backend configurado en `BACKEND_API_URL`. Todos exigen sesion y rol segun capacidad:
 
-- `/api/resguardos`
-- `/api/resguardos/[id]`
+- `/api/resguardos` (POST)
+- `/api/resguardos/[id]` (GET; PUT solo admin)
 - `/api/resguardos/[id]/firma`
 - `/api/usuarios/[neyemp]/email`
 - `/api/email/cargar-con-archivo/[id]`
+- `/api/catalogos/accesorios`
 
 ## Decisiones de UI y UX
 
@@ -244,19 +259,24 @@ Estos endpoints viven en `src/app/api` y actuan como proxy hacia el backend conf
 - Se bloquearon mejor controles de firma y revision durante la confirmacion para evitar cambios concurrentes.
 - Se recupero la accion de `Editar` en encabezados donde ya se estaba enviando `editHref`.
 - Se elimino `console.error` innecesario del boundary de error y se movio su estilo inline a CSS Module.
+- Se agrego RBAC explicito en proxies `/api/*` (`authorizeApiRequest` + capacidades).
+- Se elimino la cola in-memory de `idInventario` y se documentó la responsabilidad del backend.
+- Se actualizaron README/docs (rol `encargado`, login real, sin `MOCK_*`).
+- Se agregaron tests unitarios (Vitest) para permisos, sesion firmada e inventario, mas CI basico.
 
 ## Riesgos y pendientes reales
 
-- No hay pruebas automatizadas de integracion para el flujo completo de resguardos.
+- No hay suite E2E del flujo completo firma → PDF → email (solo unit tests de dominio/auth).
 - La generacion de PDF ocurre en cliente; si el documento crece mucho o el dispositivo es limitado, puede impactar rendimiento.
 - El contrato de creacion de resguardo sigue siendo flexible porque backend expone entidad completa y no un DTO de alta.
 - La recuperacion del draft depende de `localStorage`; no hay persistencia cross-device ni server-side draft.
-- El proyecto todavia no tiene suite E2E para validar firma, PDF y envio de email contra un backend de prueba.
+- La unicidad de `idInventario` en despliegues multi-instancia depende del backend.
 
 ## Criterio actual de salida
 
 El proyecto queda en mejor condicion para produccion si:
 
-- el backend mantiene los contratos hoy consumidos;
-- se valida manualmente el flujo completo contra ambiente real o staging;
-- se agenda una capa minima de pruebas E2E antes de una siguiente iteracion mayor.
+- el backend mantiene los contratos hoy consumidos y aplica RBAC propio;
+- `AUTH_SECRET` y `BACKEND_API_URL` estan configurados en el ambiente;
+- se valida el flujo completo contra staging (manual o E2E);
+- la asignacion atomica de inventario vive en el backend.

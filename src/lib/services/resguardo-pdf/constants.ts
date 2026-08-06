@@ -1,0 +1,16 @@
+export const EMPTY_VALUE = "\u2014";
+export const PAGE_WIDTH = 210;
+export const PAGE_HEIGHT = 297;
+export const FIRST_PAGE_LEFT = 16;
+export const FIRST_PAGE_RIGHT = 194;
+export const FIRST_PAGE_WIDTH = FIRST_PAGE_RIGHT - FIRST_PAGE_LEFT;
+export const FIRST_PAGE_RIGHT_BLOCK_X = 150;
+export const PAGE_FOOTER_Y = 278;
+export const CONTENT_PAGE_BOTTOM = 262;
+export const CONTINUATION_PAGE_TOP = 18;
+export const NORMATIVE_LEFT = 18;
+export const NORMATIVE_WIDTH = 174;
+export const MAROON: [number, number, number] = [133, 25, 53];
+export const LIGHT_BORDER: [number, number, number] = [199, 199, 199];
+export const LABEL_COLOR: [number, number, number] = [74, 74, 74];
+export const TEXT_COLOR: [number, number, number] = [27, 27, 27];

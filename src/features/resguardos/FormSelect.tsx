@@ -134,7 +134,6 @@ export default function FormSelect({
           className={styles.trigger}
           data-empty={!selectedOption || undefined}
           data-invalid={invalid || undefined}
-          aria-invalid={invalid || undefined}
           disabled={isUnavailable}
           onClick={() => (isOpen ? setIsOpen(false) : open())}
           onKeyDown={handleKeyDown}

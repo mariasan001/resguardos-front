@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { rejectUnauthenticatedRequest } from "@/lib/auth/api-authorization";
+import { authorizeApiRequest } from "@/lib/auth/api-authorization";
 import { getBackendAuthHeaders } from "@/lib/auth/backend-headers";
+import { rolesForApiCapability } from "@/lib/auth/permissions";
 import { getBackendBaseUrl } from "@/lib/config/env";
 
 interface RouteContext {
@@ -11,10 +12,12 @@ interface RouteContext {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
-  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+  const { error } = await authorizeApiRequest(
+    rolesForApiCapability("readResguardo"),
+  );
 
-  if (unauthorizedResponse) {
-    return unauthorizedResponse;
+  if (error) {
+    return error;
   }
 
   const { id } = await context.params;
@@ -46,10 +49,12 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PUT(request: Request, context: RouteContext) {
-  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+  const { error } = await authorizeApiRequest(
+    rolesForApiCapability("updateResguardo"),
+  );
 
-  if (unauthorizedResponse) {
-    return unauthorizedResponse;
+  if (error) {
+    return error;
   }
 
   const { id } = await context.params;

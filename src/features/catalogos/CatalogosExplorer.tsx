@@ -1,192 +1,29 @@
 "use client";
 
-import {
-  Boxes,
-  Check,
-  Cpu,
-  Keyboard,
-  Layers,
-  MonitorSmartphone,
-  Palette,
-  Pencil,
-  Plus,
-  Search,
-  Tag,
-  Trash2,
-  X,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import MotionItem from "@/components/ui/MotionItem";
+import { CatalogDraftEditor } from "@/features/catalogos/AccessoryForm";
+import CatalogItemRow from "@/features/catalogos/CatalogItemRow";
 import {
   createCatalogAction,
   deleteCatalogAction,
   updateCatalogAction,
   type CatalogGroupId,
 } from "@/features/catalogos/actions";
+import type {
+  CatalogGroup,
+  CatalogItem,
+} from "@/features/catalogos/catalogos-types";
+import { GROUP_ICONS, normalize } from "@/features/catalogos/catalogos-utils";
 import styles from "@/features/catalogos/CatalogosExplorer.module.css";
 
-export type { CatalogGroupId };
-
-export interface CatalogItem {
-  id: string;
-  label: string;
-  marca?: string;
-  marcaId?: string;
-  modelo?: string;
-}
-
-export interface CatalogGroup {
-  id: CatalogGroupId;
-  label: string;
-  description: string;
-  singular: string;
-  items: CatalogItem[];
-}
-
-const GROUP_ICONS: Record<CatalogGroupId, LucideIcon> = {
-  tiposBien: Boxes,
-  marcas: Tag,
-  modelos: Layers,
-  sistemasOperativos: MonitorSmartphone,
-  colores: Palette,
-  procesadores: Cpu,
-  accesorios: Keyboard,
-};
-
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim();
-}
-
-function AccessoryForm({
-  title,
-  label,
-  marcaId,
-  modelo,
-  brandItems,
-  modelItems,
-  pending,
-  onLabelChange,
-  onMarcaChange,
-  onModeloChange,
-  onSave,
-  onCancel,
-}: {
-  title: string;
-  label: string;
-  marcaId: string;
-  modelo: string;
-  brandItems: CatalogItem[];
-  modelItems: CatalogItem[];
-  pending: boolean;
-  onLabelChange: (value: string) => void;
-  onMarcaChange: (value: string) => void;
-  onModeloChange: (value: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className={styles.accessoryForm}>
-      <div className={styles.accessoryFormHead}>
-        <h4 className={styles.accessoryFormTitle}>{title}</h4>
-        <div className={styles.accessoryFormActions}>
-          <button
-            type="button"
-            className={styles.confirmButton}
-            disabled={pending}
-            onClick={onSave}
-            aria-label="Guardar"
-          >
-            <Check size={15} strokeWidth={2.2} />
-            Guardar
-          </button>
-          <button
-            type="button"
-            className={styles.cancelButton}
-            disabled={pending}
-            onClick={onCancel}
-            aria-label="Cancelar"
-          >
-            <X size={15} strokeWidth={2.2} />
-            Cancelar
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.accessoryFormGrid}>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>
-            Nombre <span className={styles.requiredMark} aria-hidden="true">*</span>
-          </span>
-          <input
-            autoFocus
-            required
-            className={styles.fieldInput}
-            value={label}
-            placeholder="Ej. Monitor, teclado, mouse"
-            onChange={(event) => onLabelChange(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                onSave();
-              }
-              if (event.key === "Escape") {
-                onCancel();
-              }
-            }}
-          />
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>
-            Marca <span className={styles.requiredMark} aria-hidden="true">*</span>
-          </span>
-          <select
-            required
-            className={styles.fieldInput}
-            value={marcaId}
-            onChange={(event) => onMarcaChange(event.target.value)}
-          >
-            <option value="">Selecciona una marca</option>
-            {brandItems.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>
-            Modelo <span className={styles.requiredMark} aria-hidden="true">*</span>
-          </span>
-          <select
-            required
-            className={styles.fieldInput}
-            value={modelo}
-            onChange={(event) => onModeloChange(event.target.value)}
-          >
-            <option value="">Selecciona un modelo</option>
-            {modelo &&
-            !modelItems.some((model) => model.label === modelo) ? (
-              <option value={modelo}>{modelo}</option>
-            ) : null}
-            {modelItems.map((model) => (
-              <option key={model.id} value={model.label}>
-                {model.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-    </div>
-  );
-}
+export type {
+  CatalogGroup,
+  CatalogGroupId,
+  CatalogItem,
+} from "@/features/catalogos/catalogos-types";
 
 export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }) {
   const [activeId, setActiveId] = useState<CatalogGroupId>(
@@ -513,65 +350,24 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
         {error ? <p className={styles.errorText}>{error}</p> : null}
 
         {draftLabel !== null ? (
-          supportsAccessoryMeta ? (
-            <AccessoryForm
-              title={`Nuevo ${activeGroup.singular}`}
-              label={draftLabel}
-              marcaId={draftMarcaId}
-              modelo={draftModelo}
-              brandItems={brandItems}
-              modelItems={modelItems}
-              pending={pending}
-              onLabelChange={(value) => {
-                setDraftLabel(value);
-                setError("");
-              }}
-              onMarcaChange={setDraftMarcaId}
-              onModeloChange={setDraftModelo}
-              onSave={commitDraft}
-              onCancel={resetEditors}
-            />
-          ) : (
-            <div className={styles.editorRow}>
-              <input
-                autoFocus
-                className={styles.editorInput}
-                value={draftLabel}
-                placeholder={`Nombre del nuevo ${activeGroup.singular}`}
-                onChange={(event) => {
-                  setDraftLabel(event.target.value);
-                  setError("");
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    commitDraft();
-                  }
-                  if (event.key === "Escape") {
-                    resetEditors();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className={styles.confirmButtonIcon}
-                disabled={pending}
-                onClick={commitDraft}
-                aria-label="Guardar elemento"
-              >
-                <Check size={15} strokeWidth={2.2} />
-              </button>
-              <button
-                type="button"
-                className={styles.cancelButtonIcon}
-                disabled={pending}
-                onClick={resetEditors}
-                aria-label="Cancelar"
-              >
-                <X size={15} strokeWidth={2.2} />
-              </button>
-            </div>
-          )
+          <CatalogDraftEditor
+            singular={activeGroup.singular}
+            supportsAccessoryMeta={supportsAccessoryMeta}
+            label={draftLabel}
+            marcaId={draftMarcaId}
+            modelo={draftModelo}
+            brandItems={brandItems}
+            modelItems={modelItems}
+            pending={pending}
+            onLabelChange={(value) => {
+              setDraftLabel(value);
+              setError("");
+            }}
+            onMarcaChange={setDraftMarcaId}
+            onModeloChange={setDraftModelo}
+            onSave={commitDraft}
+            onCancel={resetEditors}
+          />
         ) : null}
 
         {filteredItems.length ? (
@@ -580,162 +376,36 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
               supportsAccessoryMeta ? styles.accessoryGrid : styles.itemGrid
             }
           >
-            {filteredItems.map((item) =>
-              editingId === item.id ? (
-                <li
-                  key={`${activeGroup.id}-edit-${item.id}`}
-                  className={
-                    supportsAccessoryMeta
-                      ? styles.accessoryEditItem
-                      : styles.editorStack
-                  }
-                >
-                  {supportsAccessoryMeta ? (
-                    <AccessoryForm
-                      title={`Editar ${item.label}`}
-                      label={editingLabel}
-                      marcaId={editingMarcaId}
-                      modelo={editingModelo}
-                      brandItems={brandItems}
-                      modelItems={modelItems}
-                      pending={pending}
-                      onLabelChange={(value) => {
-                        setEditingLabel(value);
-                        setError("");
-                      }}
-                      onMarcaChange={setEditingMarcaId}
-                      onModeloChange={setEditingModelo}
-                      onSave={commitEdit}
-                      onCancel={resetEditors}
-                    />
-                  ) : (
-                    <div className={styles.editorRow}>
-                      <input
-                        autoFocus
-                        className={styles.editorInput}
-                        value={editingLabel}
-                        onChange={(event) => {
-                          setEditingLabel(event.target.value);
-                          setError("");
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            commitEdit();
-                          }
-                          if (event.key === "Escape") {
-                            resetEditors();
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className={styles.confirmButtonIcon}
-                        disabled={pending}
-                        onClick={commitEdit}
-                        aria-label="Guardar cambios"
-                      >
-                        <Check size={15} strokeWidth={2.2} />
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.cancelButtonIcon}
-                        disabled={pending}
-                        onClick={resetEditors}
-                        aria-label="Cancelar"
-                      >
-                        <X size={15} strokeWidth={2.2} />
-                      </button>
-                    </div>
-                  )}
-                </li>
-              ) : supportsAccessoryMeta ? (
-                <li
-                  key={`${activeGroup.id}-${item.id}`}
-                  className={styles.accessoryCard}
-                >
-                  <div className={styles.accessoryCardBody}>
-                    <span className={styles.accessoryName}>{item.label}</span>
-                    <div className={styles.accessoryMetaRow}>
-                      <span
-                        className={styles.accessoryChip}
-                        data-empty={!item.marca || undefined}
-                      >
-                        <Tag size={12} strokeWidth={2} aria-hidden="true" />
-                        {item.marca || "Sin marca"}
-                      </span>
-                      <span
-                        className={styles.accessoryChip}
-                        data-empty={!item.modelo || undefined}
-                      >
-                        <Layers size={12} strokeWidth={2} aria-hidden="true" />
-                        {item.modelo || "Sin modelo"}
-                      </span>
-                    </div>
-                  </div>
-                  <span className={styles.itemActions}>
-                    <button
-                      type="button"
-                      className={styles.itemAction}
-                      disabled={pending}
-                      onClick={() => {
-                        resetEditors();
-                        setEditingId(item.id);
-                        setEditingLabel(item.label);
-                        setEditingMarcaId(item.marcaId ?? "");
-                        setEditingModelo(item.modelo ?? "");
-                      }}
-                      aria-label={`Editar ${item.label}`}
-                      title="Editar"
-                    >
-                      <Pencil size={14} strokeWidth={1.9} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.itemAction} ${styles.itemActionDanger}`}
-                      disabled={pending}
-                      onClick={() => removeItem(item.id)}
-                      aria-label={`Eliminar ${item.label}`}
-                      title="Eliminar"
-                    >
-                      <Trash2 size={14} strokeWidth={1.9} />
-                    </button>
-                  </span>
-                </li>
-              ) : (
-                <li key={`${activeGroup.id}-${item.id}`} className={styles.item}>
-                  <span className={styles.itemCopy}>
-                    <span className={styles.itemLabel}>{item.label}</span>
-                  </span>
-                  <span className={styles.itemActions}>
-                    <button
-                      type="button"
-                      className={styles.itemAction}
-                      disabled={pending}
-                      onClick={() => {
-                        resetEditors();
-                        setEditingId(item.id);
-                        setEditingLabel(item.label);
-                      }}
-                      aria-label={`Editar ${item.label}`}
-                      title="Editar"
-                    >
-                      <Pencil size={14} strokeWidth={1.9} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.itemAction} ${styles.itemActionDanger}`}
-                      disabled={pending}
-                      onClick={() => removeItem(item.id)}
-                      aria-label={`Eliminar ${item.label}`}
-                      title="Eliminar"
-                    >
-                      <Trash2 size={14} strokeWidth={1.9} />
-                    </button>
-                  </span>
-                </li>
-              ),
-            )}
+            {filteredItems.map((item) => (
+              <CatalogItemRow
+                key={`${activeGroup.id}-${item.id}`}
+                item={item}
+                supportsAccessoryMeta={supportsAccessoryMeta}
+                isEditing={editingId === item.id}
+                editingLabel={editingLabel}
+                editingMarcaId={editingMarcaId}
+                editingModelo={editingModelo}
+                brandItems={brandItems}
+                modelItems={modelItems}
+                pending={pending}
+                onEditingLabelChange={(value) => {
+                  setEditingLabel(value);
+                  setError("");
+                }}
+                onEditingMarcaChange={setEditingMarcaId}
+                onEditingModeloChange={setEditingModelo}
+                onSave={commitEdit}
+                onCancel={resetEditors}
+                onStartEdit={(entry) => {
+                  resetEditors();
+                  setEditingId(entry.id);
+                  setEditingLabel(entry.label);
+                  setEditingMarcaId(entry.marcaId ?? "");
+                  setEditingModelo(entry.modelo ?? "");
+                }}
+                onRemove={removeItem}
+              />
+            ))}
           </ul>
         ) : draftLabel === null ? (
           <div className={styles.emptyState}>

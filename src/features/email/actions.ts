@@ -2,6 +2,7 @@
 
 import type { ActionResult } from "@/lib/types/api";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { canUseApiCapability } from "@/lib/auth/permissions";
 import { getSession } from "@/lib/auth/session";
 import { uploadPdfAndSendEmail } from "@/lib/services/email.service";
 
@@ -11,10 +12,10 @@ export async function sendResguardoEmailAction(
 ): Promise<ActionResult> {
   const session = await getSession();
 
-  if (!session) {
+  if (!session || !canUseApiCapability(session.role, "sendResguardoEmail")) {
     return {
       success: false,
-      message: "La sesión no es válida o ha expirado.",
+      message: "No tienes permiso para enviar el resguardo por correo.",
     };
   }
 

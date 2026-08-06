@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { rejectUnauthenticatedRequest } from "@/lib/auth/api-authorization";
+import { authorizeApiRequest } from "@/lib/auth/api-authorization";
+import { rolesForApiCapability } from "@/lib/auth/permissions";
 import { getAccesorios } from "@/lib/services/catalogos.service";
 
 export async function GET() {
-  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+  const { error } = await authorizeApiRequest(
+    rolesForApiCapability("readCatalogos"),
+  );
 
-  if (unauthorizedResponse) {
-    return unauthorizedResponse;
+  if (error) {
+    return error;
   }
 
   const accesorios = await getAccesorios().catch(() => []);
