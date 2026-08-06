@@ -1,12 +1,48 @@
 import { NextResponse } from "next/server";
 
+import { rejectUnauthenticatedRequest } from "@/lib/auth/api-authorization";
+import { getBackendAuthHeaders } from "@/lib/auth/backend-headers";
 import { getBackendBaseUrl } from "@/lib/config/env";
+import { getResguardos } from "@/lib/services/resguardos.server";
+import type { Resguardo } from "@/lib/types/api";
+import { getNextInventoryId } from "@/lib/utils/inventory-id";
 
-export async function POST(request: Request) {
-  let body: unknown;
+let inventoryAssignmentQueue = Promise.resolve();
+
+async function withInventoryLock<T>(operation: () => Promise<T>) {
+  const previous = inventoryAssignmentQueue;
+  let release: () => void = () => undefined;
+
+  inventoryAssignmentQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
 
   try {
-    body = await request.json();
+    return await operation();
+  } finally {
+    release();
+  }
+}
+
+export async function POST(request: Request) {
+  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+
+  if (unauthorizedResponse) {
+    return unauthorizedResponse;
+  }
+
+  let body: Resguardo;
+
+  try {
+    const payload: unknown = await request.json();
+
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error("Invalid payload");
+    }
+
+    body = payload as Resguardo;
   } catch {
     return NextResponse.json(
       { message: "El cuerpo de la solicitud no es JSON valido." },
@@ -14,25 +50,36 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = await fetch(
-    new URL("/api/resguardos", getBackendBaseUrl()),
-    {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-        "Content-Type": "application/json",
+  return withInventoryLock(async () => {
+    const existingResguardos = await getResguardos();
+    const idInventario = getNextInventoryId(existingResguardos);
+    const response = await fetch(
+      new URL("/api/resguardos", getBackendBaseUrl()),
+      {
+        method: "POST",
+        cache: "no-store",
+        headers: await getBackendAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          ...body,
+          idInventario,
+        }),
       },
-      body: JSON.stringify(body),
-    },
-  );
+    );
 
-  const contentType = response.headers.get("content-type") ?? "";
-  const payload = contentType.includes("application/json")
-    ? await response.json()
-    : await response.text();
+    const contentType = response.headers.get("content-type") ?? "";
+    const payload = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
 
-  return NextResponse.json(payload, {
-    status: response.status,
+    const responsePayload =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? { ...payload, idInventario }
+        : payload;
+
+    return NextResponse.json(responsePayload, {
+      status: response.status,
+    });
   });
 }

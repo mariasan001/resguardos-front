@@ -167,6 +167,31 @@ Si el usuario vuelve a abrir la vista previa con un `createdResguardoId` ya pers
 - vista previa del PDF visible
 - acciones de descarga y email disponibles
 
+## Autenticacion y autorizacion
+
+La aplicacion contempla dos perfiles:
+
+- `admin`: dashboard, consulta y edicion de resguardos, alta de resguardos,
+  usuarios y administracion de catalogos;
+- `capturista`: acceso exclusivo al flujo de alta y vista previa de un nuevo
+  resguardo.
+
+La sesion se guarda en una cookie `httpOnly`, `sameSite=lax` y firmada con
+HMAC-SHA256. `src/proxy.ts` realiza el redireccionamiento optimista por ruta,
+mientras los layouts, paginas sensibles y route handlers vuelven a comprobar
+la sesion en servidor.
+
+Mientras no exista el proveedor de identidad definitivo,
+`src/lib/auth/provider.ts` usa cuentas configurables por variables de entorno.
+La UI, la sesion y los permisos no dependen de ese proveedor, por lo que la
+integracion futura debe sustituir unicamente `authenticateUser`.
+
+Variables temporales documentadas en `.env.example`:
+
+- `AUTH_SECRET`;
+- `MOCK_ADMIN_USERNAME` y `MOCK_ADMIN_PASSWORD`;
+- `MOCK_CAPTURISTA_USERNAME` y `MOCK_CAPTURISTA_PASSWORD`.
+
 ## Servicios y contratos usados
 
 ### Resguardos

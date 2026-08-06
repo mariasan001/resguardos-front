@@ -8,15 +8,6 @@ const nextConfig: NextConfig = {
     "localhost",
     "127.0.0.1",
   ],
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/resguardos",
-        permanent: false,
-      },
-    ];
-  },
 };
 
 export default nextConfig;

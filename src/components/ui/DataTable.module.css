@@ -27,9 +27,48 @@
   background: color-mix(in srgb, var(--color-ink-400) 82%, transparent);
 }
 
+.embedded {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.sortLink {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+  transition: color var(--transition-base);
+}
+
+.sortLink svg {
+  opacity: 0.55;
+  transition: opacity var(--transition-base);
+}
+
+.sortLink:hover {
+  color: var(--color-ink-900);
+}
+
+.sortLink:hover svg {
+  opacity: 1;
+}
+
+.sortLink[data-active="true"] {
+  color: var(--color-wine-700);
+}
+
+.sortLink[data-active="true"] svg {
+  opacity: 1;
 }
 
 .table thead {
@@ -64,10 +103,50 @@
   font-size: var(--text-sm);
 }
 
+.table th[data-align="center"],
+.table td[data-align="center"] {
+  text-align: center;
+}
+
+.table th[data-align="right"],
+.table td[data-align="right"] {
+  text-align: right;
+}
+
+.headerContent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+  width: 100%;
+}
+
+.headerLabel {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.table th[data-align="center"] .headerContent {
+  justify-content: center;
+}
+
+.table th[data-align="right"] .headerContent {
+  justify-content: flex-end;
+}
+
+.table th[data-align="center"] .sortLink {
+  justify-content: center;
+}
+
 .table tbody tr:hover {
   background: var(--color-gray-50);
 }
 
 .table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.emptyCell {
+  padding: var(--space-6) var(--space-4) !important;
 }

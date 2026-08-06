@@ -2,12 +2,22 @@
 
 import type { ActionResult } from "@/lib/types/api";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { getSession } from "@/lib/auth/session";
 import { uploadPdfAndSendEmail } from "@/lib/services/email.service";
 
 export async function sendResguardoEmailAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const session = await getSession();
+
+  if (!session) {
+    return {
+      success: false,
+      message: "La sesión no es válida o ha expirado.",
+    };
+  }
+
   const rawId = String(formData.get("resguardoId") ?? "").trim();
   const archivo = formData.get("archivo");
   const resguardoId = Number(rawId);

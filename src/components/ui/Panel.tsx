@@ -5,7 +5,7 @@ import styles from "@/components/ui/Panel.module.css";
 
 interface PanelProps {
   title?: string;
-  description?: string;
+  description?: ReactNode;
   children: ReactNode;
   compact?: boolean;
 }

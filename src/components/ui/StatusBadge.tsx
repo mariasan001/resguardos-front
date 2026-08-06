@@ -6,14 +6,20 @@ interface StatusBadgeProps {
   value?: number;
 }
 
+const TONES: Record<number, string> = {
+  1: styles.active,
+  2: styles.returned,
+  3: styles.cancelled,
+};
+
 export default function StatusBadge({ value }: StatusBadgeProps) {
   const label = getEstadoLabel(value);
-  const className =
-    value === 1
-      ? styles.active
-      : value === 2
-        ? styles.returned
-        : styles.neutral;
+  const tone = (value !== undefined && TONES[value]) || styles.neutral;
 
-  return <span className={`${styles.badge} ${className}`}>{label}</span>;
+  return (
+    <span className={`${styles.badge} ${tone}`}>
+      <span className={styles.dot} aria-hidden="true" />
+      {label}
+    </span>
+  );
 }

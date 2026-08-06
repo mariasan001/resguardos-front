@@ -1,9 +1,9 @@
 .card {
   display: grid;
-  gap: 0.8rem;
-  padding: 0.95rem;
+  gap: var(--space-4);
+  padding: var(--space-5);
   border: 1px solid var(--border-subtle);
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   box-shadow: var(--shadow-sm);
 }
@@ -12,63 +12,103 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.9rem;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
   flex-wrap: wrap;
 }
 
 .titleBlock {
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .iconWrap {
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 2.15rem;
+  height: 2.15rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.7rem;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-alt);
-  color: var(--color-ink-700);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(140, 67, 88, 0.16);
+  background: rgba(140, 67, 88, 0.07);
+  color: var(--color-wine-600);
 }
 
 .title {
   color: var(--color-ink-900);
   font-size: 0.95rem;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
 }
 
 .description {
-  margin-top: 0.12rem;
+  margin-top: 0.15rem;
   color: var(--color-ink-600);
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   line-height: 1.4;
 }
 
 .readyBadge,
 .signatureStatus {
-  min-height: 1.75rem;
+  min-height: 1.8rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  padding: 0 0.7rem;
-  border-radius: 999px;
+  gap: 0.35rem;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
   font-size: 0.74rem;
   font-weight: var(--font-weight-semibold);
-  border: 1px solid var(--border-subtle);
+  letter-spacing: 0.01em;
+}
+
+.badgeDot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.readyBadge[data-tone="neutral"],
+.signatureStatus[data-tone="neutral"] {
+  border-color: var(--border-subtle);
+  background: var(--surface-muted);
+  color: var(--color-ink-600);
+}
+
+.readyBadge[data-tone="info"],
+.signatureStatus[data-tone="info"] {
+  border-color: rgba(79, 124, 255, 0.2);
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+}
+
+.readyBadge[data-tone="success"],
+.signatureStatus[data-tone="success"] {
+  border-color: rgba(31, 143, 95, 0.22);
+  background: var(--color-success-50);
+  color: var(--color-success-600);
 }
 
 .signatureBlock {
   display: grid;
-  gap: 0.65rem;
+  gap: var(--space-4);
+}
+
+.signatureHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .signatureCopy {
   display: grid;
-  gap: 0.12rem;
+  gap: 0.15rem;
 }
 
 .signatureLabel {
@@ -82,14 +122,38 @@
   font-size: 0.76rem;
 }
 
+/* Hoja de firma: emula el recuadro de un formato impreso. */
+.paper {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.paper[data-tone="success"] {
+  border-color: rgba(31, 143, 95, 0.28);
+}
+
+.paper[data-tone="info"] {
+  border-color: rgba(79, 124, 255, 0.24);
+}
+
+/* Un recuadro muy ancho aplana la firma; se centra y se limita el ancho util. */
 .canvasWrap {
   position: relative;
-  min-height: 200px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 0.95rem;
-  background:
-    linear-gradient(to bottom, rgba(248, 250, 252, 0.75), rgba(255, 255, 255, 0.98)),
-    var(--surface-card);
+  width: 100%;
+  max-width: 40rem;
+  min-height: 230px;
+  margin-inline: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
   overflow: hidden;
 }
 
@@ -97,34 +161,112 @@
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
+  padding-bottom: 1.6rem;
   color: var(--color-ink-500);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   pointer-events: none;
 }
 
+.placeholderIcon {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--color-ink-500);
+}
+
 .canvas {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  height: 200px;
+  height: 230px;
   display: block;
   touch-action: none;
   cursor: crosshair;
 }
 
+.baseline {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 1.35rem;
+  left: 1.6rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.baselineMark {
+  margin-bottom: 0.1rem;
+  color: var(--border-strong);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.baselineRule {
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+.paperFoot {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.paperName {
+  color: var(--color-ink-900);
+  font-size: 0.84rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+}
+
+.paperCaption {
+  color: var(--color-ink-500);
+  font-size: 0.71rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paperSeal {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(31, 143, 95, 0.22);
+  background: var(--color-success-50);
+  color: var(--color-success-600);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+}
+
 .signaturePreview {
   width: 100%;
-  height: 200px;
+  height: 230px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 1.15rem;
+  padding: 1.2rem 1.6rem 2.2rem;
 }
 
 .signaturePreviewImage {
   display: block;
-  max-width: min(100%, 42rem);
+  max-width: min(100%, 26rem);
   max-height: 100%;
   width: auto;
   height: auto;
@@ -150,15 +292,19 @@
 .validateButton,
 .confirmButton,
 .backButton {
-  min-height: 2.3rem;
+  min-height: 2.35rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   border-radius: var(--radius-pill);
-  padding: 0 0.95rem;
+  padding: 0 1rem;
   font-size: 0.84rem;
   font-weight: var(--font-weight-semibold);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .clearButton,
@@ -168,11 +314,23 @@
   color: var(--color-ink-700);
 }
 
+.clearButton:hover:not(:disabled),
+.backButton:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-alt);
+}
+
 .validateButton,
 .confirmButton {
   border: 0;
   background: var(--color-button-700);
   color: var(--color-white);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.validateButton:hover:not(:disabled),
+.confirmButton:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(101, 38, 58, 0.22);
 }
 
 .clearButton,
@@ -199,56 +357,64 @@
   pointer-events: none;
 }
 
-.signatureStatusPending {
-  background: var(--surface-alt);
-  color: var(--color-ink-600);
-}
-
-.signatureStatusCaptured {
-  background: rgba(236, 244, 255, 0.95);
-  border-color: rgba(115, 145, 189, 0.22);
-  color: #5a7396;
-}
-
-.signatureStatusValidated {
-  background: var(--color-success-50);
-  border-color: #cdeedb;
-  color: var(--color-success-600);
-}
-
 .signatureMeta {
   display: grid;
-  gap: 0.6rem;
+  gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .metaItem {
-  display: grid;
-  gap: 0.12rem;
-  padding: 0.7rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-md);
   background: var(--surface-alt);
+}
+
+.metaIcon {
+  width: 1.9rem;
+  height: 1.9rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--color-ink-600);
+}
+
+.metaCopy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .metaLabel {
   color: var(--color-ink-600);
-  font-size: 0.73rem;
+  font-size: 0.71rem;
+  letter-spacing: 0.05em;
   line-height: 1.3;
+  text-transform: uppercase;
 }
 
 .metaValue {
   color: var(--color-ink-900);
-  font-size: 0.82rem;
+  font-size: 0.83rem;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .metaInput {
   width: 100%;
-  min-height: 2.45rem;
-  padding: 0 0.8rem;
+  min-height: 2.35rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--color-ink-900);
   font-size: 0.82rem;
@@ -256,8 +422,8 @@
 
 .metaInput:focus {
   outline: none;
-  border-color: rgba(17, 24, 39, 0.26);
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.06);
+  border-color: rgba(140, 67, 88, 0.42);
+  box-shadow: 0 0 0 3px rgba(140, 67, 88, 0.12);
 }
 
 .metaInput::placeholder {
@@ -268,24 +434,26 @@
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  padding: 0.75rem 0.85rem;
+  padding: 0.8rem 0.9rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-md);
   background: var(--surface-alt);
   color: var(--color-ink-700);
   font-size: 0.8rem;
   line-height: 1.42;
+  cursor: pointer;
 }
 
 .checkRowDisabled {
   opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .checkbox {
   width: 1rem;
   height: 1rem;
   margin-top: 0.12rem;
-  accent-color: #3f8c5c;
+  accent-color: var(--color-success-600);
 }
 
 .validationHint {
@@ -304,19 +472,28 @@
 
 @media (max-width: 48rem) {
   .card {
-    padding: 0.9rem;
+    padding: var(--space-4);
+  }
+
+  .paper {
+    padding: var(--space-4) var(--space-4) var(--space-3);
   }
 
   .canvasWrap {
-    min-height: 176px;
+    min-height: 190px;
   }
 
   .canvas {
-    height: 176px;
+    height: 190px;
   }
 
   .signaturePreview {
-    height: 176px;
+    height: 190px;
+  }
+
+  .baseline {
+    right: 1rem;
+    left: 1rem;
   }
 
   .signatureMeta {

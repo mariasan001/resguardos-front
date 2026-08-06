@@ -1,0 +1,20 @@
+.section {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.selectedAdscripcion {
+  color: var(--color-ink-900);
+  font-weight: var(--font-weight-semibold);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (min-width: 64rem) {
+  .grid {
+    grid-template-columns: 1.5fr 1fr;
+  }
+}

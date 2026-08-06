@@ -1,6 +1,4 @@
-import { backendRequest } from "@/lib/api/backend-client";
 import { ApiError } from "@/lib/api/errors";
-import { getBackendBaseUrl } from "@/lib/config/env";
 import type {
   CreateResguardoResponse,
   Resguardo,
@@ -44,73 +42,81 @@ async function readBlobResponse(response: Response) {
   );
 }
 
-export function getResguardos() {
-  return backendRequest<Resguardo[]>("/api/resguardos/all");
-}
-
-export function getResguardoCount() {
-  return backendRequest<number>("/api/resguardos/count");
-}
-
+/** Cliente: siempre pasa por rutas Next autenticadas. */
 export function getResguardoById(id: number) {
-  if (typeof window !== "undefined") {
-    return fetch(`/api/resguardos/${id}`, {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-      },
-    }).then(async (response) => {
-      const payload = await parsePayload(response);
+  return fetch(`/api/resguardos/${id}`, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+    },
+  }).then(async (response) => {
+    const payload = await parsePayload(response);
 
-      if (!response.ok) {
-        const message =
-          typeof payload === "string" && payload.trim()
-            ? payload
-            : `Error HTTP ${response.status}`;
+    if (!response.ok) {
+      const message =
+        typeof payload === "string" && payload.trim()
+          ? payload
+          : `Error HTTP ${response.status}`;
 
-        throw new ApiError(message, response.status, payload);
-      }
+      throw new ApiError(message, response.status, payload);
+    }
 
-      return payload as Resguardo;
-    });
-  }
-
-  return backendRequest<Resguardo>(`/api/resguardos/${id}`);
+    return payload as Resguardo;
+  });
 }
 
 export function createResguardo(payload: Resguardo) {
-  if (typeof window !== "undefined") {
-    return fetch("/api/resguardos", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    }).then(async (response) => {
-      const payload = await parsePayload(response);
-
-      if (!response.ok) {
-        const message =
-          typeof payload === "string" && payload.trim()
-            ? payload
-            : `Error HTTP ${response.status}`;
-
-        throw new ApiError(message, response.status, payload);
-      }
-
-      return payload as CreateResguardoResponse;
-    });
-  }
-
-  return backendRequest<CreateResguardoResponse>("/api/resguardos", {
+  return fetch("/api/resguardos", {
     method: "POST",
+    cache: "no-store",
     headers: {
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
+  }).then(async (response) => {
+    const result = await parsePayload(response);
+
+    if (!response.ok) {
+      const message =
+        typeof result === "string" && result.trim()
+          ? result
+          : `Error HTTP ${response.status}`;
+
+      throw new ApiError(message, response.status, result);
+    }
+
+    return result as CreateResguardoResponse;
+  });
+}
+
+export function updateResguardo(id: number, payload: Resguardo) {
+  return fetch(`/api/resguardos/${id}`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  }).then(async (response) => {
+    const result = await parsePayload(response);
+
+    if (!response.ok) {
+      const message =
+        typeof result === "string" && result.trim()
+          ? result
+          : response.status === 403
+            ? "Solo un administrador puede editar un resguardo."
+            : response.status === 404
+              ? "El resguardo que intentas editar ya no existe."
+              : `Error HTTP ${response.status}`;
+
+      throw new ApiError(message, response.status, result);
+    }
+
+    return result as Resguardo;
   });
 }
 
@@ -118,55 +124,35 @@ export function uploadResguardoFirma(resguardoId: number, file: File) {
   const formData = new FormData();
   formData.append("file", file);
 
-  if (typeof window !== "undefined") {
-    return fetch(`/api/resguardos/${resguardoId}/firma`, {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-      },
-      body: formData,
-    }).then(async (response) => {
-      const payload = await parsePayload(response);
-
-      if (!response.ok) {
-        const message =
-          typeof payload === "string" && payload.trim()
-            ? payload
-            : response.status === 400
-              ? "La firma no es valida o el archivo esta vacio."
-              : response.status === 404
-                ? "No se encontro el resguardo para guardar la firma."
-                : "No fue posible guardar la firma del resguardo.";
-
-        throw new ApiError(message, response.status, payload);
-      }
-
-      return payload as UploadResguardoFirmaResponse;
-    });
-  }
-
-  return backendRequest<UploadResguardoFirmaResponse>(
-    `/api/resguardos/${resguardoId}/firma`,
-    {
-      method: "POST",
-      body: formData,
+  return fetch(`/api/resguardos/${resguardoId}/firma`, {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
     },
-  );
+    body: formData,
+  }).then(async (response) => {
+    const payload = await parsePayload(response);
+
+    if (!response.ok) {
+      const message =
+        typeof payload === "string" && payload.trim()
+          ? payload
+          : response.status === 400
+            ? "La firma no es valida o el archivo esta vacio."
+            : response.status === 404
+              ? "No se encontro el resguardo para guardar la firma."
+              : "No fue posible guardar la firma del resguardo.";
+
+      throw new ApiError(message, response.status, payload);
+    }
+
+    return payload as UploadResguardoFirmaResponse;
+  });
 }
 
 export function getResguardoFirma(resguardoId: number) {
-  if (typeof window !== "undefined") {
-    return fetch(`/api/resguardos/${resguardoId}/firma`, {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        Accept: "image/png, image/jpeg, */*;q=0.8",
-      },
-    }).then(readBlobResponse);
-  }
-
-  return fetch(new URL(`/api/resguardos/${resguardoId}/firma`, getBackendBaseUrl()), {
+  return fetch(`/api/resguardos/${resguardoId}/firma`, {
     method: "GET",
     cache: "no-store",
     headers: {

@@ -1,0 +1,60 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(1.25rem, 5vw, 3rem);
+  background:
+    radial-gradient(60rem 32rem at 15% -10%, rgba(140, 67, 88, 0.16), transparent 60%),
+    radial-gradient(46rem 28rem at 92% 108%, rgba(154, 123, 99, 0.18), transparent 62%),
+    var(--surface-page);
+}
+
+.page::before {
+  position: absolute;
+  z-index: 0;
+  top: -14rem;
+  right: -10rem;
+  width: 34rem;
+  height: 34rem;
+  content: "";
+  border: 1px solid rgba(140, 67, 88, 0.1);
+  border-radius: 50%;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: min(27rem, 100%);
+  display: grid;
+  gap: var(--space-6);
+  padding: clamp(1.75rem, 5vw, 2.75rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
+}
+
+.logos {
+  width: min(19rem, 100%);
+  height: auto;
+  justify-self: center;
+}
+
+.heading {
+  display: grid;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.heading h1 {
+  color: var(--color-ink-900);
+  font-size: clamp(1.5rem, 4vw, 1.9rem);
+}
+
+.heading p {
+  color: var(--color-ink-600);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}

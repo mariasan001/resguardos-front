@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
   PenLine,
   Signature,
+  SquarePen,
   X,
 } from "lucide-react";
 import SignaturePad from "signature_pad";
@@ -19,6 +20,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import styles from "@/features/resguardos/ResguardoRowActions.module.css";
 import { ApiError, getApiErrorMessage } from "@/lib/api/errors";
+import { getAccesoriosCatalog } from "@/lib/services/catalogos.client";
 import { sendResguardoEmailWithPdf } from "@/lib/services/email.service";
 import {
   getResguardoById,
@@ -322,7 +324,10 @@ export default function ResguardoRowActions({
   }
 
   async function buildPdfFileForResguardo(resguardoId: number) {
-    const resguardo = await getResguardoById(resguardoId);
+    const [resguardo, accesoriosCatalogo] = await Promise.all([
+      getResguardoById(resguardoId),
+      getAccesoriosCatalog(),
+    ]);
     let signature: string | undefined;
 
     try {
@@ -340,6 +345,7 @@ export default function ResguardoRowActions({
       createdResguardoId: resguardoId,
       draft,
       resguardo,
+      accesoriosCatalogo,
     });
   }
 
@@ -465,6 +471,23 @@ export default function ResguardoRowActions({
                 <span className={`${styles.menuItem} ${styles.menuItemDisabled}`}>
                   <Eye size={15} strokeWidth={1.9} />
                   Ver detalle
+                </span>
+              )}
+
+              {hasValidId ? (
+                <Link
+                  href={`/resguardos/nuevo?edit=${id}`}
+                  className={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                >
+                  <SquarePen size={15} strokeWidth={1.9} />
+                  Editar
+                </Link>
+              ) : (
+                <span className={`${styles.menuItem} ${styles.menuItemDisabled}`}>
+                  <SquarePen size={15} strokeWidth={1.9} />
+                  Editar
                 </span>
               )}
 

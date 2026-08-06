@@ -1,9 +1,18 @@
 import Link from "next/link";
 
 import styles from "@/app/not-found.module.css";
-import { ROUTES } from "@/lib/utils/routes";
+import { AUTH_ROUTES, getHomeRoute } from "@/lib/auth/permissions";
+import { getSession } from "@/lib/auth/session";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const session = await getSession();
+  const homeHref = session
+    ? getHomeRoute(session.role)
+    : AUTH_ROUTES.login;
+  const homeLabel = session
+    ? "Volver al panel principal"
+    : "Ir al inicio de sesión";
+
   return (
     <main className={styles.page}>
       <div className={styles.card}>
@@ -13,8 +22,8 @@ export default function NotFound() {
           La ruta no existe o el recurso aún no está disponible dentro del
           sistema.
         </p>
-        <Link href={ROUTES.dashboard} className={styles.link}>
-          Volver al panel principal
+        <Link href={homeHref} className={styles.link}>
+          {homeLabel}
         </Link>
       </div>
     </main>

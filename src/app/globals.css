@@ -38,6 +38,12 @@
   --color-danger-50: #fff1f2;
   --color-danger-600: #d1435b;
 
+  --chart-primary: #8c4358;
+  --chart-secondary: #9a7b63;
+  --chart-tertiary: #4f7cff;
+  --chart-neutral: #94a3b8;
+  --chart-track: #eef2f7;
+
   --surface-page: #f8fafc;
   --surface-muted: #f1f5f9;
   --surface-card: #ffffff;

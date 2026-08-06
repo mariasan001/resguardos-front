@@ -1,10 +1,11 @@
 import { getBackendBaseUrl } from "@/lib/config/env";
 import { ApiError } from "@/lib/api/errors";
 
-type ParseMode = "json" | "text" | "auto";
+type ParseMode = "json" | "text" | "auto" | "blob";
 
 interface RequestOptions extends RequestInit {
   parse?: ParseMode;
+  accessToken?: string;
 }
 
 function buildUrl(path: string) {
@@ -12,6 +13,10 @@ function buildUrl(path: string) {
 }
 
 async function parseResponse(response: Response, parse: ParseMode) {
+  if (parse === "blob") {
+    return response.blob();
+  }
+
   if (parse === "text") {
     return response.text();
   }
@@ -32,13 +37,14 @@ export async function backendRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { headers, parse = "auto", ...init } = options;
+  const { headers, parse = "auto", accessToken, ...init } = options;
 
   const response = await fetch(buildUrl(path), {
     ...init,
     cache: "no-store",
     headers: {
       Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...headers,
     },
   });

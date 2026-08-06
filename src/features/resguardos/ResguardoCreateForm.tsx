@@ -19,15 +19,15 @@ import { useRouter } from "next/navigation";
 import type { ChangeEventHandler, ReactNode } from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { FIXED_ASSIGN_USER_NAME, findAssignerNeyemp } from "@/lib/constants/assigner";
 import type {
-  AppUser,
   OptionItem,
   PreviewAccesorioDraft,
   PreviewResguardoDraft,
   ResguardoCatalogSources,
   SelectOptionsSource,
 } from "@/lib/types/api";
-import { mergeUserOptionsWithUpdatedUsers, toUserOption } from "@/lib/utils/format";
+import { mergeUserOptionsWithUpdatedUsers } from "@/lib/utils/format";
 import {
   clearPreviewResguardoDraft,
   getOptionLabel,
@@ -38,19 +38,12 @@ import {
   useIsHydrated,
   usePreviewResguardoDraft,
 } from "@/lib/utils/use-preview-resguardo-draft";
+import FormDatePicker from "@/features/resguardos/FormDatePicker";
+import FormSelect from "@/features/resguardos/FormSelect";
 import styles from "@/features/resguardos/ResguardoCreateForm.module.css";
 
 const initialSectionValues = {
   idEstadoResguardo: "1",
-};
-
-const FIXED_ASSIGN_USER: AppUser = {
-  neyemp: "998619208",
-  nombre: "DELGADILLO RAMIREZ CHRISTOPHER",
-  adscripcion: {
-    necads: "23400004060100L",
-    desAds: "SUBDIRECCION DE DESARROLLO TECNOLOGICO",
-  },
 };
 
 type SectionKey =
@@ -71,6 +64,8 @@ interface ResguardoCreateFormProps {
   sources: ResguardoCatalogSources;
   cancelHref?: string;
   preserveDraft?: boolean;
+  serverDraft?: PreviewResguardoDraft | null;
+  generatedInventoryId: string;
 }
 
 interface ResguardoCreateFormContentProps extends ResguardoCreateFormProps {
@@ -83,9 +78,54 @@ interface BaseFieldProps {
   value?: string;
   defaultValue?: string;
   placeholder?: string;
+  readOnly?: boolean;
+  required?: boolean;
+  invalid?: boolean;
   span?: "full" | "half" | "third" | "quarter" | "twoThirds";
   onChange?: ChangeEventHandler<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
 }
+
+function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+  return (
+    <span className={styles.label}>
+      {label}
+      {required ? (
+        <span className={styles.requiredMark} aria-hidden="true">
+          {" "}
+          *
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+const REQUIRED_FORM_FIELDS: Array<{
+  key: string;
+  label: string;
+  section: SectionKey;
+}> = [
+  { key: "idInventario", label: "Inventario", section: "equipo" },
+  { key: "marcaId", label: "Marca", section: "equipo" },
+  { key: "tipoBienId", label: "Tipo de bien", section: "equipo" },
+  { key: "modeloId", label: "Modelo", section: "equipo" },
+  { key: "numeroSerie", label: "Numero de serie", section: "equipo" },
+  { key: "procesadorId", label: "Procesador", section: "tecnico" },
+  { key: "sistemaOperativoId", label: "Sistema operativo", section: "tecnico" },
+  { key: "colorMaterialId", label: "Color o material", section: "tecnico" },
+  { key: "ip", label: "IP", section: "tecnico" },
+  { key: "mac", label: "MAC", section: "tecnico" },
+  { key: "usuarioTitularId", label: "Usuario titular", section: "responsable" },
+  {
+    key: "usuarioResguardaId",
+    label: "Usuario que resguarda",
+    section: "responsable",
+  },
+  { key: "referenciaInterna", label: "Referencia interna", section: "ubicacion" },
+  { key: "telefono", label: "Telefono de contacto", section: "ubicacion" },
+  { key: "fechaAsignacion", label: "Fecha de asignacion", section: "control" },
+  { key: "idEstadoResguardo", label: "Estado", section: "control" },
+  { key: "observaciones", label: "Observaciones", section: "extras" },
+];
 
 function nextDetailId() {
   return globalThis.crypto?.randomUUID?.() ?? `detalle-${Date.now()}-${Math.random()}`;
@@ -129,7 +169,7 @@ function getSectionStatus(
       return {
         completed: getCount(values, [
           "idInventario",
-          "marca",
+          "marcaId",
           "tipoBienId",
           "modeloId",
           "numeroSerie",
@@ -149,11 +189,8 @@ function getSectionStatus(
       };
     case "responsable":
       return {
-        completed: getCount(values, [
-          "usuarioTitularId",
-          "usuarioResguardaId",
-          "usuarioAsignaId",
-        ]),
+        completed:
+          getCount(values, ["usuarioTitularId", "usuarioResguardaId"]) + 1,
         total: 3,
       };
     case "ubicacion":
@@ -168,9 +205,11 @@ function getSectionStatus(
       };
     case "extras": {
       const hasNotes = Boolean(values.observaciones?.trim());
-      const hasAccessories = details.some(
-        (detail) => detail.accesorioId || detail.numeroSerie.trim(),
+      const completeAccessories = details.filter(
+        (detail) => detail.accesorioId.trim() && detail.numeroSerie.trim(),
       );
+      const hasAccessories =
+        details.length > 0 && completeAccessories.length === details.length;
       return {
         completed: Number(hasNotes) + Number(hasAccessories),
         total: 2,
@@ -184,16 +223,28 @@ function getSectionStatus(
   }
 }
 
+function getAccesorioOption(accesorios: OptionItem[], accesorioId: string) {
+  return accesorios.find((item) => item.value === accesorioId);
+}
+
+/** La marca y el modelo del accesorio vienen del catalogo, no se capturan aqui. */
 function toDraftDetalles(
   detalles: DetalleItem[],
   accesorios: OptionItem[],
 ): PreviewAccesorioDraft[] {
-  return detalles.map((detalle) => ({
-    id: detalle.id,
-    accesorioId: detalle.accesorioId,
-    accesorioLabel: getOptionLabel(accesorios, detalle.accesorioId),
-    numeroSerie: detalle.numeroSerie,
-  }));
+  return detalles.map((detalle) => {
+    const option = getAccesorioOption(accesorios, detalle.accesorioId);
+
+    return {
+      id: detalle.id,
+      accesorioId: detalle.accesorioId,
+      accesorioLabel: option?.label ?? "",
+      marcaId: option?.marcaId ?? "",
+      marcaLabel: option?.marca ?? "",
+      modeloLabel: option?.modelo ?? "",
+      numeroSerie: detalle.numeroSerie,
+    };
+  });
 }
 
 function Section({
@@ -261,25 +312,39 @@ function Section({
 }
 
 export default function ResguardoCreateForm(props: ResguardoCreateFormProps) {
-  const { preserveDraft = false } = props;
+  const { preserveDraft = false, serverDraft = null } = props;
   const hydrated = useIsHydrated();
   const draft = usePreviewResguardoDraft();
-  const effectiveDraft = preserveDraft ? draft : null;
-  const formKey = hydrated && effectiveDraft ? "draft-loaded" : "draft-empty";
+  const effectiveDraft = serverDraft ?? (preserveDraft ? draft : null);
+  const formKey = serverDraft
+    ? `edit-${serverDraft.editingResguardoId ?? "draft"}`
+    : hydrated && effectiveDraft
+      ? "draft-loaded"
+      : "draft-empty";
 
   useEffect(() => {
-    if (!hydrated || preserveDraft) {
+    if (!hydrated) {
+      return;
+    }
+
+    if (serverDraft) {
+      // El resguardo recien cargado reemplaza cualquier borrador anterior.
+      writePreviewResguardoDraft(serverDraft);
+      return;
+    }
+
+    if (preserveDraft) {
       return;
     }
 
     clearPreviewResguardoDraft();
-  }, [hydrated, preserveDraft]);
+  }, [hydrated, preserveDraft, serverDraft]);
 
   return (
     <ResguardoCreateFormContent
       key={formKey}
       {...props}
-      initialDraft={hydrated ? effectiveDraft : null}
+      initialDraft={serverDraft ?? (hydrated ? effectiveDraft : null)}
     />
   );
 }
@@ -288,6 +353,7 @@ function ResguardoCreateFormContent({
   sources,
   cancelHref = "/resguardos",
   initialDraft,
+  generatedInventoryId,
 }: ResguardoCreateFormContentProps) {
   const router = useRouter();
   const [detalles, setDetalles] = useState<DetalleItem[]>(
@@ -298,9 +364,12 @@ function ResguardoCreateFormContent({
     })) ?? [],
   );
   const [openSection, setOpenSection] = useState<SectionKey>("equipo");
+  const [formError, setFormError] = useState("");
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [formValues, setFormValues] = useState<Record<string, string>>({
     ...initialSectionValues,
-    idInventario: initialDraft?.idInventario ?? "",
+    idInventario: initialDraft?.idInventario ?? generatedInventoryId,
+    marcaId: initialDraft?.marcaId ?? "",
     marca: initialDraft?.marca ?? "",
     referenciaInterna:
       initialDraft?.referenciaInterna ?? initialDraft?.resguardo ?? "",
@@ -319,10 +388,11 @@ function ResguardoCreateFormContent({
     procesadorId: initialDraft?.procesadorId ?? "",
     usuarioTitularId: initialDraft?.usuarioTitularId ?? "",
     usuarioResguardaId: initialDraft?.usuarioResguardaId ?? "",
-    usuarioAsignaId: FIXED_ASSIGN_USER.neyemp ?? "",
   });
+  const editingResguardoId = initialDraft?.editingResguardoId;
   const accesorios = sources.accesorios.options;
   const tiposBien = sources.tiposBien.options;
+  const marcas = sources.marcas.options;
   const modelos = sources.modelos.options;
   const sistemasOperativos = sources.sistemasOperativos.options;
   const colores = sources.colores.options;
@@ -332,12 +402,7 @@ function ResguardoCreateFormContent({
     () => mergeUserOptionsWithUpdatedUsers(sources.usuarios.options, updatedUsers),
     [sources.usuarios.options, updatedUsers],
   );
-  const fixedAssignOption = useMemo(
-    () =>
-      users.find((option) => option.value === FIXED_ASSIGN_USER.neyemp) ??
-      toUserOption(FIXED_ASSIGN_USER),
-    [users],
-  );
+  const assignerNeyemp = useMemo(() => findAssignerNeyemp(users), [users]);
   const userOptionsSource = useMemo(
     () => ({
       ...sources.usuarios,
@@ -348,13 +413,25 @@ function ResguardoCreateFormContent({
   const estadoOptionsSource: SelectOptionsSource = {
     state: "ready",
     options: [
-      { value: "1", label: "Activo" },
-      { value: "2", label: "Devuelto" },
-      { value: "3", label: "Cancelado" },
+      { value: "1", label: "Entregado" },
+      { value: "2", label: "Modificado" },
+      { value: "3", label: "Baja" },
     ],
   };
 
+  function isFieldInvalid(key: string) {
+    return invalidFields.includes(key);
+  }
+
+  function clearFieldInvalid(key: string) {
+    setInvalidFields((current) =>
+      current.includes(key) ? current.filter((item) => item !== key) : current,
+    );
+  }
+
   function updateField(name: string, value: string) {
+    clearFieldInvalid(name);
+    setFormError("");
     setFormValues((current) => ({
       ...current,
       [name]: value,
@@ -366,27 +443,149 @@ function ResguardoCreateFormContent({
     key: "accesorioId" | "numeroSerie",
     value: string,
   ) {
+    clearFieldInvalid(`detalle-${id}-${key}`);
+    if (key === "accesorioId") {
+      clearFieldInvalid(`detalle-${id}-marca`);
+      clearFieldInvalid(`detalle-${id}-modelo`);
+    }
+    setFormError("");
     setDetalles((current) =>
-      current.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
+      current.map((item) =>
+        item.id === id ? { ...item, [key]: value } : item,
+      ),
     );
   }
 
   function addDetalle() {
+    clearFieldInvalid("accesorios");
+    setFormError("");
     setOpenSection("extras");
     setDetalles((current) => [
       ...current,
-      { id: nextDetailId(), accesorioId: "", numeroSerie: "" },
+      {
+        id: nextDetailId(),
+        accesorioId: "",
+        numeroSerie: "",
+      },
     ]);
   }
 
   function removeDetalle(id: string) {
     setDetalles((current) => current.filter((item) => item.id !== id));
+    setInvalidFields((current) =>
+      current.filter(
+        (key) =>
+          key !== `detalle-${id}-accesorioId` &&
+          key !== `detalle-${id}-numeroSerie` &&
+          key !== `detalle-${id}-marca` &&
+          key !== `detalle-${id}-modelo`,
+      ),
+    );
+    setFormError("");
+  }
+
+  function collectValidationIssues(): {
+    message: string;
+    section: SectionKey;
+    invalidKeys: string[];
+  } | null {
+    const invalidKeys: string[] = [];
+    let firstSection: SectionKey | null = null;
+    let firstMessage = "";
+
+    for (const field of REQUIRED_FORM_FIELDS) {
+      if (!(formValues[field.key] ?? "").trim()) {
+        invalidKeys.push(field.key);
+
+        if (!firstSection) {
+          firstSection = field.section;
+          firstMessage = `Completa los campos obligatorios marcados.`;
+        }
+      }
+    }
+
+    if (detalles.length === 0) {
+      invalidKeys.push("accesorios");
+
+      if (!firstSection) {
+        firstSection = "extras";
+        firstMessage = "Agrega al menos un accesorio con serie.";
+      }
+    }
+
+    for (const [index, detalle] of detalles.entries()) {
+      const position = index + 1;
+
+      if (!detalle.accesorioId.trim()) {
+        invalidKeys.push(`detalle-${detalle.id}-accesorioId`);
+
+        if (!firstSection) {
+          firstSection = "extras";
+          firstMessage = `Selecciona el accesorio ${position}.`;
+        }
+      }
+
+      if (!detalle.numeroSerie.trim()) {
+        invalidKeys.push(`detalle-${detalle.id}-numeroSerie`);
+
+        if (!firstSection) {
+          firstSection = "extras";
+          firstMessage = `Captura la serie del accesorio ${position}.`;
+        }
+      }
+
+      const option = getAccesorioOption(accesorios, detalle.accesorioId);
+
+      if (detalle.accesorioId.trim() && !option?.marca?.trim()) {
+        invalidKeys.push(`detalle-${detalle.id}-marca`);
+
+        if (!firstSection) {
+          firstSection = "extras";
+          firstMessage = `El accesorio ${position} no tiene marca en el catalogo.`;
+        }
+      }
+
+      if (detalle.accesorioId.trim() && !option?.modelo?.trim()) {
+        invalidKeys.push(`detalle-${detalle.id}-modelo`);
+
+        if (!firstSection) {
+          firstSection = "extras";
+          firstMessage = `El accesorio ${position} no tiene modelo en el catalogo.`;
+        }
+      }
+    }
+
+    if (!invalidKeys.length || !firstSection) {
+      return null;
+    }
+
+    return {
+      message:
+        invalidKeys.length > 1
+          ? "Completa los campos obligatorios marcados."
+          : firstMessage,
+      section: firstSection,
+      invalidKeys,
+    };
   }
 
   function continueToPreview() {
+    const validationError = collectValidationIssues();
+
+    if (validationError) {
+      setFormError(validationError.message);
+      setInvalidFields(validationError.invalidKeys);
+      setOpenSection(validationError.section);
+      return;
+    }
+
+    setFormError("");
+    setInvalidFields([]);
+
     const draft: PreviewResguardoDraft = {
       idInventario: formValues.idInventario ?? "",
-      marca: formValues.marca ?? "",
+      marcaId: formValues.marcaId ?? "",
+      marca: getOptionLabel(marcas, formValues.marcaId) || formValues.marca || "",
       referenciaInterna: formValues.referenciaInterna ?? "",
       fechaAsignacion: formValues.fechaAsignacion ?? "",
       observaciones: formValues.observaciones ?? "",
@@ -398,12 +597,12 @@ function ResguardoCreateFormContent({
       estadoLabel:
         getOptionLabel(
           [
-            { value: "1", label: "Activo" },
-            { value: "2", label: "Devuelto" },
-            { value: "3", label: "Cancelado" },
+            { value: "1", label: "Entregado" },
+            { value: "2", label: "Modificado" },
+            { value: "3", label: "Baja" },
           ],
           formValues.idEstadoResguardo ?? "1",
-        ) || "Activo",
+        ) || "Entregado",
       tipoBienLabel: getOptionLabel(tiposBien, formValues.tipoBienId),
       modeloLabel: getOptionLabel(modelos, formValues.modeloId),
       sistemaOperativoLabel: getOptionLabel(
@@ -420,9 +619,8 @@ function ResguardoCreateFormContent({
       usuarioResguardaLabel: getOptionLabel(users, formValues.usuarioResguardaId),
       usuarioResguardaHelper:
         users.find((option) => option.value === formValues.usuarioResguardaId)?.helper ?? "",
-      usuarioAsignaLabel: getOptionLabel(users, formValues.usuarioAsignaId),
-      usuarioAsignaHelper:
-        users.find((option) => option.value === formValues.usuarioAsignaId)?.helper ?? "",
+      usuarioAsignaLabel: FIXED_ASSIGN_USER_NAME,
+      usuarioAsignaHelper: "Asignador predeterminado",
       tipoBienId: formValues.tipoBienId ?? "",
       modeloId: formValues.modeloId ?? "",
       sistemaOperativoId: formValues.sistemaOperativoId ?? "",
@@ -430,7 +628,8 @@ function ResguardoCreateFormContent({
       procesadorId: formValues.procesadorId ?? "",
       usuarioTitularId: formValues.usuarioTitularId ?? "",
       usuarioResguardaId: formValues.usuarioResguardaId ?? "",
-      usuarioAsignaId: formValues.usuarioAsignaId ?? "",
+      usuarioAsignaId: assignerNeyemp,
+      editingResguardoId,
       detalles: toDraftDetalles(detalles, accesorios),
     };
 
@@ -462,14 +661,19 @@ function ResguardoCreateFormContent({
             name="idInventario"
             value={formValues.idInventario ?? ""}
             span="third"
-            onChange={(event) => updateField("idInventario", event.target.value)}
+            required
+            invalid={isFieldInvalid("idInventario")}
+            readOnly
           />
-          <Field
+          <SelectField
             label="Marca"
-            name="marca"
-            value={formValues.marca ?? ""}
+            name="marcaId"
+            source={sources.marcas}
+            value={formValues.marcaId ?? ""}
             span="third"
-            onChange={(event) => updateField("marca", event.target.value)}
+            required
+            invalid={isFieldInvalid("marcaId")}
+            onChange={(event) => updateField("marcaId", event.target.value)}
           />
           <SelectField
             label="Tipo de bien"
@@ -477,6 +681,8 @@ function ResguardoCreateFormContent({
             source={sources.tiposBien}
             value={formValues.tipoBienId ?? ""}
             span="third"
+            required
+            invalid={isFieldInvalid("tipoBienId")}
             onChange={(event) => updateField("tipoBienId", event.target.value)}
           />
           <SelectField
@@ -485,6 +691,8 @@ function ResguardoCreateFormContent({
             source={sources.modelos}
             value={formValues.modeloId ?? ""}
             span="third"
+            required
+            invalid={isFieldInvalid("modeloId")}
             onChange={(event) => updateField("modeloId", event.target.value)}
           />
           <Field
@@ -492,6 +700,8 @@ function ResguardoCreateFormContent({
             name="numeroSerie"
             value={formValues.numeroSerie ?? ""}
             span="third"
+            required
+            invalid={isFieldInvalid("numeroSerie")}
             onChange={(event) => updateField("numeroSerie", event.target.value)}
           />
         </div>
@@ -513,6 +723,8 @@ function ResguardoCreateFormContent({
             source={sources.procesadores}
             value={formValues.procesadorId ?? ""}
             span="half"
+            required
+            invalid={isFieldInvalid("procesadorId")}
             onChange={(event) => updateField("procesadorId", event.target.value)}
           />
           <SelectField
@@ -521,6 +733,8 @@ function ResguardoCreateFormContent({
             source={sources.sistemasOperativos}
             value={formValues.sistemaOperativoId ?? ""}
             span="half"
+            required
+            invalid={isFieldInvalid("sistemaOperativoId")}
             onChange={(event) =>
               updateField("sistemaOperativoId", event.target.value)
             }
@@ -531,6 +745,8 @@ function ResguardoCreateFormContent({
             source={sources.colores}
             value={formValues.colorMaterialId ?? ""}
             span="half"
+            required
+            invalid={isFieldInvalid("colorMaterialId")}
             onChange={(event) => updateField("colorMaterialId", event.target.value)}
           />
           <Field
@@ -539,6 +755,8 @@ function ResguardoCreateFormContent({
             value={formValues.ip ?? ""}
             span="quarter"
             placeholder="192.168.0.10"
+            required
+            invalid={isFieldInvalid("ip")}
             onChange={(event) => updateField("ip", event.target.value)}
           />
           <Field
@@ -547,6 +765,8 @@ function ResguardoCreateFormContent({
             value={formValues.mac ?? ""}
             span="quarter"
             placeholder="00:00:00:00:00:00"
+            required
+            invalid={isFieldInvalid("mac")}
             onChange={(event) => updateField("mac", event.target.value)}
           />
         </div>
@@ -568,6 +788,8 @@ function ResguardoCreateFormContent({
             source={userOptionsSource}
             value={formValues.usuarioTitularId ?? ""}
             span="half"
+            required
+            invalid={isFieldInvalid("usuarioTitularId")}
             onChange={(event) => updateField("usuarioTitularId", event.target.value)}
           />
           <UserComboboxField
@@ -576,15 +798,18 @@ function ResguardoCreateFormContent({
             source={userOptionsSource}
             value={formValues.usuarioResguardaId ?? ""}
             span="half"
+            required
+            invalid={isFieldInvalid("usuarioResguardaId")}
             onChange={(event) =>
               updateField("usuarioResguardaId", event.target.value)
             }
           />
           <StaticUserField
             label="Usuario que asigna"
-            value={fixedAssignOption.label}
-            helper={fixedAssignOption.helper}
+            value={FIXED_ASSIGN_USER_NAME}
+            helper="Asignador predeterminado"
             span="half"
+            required
           />
         </div>
       </Section>
@@ -605,6 +830,8 @@ function ResguardoCreateFormContent({
             value={formValues.referenciaInterna ?? ""}
             span="half"
             placeholder="Referencia de area o control interno"
+            required
+            invalid={isFieldInvalid("referenciaInterna")}
             onChange={(event) => updateField("referenciaInterna", event.target.value)}
           />
           <Field
@@ -613,6 +840,8 @@ function ResguardoCreateFormContent({
             value={formValues.telefono ?? ""}
             span="half"
             placeholder="5551234567"
+            required
+            invalid={isFieldInvalid("telefono")}
             onChange={(event) => updateField("telefono", event.target.value)}
           />
         </div>
@@ -628,12 +857,14 @@ function ResguardoCreateFormContent({
         status={controlStatus}
       >
         <div className={styles.grid}>
-          <DateField
+          <FormDatePicker
             label="Fecha de asignacion"
             name="fechaAsignacion"
             value={formValues.fechaAsignacion ?? ""}
-            span="half"
-            onChange={(event) => updateField("fechaAsignacion", event.target.value)}
+            className={styles.spanHalf}
+            required
+            invalid={isFieldInvalid("fechaAsignacion")}
+            onChange={(nextValue) => updateField("fechaAsignacion", nextValue)}
           />
           <SelectField
             label="Estado"
@@ -641,6 +872,8 @@ function ResguardoCreateFormContent({
             source={estadoOptionsSource}
             value={formValues.idEstadoResguardo ?? "1"}
             span="quarter"
+            required
+            invalid={isFieldInvalid("idEstadoResguardo")}
             onChange={(event) => updateField("idEstadoResguardo", event.target.value)}
           />
         </div>
@@ -656,79 +889,148 @@ function ResguardoCreateFormContent({
         status={extrasStatus}
       >
         <label className={`${styles.fieldBlock} ${styles.spanFull}`}>
-          <span className={styles.label}>Observaciones</span>
+          <FieldLabel label="Observaciones" required />
           <textarea
-            className={styles.textarea}
+            className={`${styles.textarea} ${
+              isFieldInvalid("observaciones") ? styles.inputInvalid : ""
+            }`}
             name="observaciones"
             rows={4}
+            required
+            aria-invalid={isFieldInvalid("observaciones") || undefined}
             value={formValues.observaciones ?? ""}
             placeholder="Notas relevantes del resguardo."
             onChange={(event) => updateField("observaciones", event.target.value)}
           />
         </label>
 
-        <div className={styles.detailList}>
-          {detalles.length ? (
-            <>
-              {detalles.map((detalle, index) => (
-                <div key={detalle.id} className={styles.detailRow} data-motion-item>
-                  <button
-                    type="button"
-                    className={styles.removeIconButton}
-                    onClick={() => removeDetalle(detalle.id)}
-                    aria-label={`Quitar accesorio ${index + 1}`}
-                    title="Quitar accesorio"
-                  >
-                    <Trash2 size={16} strokeWidth={1.9} />
-                  </button>
-                  <SelectField
-                    label={`Accesorio ${index + 1}`}
-                    name={`detalle-accesorio-${index}`}
-                    source={sources.accesorios}
-                    value={detalle.accesorioId}
-                    onChange={(event) =>
-                      updateDetalle(detalle.id, "accesorioId", event.target.value)
-                    }
-                    span="half"
-                  />
-                  <Field
-                    label="Serie del accesorio"
-                    name={`detalle-serie-${index}`}
-                    value={detalle.numeroSerie}
-                    onChange={(event) =>
-                      updateDetalle(detalle.id, "numeroSerie", event.target.value)
-                    }
-                    span="half"
-                  />
-                </div>
-              ))}
-            </>
-          ) : (
-            <div className={styles.emptyAccessoriesCard}>
-              <p className={styles.emptyAccessories}>No se han agregado accesorios.</p>
+        <div className={`${styles.detailBlock} ${styles.spanFull}`}>
+          <div className={styles.detailHeader}>
+            <div className={styles.detailHeaderCopy}>
+              <span className={styles.detailHeaderTitle}>
+                Accesorios
+                <span className={styles.requiredMark} aria-hidden="true">
+                  {" "}
+                  *
+                </span>
+              </span>
+              <span className={styles.detailHeaderHint}>
+                {detalles.length
+                  ? `${detalles.length} accesorio${detalles.length === 1 ? "" : "s"} agregado${
+                      detalles.length === 1 ? "" : "s"
+                    }.`
+                  : "Agrega al menos un accesorio con su serie."}
+              </span>
             </div>
-          )}
+            <button
+              type="button"
+              className={styles.detailAddButton}
+              onClick={addDetalle}
+            >
+              <Plus size={15} strokeWidth={2.2} />
+              Nuevo accesorio
+            </button>
+          </div>
 
-          <button
-            type="button"
-            className={styles.detailAddCard}
-            onClick={addDetalle}
-            data-motion-item
-          >
-            <span className={styles.detailAddIcon}>
-              <Plus size={18} strokeWidth={2} />
-            </span>
-            <span className={styles.detailAddLabel}>Nuevo accesorio</span>
-          </button>
+          {detalles.length ? (
+            <div className={styles.detailList}>
+              {detalles.map((detalle, index) => (
+                <article key={detalle.id} className={styles.detailCard} data-motion-item>
+                  <header className={styles.detailCardHeader}>
+                    <span className={styles.detailIndex}>{index + 1}</span>
+                    <span className={styles.detailCardTitle}>
+                      {getOptionLabel(accesorios, detalle.accesorioId) ||
+                        "Accesorio sin definir"}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.removeIconButton}
+                      onClick={() => removeDetalle(detalle.id)}
+                      aria-label={`Quitar accesorio ${index + 1}`}
+                      title="Quitar accesorio"
+                    >
+                      <Trash2 size={15} strokeWidth={1.9} />
+                    </button>
+                  </header>
+
+                  <div className={styles.detailCardBody}>
+                    <SelectField
+                      label="Accesorio"
+                      name={`detalle-accesorio-${index}`}
+                      source={sources.accesorios}
+                      value={detalle.accesorioId}
+                      required
+                      invalid={isFieldInvalid(`detalle-${detalle.id}-accesorioId`)}
+                      onChange={(event) =>
+                        updateDetalle(detalle.id, "accesorioId", event.target.value)
+                      }
+                      span="half"
+                    />
+                    <Field
+                      label="Serie del accesorio"
+                      name={`detalle-serie-${index}`}
+                      value={detalle.numeroSerie}
+                      placeholder="Numero de serie"
+                      required
+                      invalid={isFieldInvalid(`detalle-${detalle.id}-numeroSerie`)}
+                      onChange={(event) =>
+                        updateDetalle(detalle.id, "numeroSerie", event.target.value)
+                      }
+                      span="half"
+                    />
+                    <StaticUserField
+                      label="Marca"
+                      value={
+                        getAccesorioOption(accesorios, detalle.accesorioId)?.marca ||
+                        "Sin marca en el catalogo"
+                      }
+                      span="half"
+                      required
+                      invalid={isFieldInvalid(`detalle-${detalle.id}-marca`)}
+                    />
+                    <StaticUserField
+                      label="Modelo"
+                      value={
+                        getAccesorioOption(accesorios, detalle.accesorioId)?.modelo ||
+                        "Sin modelo en el catalogo"
+                      }
+                      span="half"
+                      required
+                      invalid={isFieldInvalid(`detalle-${detalle.id}-modelo`)}
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.detailEmptyCard} ${
+                isFieldInvalid("accesorios") ? styles.detailEmptyCardInvalid : ""
+              }`}
+              onClick={addDetalle}
+              data-motion-item
+            >
+              <span className={styles.detailAddIcon}>
+                <Plus size={18} strokeWidth={2} />
+              </span>
+              <span className={styles.detailAddLabel}>Agregar el primer accesorio</span>
+              <span className={styles.emptyAccessories}>
+                Elige el accesorio del catalogo; su marca y modelo se completan solos
+                y tu capturas la serie.
+              </span>
+            </button>
+          )}
         </div>
       </Section>
 
       <div className={styles.actions} data-motion-item>
+        {formError ? <p className={styles.formError}>{formError}</p> : null}
         <Link href={cancelHref} className={styles.cancelLink}>
           Cancelar
         </Link>
         <button type="button" className={styles.primaryButton} onClick={continueToPreview}>
-          Revisar resguardo
+          {editingResguardoId ? "Revisar cambios" : "Revisar resguardo"}
         </button>
       </div>
     </div>
@@ -741,40 +1043,26 @@ function Field({
   value,
   defaultValue,
   placeholder,
+  readOnly,
+  required,
+  invalid,
   span = "full",
   onChange,
 }: BaseFieldProps) {
   return (
     <label className={`${styles.fieldBlock} ${getSpanClass(span)}`}>
-      <span className={styles.label}>{label}</span>
+      <FieldLabel label={label} required={required} />
       <input
-        className={styles.input}
+        className={`${styles.input} ${invalid ? styles.inputInvalid : ""}`}
         name={name}
         placeholder={placeholder}
         onChange={onChange}
+        readOnly={readOnly}
+        required={required}
+        aria-invalid={invalid || undefined}
+        aria-readonly={readOnly || undefined}
         {...(value !== undefined ? { value } : {})}
         {...(defaultValue !== undefined ? { defaultValue } : {})}
-      />
-    </label>
-  );
-}
-
-function DateField({
-  label,
-  name,
-  value,
-  span = "full",
-  onChange,
-}: BaseFieldProps) {
-  return (
-    <label className={`${styles.fieldBlock} ${getSpanClass(span)}`}>
-      <span className={styles.label}>{label}</span>
-      <input
-        className={styles.input}
-        type="datetime-local"
-        name={name}
-        onChange={onChange}
-        {...(value !== undefined ? { value } : {})}
       />
     </label>
   );
@@ -785,16 +1073,24 @@ function StaticUserField({
   value,
   helper,
   span = "full",
+  required,
+  invalid,
 }: {
   label: string;
   value: string;
   helper?: string;
   span?: BaseFieldProps["span"];
+  required?: boolean;
+  invalid?: boolean;
 }) {
   return (
     <label className={`${styles.fieldBlock} ${getSpanClass(span)}`}>
-      <span className={styles.label}>{label}</span>
-      <div className={styles.staticUserField}>
+      <FieldLabel label={label} required={required} />
+      <div
+        className={`${styles.staticUserField} ${
+          invalid ? styles.staticUserFieldInvalid : ""
+        }`}
+      >
         <span className={styles.staticUserValue}>{value}</span>
       </div>
       {helper ? <span className={styles.fieldHint}>{helper}</span> : null}
@@ -811,46 +1107,24 @@ function SelectField({
   name,
   source,
   value,
-  defaultValue,
   span = "full",
+  required,
+  invalid,
   onChange,
 }: SelectFieldProps) {
-  const isUnavailable = source.state !== "ready";
-  const placeholder =
-    source.state === "error"
-      ? "No disponible"
-      : source.state === "empty"
-        ? "Sin registros"
-        : "Selecciona una opcion";
-
   return (
-    <label className={`${styles.fieldBlock} ${getSpanClass(span)}`}>
-      <span className={styles.label}>{label}</span>
-      <select
-        className={styles.select}
-        name={name}
-        disabled={isUnavailable}
-        onChange={onChange}
-        {...(value !== undefined ? { value } : {})}
-        {...(defaultValue !== undefined ? { defaultValue } : {})}
-      >
-        <option value="">{placeholder}</option>
-        {source.options.map((option) => (
-          <option key={`${name}-${option.value}`} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {source.message ? (
-        <span
-          className={`${styles.fieldHint} ${
-            source.state === "error" ? styles.fieldHintError : ""
-          }`}
-        >
-          {source.message}
-        </span>
-      ) : null}
-    </label>
+    <FormSelect
+      label={label}
+      name={name}
+      source={source}
+      value={value ?? ""}
+      required={required}
+      invalid={invalid}
+      className={getSpanClass(span)}
+      onChange={(nextValue) =>
+        onChange?.({ target: { value: nextValue, name } } as never)
+      }
+    />
   );
 }
 
@@ -860,6 +1134,8 @@ function UserComboboxField({
   source,
   value,
   span = "full",
+  required,
+  invalid,
   onChange,
 }: SelectFieldProps) {
   const inputId = useId();
@@ -968,11 +1244,11 @@ function UserComboboxField({
       ref={wrapperRef}
       className={`${styles.fieldBlock} ${getSpanClass(span)}`}
     >
-      <span className={styles.label}>{label}</span>
+      <FieldLabel label={label} required={required} />
       <div
         className={`${styles.combobox} ${isOpen ? styles.comboboxOpen : ""} ${
           isUnavailable ? styles.comboboxDisabled : ""
-        }`}
+        } ${invalid ? styles.comboboxInvalid : ""}`}
       >
         <input
           ref={inputRef}

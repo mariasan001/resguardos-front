@@ -1,4 +1,3 @@
-import { backendRequest } from "@/lib/api/backend-client";
 import { ApiError } from "@/lib/api/errors";
 
 async function parseTextResponse(response: Response) {
@@ -15,28 +14,24 @@ async function parseTextResponse(response: Response) {
   return payload;
 }
 
-export async function sendResguardoEmailWithPdf(id: number, archivo: File): Promise<void> {
+export async function sendResguardoEmailWithPdf(
+  id: number,
+  archivo: File,
+): Promise<void> {
   const formData = new FormData();
   formData.append("archivo", archivo);
 
-  if (typeof window !== "undefined") {
-    await fetch(`/api/email/cargar-con-archivo/${id}`, {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-      },
-      body: formData,
-    }).then(parseTextResponse);
-
-    return;
-  }
-
-  await backendRequest<string>(`/api/email/cargar-con-archivo/${id}`, {
+  await fetch(`/api/email/cargar-con-archivo/${id}`, {
     method: "POST",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+    },
     body: formData,
-    parse: "text",
-  });
+  }).then(parseTextResponse);
 }
 
 export const uploadPdfAndSendEmail = sendResguardoEmailWithPdf;
+
+
+/** correponde a la firma 2  */

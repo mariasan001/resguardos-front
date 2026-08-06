@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { rejectUnauthenticatedRequest } from "@/lib/auth/api-authorization";
+import { getBackendAuthHeaders } from "@/lib/auth/backend-headers";
 import { getBackendBaseUrl } from "@/lib/config/env";
 
 interface RouteContext {
@@ -13,6 +15,12 @@ function buildBackendUrl(id: string) {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
+  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+
+  if (unauthorizedResponse) {
+    return unauthorizedResponse;
+  }
+
   const { id } = await context.params;
 
   if (!id?.trim()) {
@@ -25,9 +33,9 @@ export async function GET(_request: Request, context: RouteContext) {
   const response = await fetch(buildBackendUrl(id), {
     method: "GET",
     cache: "no-store",
-    headers: {
+    headers: await getBackendAuthHeaders({
       Accept: "image/png, image/jpeg, */*;q=0.8",
-    },
+    }),
   });
 
   const contentType = response.headers.get("content-type") ?? "";
@@ -40,6 +48,12 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+
+  if (unauthorizedResponse) {
+    return unauthorizedResponse;
+  }
+
   const { id } = await context.params;
 
   if (!id?.trim()) {
@@ -54,9 +68,7 @@ export async function POST(request: Request, context: RouteContext) {
   const response = await fetch(buildBackendUrl(id), {
     method: "POST",
     cache: "no-store",
-    headers: {
-      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-    },
+    headers: await getBackendAuthHeaders(),
     body: formData,
   });
 

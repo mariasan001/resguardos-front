@@ -1,13 +1,23 @@
 "use server";
 
 import { getApiErrorMessage } from "@/lib/api/errors";
-import { updateUsuarioEmail } from "@/lib/services/usuarios.service";
-import type { ActionResult } from "@/lib/types/api";
+import { serverBackendRequest } from "@/lib/api/server-backend";
+import { getSession } from "@/lib/auth/session";
+import type { ActionResult, AppUser } from "@/lib/types/api";
 
 export async function updateUsuarioEmailAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
+  const session = await getSession();
+
+  if (!session) {
+    return {
+      success: false,
+      message: "No tienes permiso para actualizar correos de usuarios.",
+    };
+  }
+
   const neyemp = String(formData.get("neyemp") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
 
@@ -37,7 +47,14 @@ export async function updateUsuarioEmailAction(
   }
 
   try {
-    const updatedUser = await updateUsuarioEmail(neyemp, email);
+    const updatedUser = await serverBackendRequest<AppUser>(
+      `/api/${neyemp}/email`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      },
+    );
 
     if (updatedUser.neyemp !== neyemp) {
       return {

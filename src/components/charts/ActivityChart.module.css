@@ -1,0 +1,332 @@
+.wrapper {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.legendButton {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 0.3rem var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    background-color var(--transition-base),
+    opacity var(--transition-base);
+}
+
+.legendButton:hover {
+  border-color: var(--border-subtle);
+  background: var(--surface-alt);
+}
+
+.legendButton[data-hidden="true"] {
+  opacity: 0.42;
+}
+
+.legendButton[data-selected="true"] {
+  border-color: var(--border-strong);
+  background: var(--surface-alt);
+}
+
+.legendDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+}
+
+.legendLabel {
+  color: var(--color-ink-600);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.legendValue {
+  color: var(--color-ink-900);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.switcher {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.2rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.switchButton {
+  padding: 0.35rem var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-ink-600);
+  background: transparent;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    color var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.switchButton:hover {
+  color: var(--color-ink-900);
+}
+
+.switchButton[data-active="true"] {
+  color: var(--color-wine-700);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-4);
+  row-gap: var(--space-3);
+}
+
+.yAxis {
+  grid-column: 1;
+  grid-row: 1;
+  animation: fadeInUp 420ms ease both;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  color: var(--color-ink-500);
+  font-size: var(--text-xs);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.plot {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  min-height: 16rem;
+  display: block;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.crosshair {
+  stroke: var(--color-ink-500);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.5;
+}
+
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    r: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  pointer-events: none;
+  animation: drawLine 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  transition: opacity var(--transition-base);
+}
+
+.line[data-hidden="true"] {
+  opacity: 0;
+}
+
+.area {
+  stroke: none;
+  opacity: 0.12;
+  animation: fadeInUp 420ms ease both;
+}
+
+.dot {
+  stroke: var(--surface-card);
+  stroke-width: 2.5;
+  animation: popIn 180ms ease both;
+}
+
+.hoverArea {
+  fill: transparent;
+}
+
+.line[data-metric="altas"] {
+  stroke: var(--chart-primary);
+}
+
+.area[data-metric="altas"],
+.dot[data-metric="altas"],
+.legendDot[data-metric="altas"] {
+  fill: var(--chart-primary);
+  background: var(--chart-primary);
+}
+
+.line[data-metric="modificados"] {
+  stroke: var(--color-warning-600);
+}
+
+.area[data-metric="modificados"],
+.dot[data-metric="modificados"],
+.legendDot[data-metric="modificados"] {
+  fill: var(--color-warning-600);
+  background: var(--color-warning-600);
+}
+
+.line[data-metric="eliminados"] {
+  stroke: var(--color-danger-600);
+}
+
+.area[data-metric="eliminados"],
+.dot[data-metric="eliminados"],
+.legendDot[data-metric="eliminados"] {
+  fill: var(--color-danger-600);
+  background: var(--color-danger-600);
+}
+
+.tooltip {
+  position: absolute;
+  top: var(--space-3);
+  z-index: 2;
+  min-width: 11rem;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.tooltipTitle {
+  color: var(--color-ink-900);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: capitalize;
+}
+
+.tooltipList {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.tooltipList li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--color-ink-600);
+  font-size: var(--text-xs);
+}
+
+.tooltipList strong {
+  color: var(--color-ink-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.xAxis {
+  grid-column: 2;
+  grid-row: 2;
+  animation: fadeInUp 420ms ease both;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  color: var(--color-ink-500);
+  font-size: var(--text-xs);
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.xAxis li {
+  transition: color var(--transition-base);
+}
+
+.xAxis li[data-active="true"] {
+  color: var(--color-ink-900);
+  font-weight: var(--font-weight-semibold);
+}
+
+.empty {
+  padding: var(--space-6) 0;
+  color: var(--color-ink-600);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switchButton,
+  .legendButton,
+  .line,
+  .xAxis li {
+    transition: none;
+  }
+
+  .line,
+  .area,
+  .dot,
+  .yAxis,
+  .xAxis {
+    animation: none;
+  }
+}

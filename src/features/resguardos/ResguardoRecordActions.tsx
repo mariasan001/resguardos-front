@@ -12,7 +12,7 @@ interface ResguardoRecordActionsProps {
 
 export default function ResguardoRecordActions({
   editHref,
-  exitHref = "/resguardos",
+  exitHref,
 }: ResguardoRecordActionsProps) {
   return (
     <div className={styles.actions}>
@@ -22,10 +22,12 @@ export default function ResguardoRecordActions({
           Editar
         </Link>
       ) : null}
-      <Link href={exitHref} className={styles.secondaryAction}>
-        <DoorOpen size={16} strokeWidth={1.9} />
-        Salir
-      </Link>
+      {exitHref ? (
+        <Link href={exitHref} className={styles.secondaryAction}>
+          <DoorOpen size={16} strokeWidth={1.9} />
+          Salir
+        </Link>
+      ) : null}
     </div>
   );
 }

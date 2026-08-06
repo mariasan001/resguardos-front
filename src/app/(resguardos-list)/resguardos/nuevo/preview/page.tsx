@@ -1,5 +1,5 @@
 import ResguardoPreview from "@/features/resguardos/ResguardoPreview";
-import ResguardoRecordActions from "@/features/resguardos/ResguardoRecordActions";
+import ResguardoPreviewActions from "@/features/resguardos/ResguardoPreviewActions";
 import styles from "@/app/(resguardos-list)/resguardos/nuevo/page.module.css";
 
 export default function PreviewResguardoPage() {
@@ -13,10 +13,7 @@ export default function PreviewResguardoPage() {
           </p>
         </div>
 
-        <ResguardoRecordActions
-          editHref="/resguardos/nuevo?continue=1"
-          exitHref="/resguardos"
-        />
+        <ResguardoPreviewActions />
       </div>
 
       <ResguardoPreview />

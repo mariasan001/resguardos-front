@@ -3,11 +3,14 @@ import Link from "next/link";
 import DataTable from "@/components/ui/DataTable";
 import PageHeader from "@/components/ui/PageHeader";
 import Panel from "@/components/ui/Panel";
-import { getUsuarios } from "@/lib/services/usuarios.service";
+import { requireRole } from "@/lib/auth/session";
+import { USER_ROLES } from "@/lib/auth/types";
+import { getUsuarios } from "@/lib/services/usuarios.server";
 import { formatText } from "@/lib/utils/format";
 import styles from "@/app/(workspace)/usuarios/page.module.css";
 
 export default async function UsuariosPage() {
+  await requireRole([USER_ROLES.admin]);
   const usuarios = await getUsuarios();
 
   return (

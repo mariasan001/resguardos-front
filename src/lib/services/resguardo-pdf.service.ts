@@ -1,6 +1,13 @@
 import { jsPDF } from "jspdf";
 
-import type { PreviewResguardoDraft, Resguardo } from "@/lib/types/api";
+import { FIXED_ASSIGN_USER_NAME } from "@/lib/constants/assigner";
+import type { Accesorio, PreviewResguardoDraft, Resguardo } from "@/lib/types/api";
+import {
+  formatTitleCase,
+  getEstadoLabel,
+  getMarcaLabel,
+} from "@/lib/utils/format";
+import { completeResguardoAccesorios } from "@/lib/utils/resguardo-accesorios";
 import { trimSignatureDataUrl } from "@/lib/utils/signature";
 
 const EMPTY_VALUE = "\u2014";
@@ -16,7 +23,6 @@ const CONTINUATION_PAGE_TOP = 18;
 const NORMATIVE_LEFT = 18;
 const NORMATIVE_WIDTH = 174;
 const MAROON: [number, number, number] = [133, 25, 53];
-const BROWN: [number, number, number] = [164, 121, 57];
 const LIGHT_BORDER: [number, number, number] = [199, 199, 199];
 const LABEL_COLOR: [number, number, number] = [74, 74, 74];
 const TEXT_COLOR: [number, number, number] = [27, 27, 27];
@@ -25,6 +31,7 @@ interface GenerateResguardoPdfParams {
   createdResguardoId: number;
   draft: PreviewResguardoDraft;
   resguardo: Resguardo;
+  accesoriosCatalogo?: Accesorio[];
 }
 
 const assetCache = new Map<string, Promise<string>>();
@@ -138,14 +145,6 @@ function drawTopRibbon(doc: jsPDF) {
   doc.rect(0, 5.5, PAGE_WIDTH, 1.3, "F");
 }
 
-function drawSectionBar(doc: jsPDF, y: number, title: string) {
-  doc.setFillColor(...BROWN);
-  doc.roundedRect(FIRST_PAGE_LEFT, y, FIRST_PAGE_WIDTH, 7.5, 1.2, 1.2, "F");
-  setFont(doc, "bold", 9.4);
-  doc.setTextColor(255, 255, 255);
-  doc.text(title, FIRST_PAGE_LEFT + 2.5, y + 5.1);
-}
-
 function drawContinuationPageBase(doc: jsPDF) {
   doc.addPage();
   drawTopRibbon(doc);
@@ -164,110 +163,8 @@ function ensureContentPageSpace(
   return CONTINUATION_PAGE_TOP;
 }
 
-function drawWrappedLabelValueRow(
-  doc: jsPDF,
-  labelX: number,
-  labelWidth: number,
-  valueX: number,
-  valueWidth: number,
-  y: number,
-  label: string,
-  value: string,
-  lineHeight = 4.8,
-  options?: {
-    labelFontSize?: number;
-    valueFontSize?: number;
-    minValueFontSize?: number;
-    maxValueLines?: number;
-  },
-) {
-  const labelFontSize = options?.labelFontSize ?? 8.3;
-  let valueFontSize = options?.valueFontSize ?? 8.1;
-  const minValueFontSize = options?.minValueFontSize ?? valueFontSize;
-  const maxValueLines = options?.maxValueLines ?? Number.POSITIVE_INFINITY;
-
-  setFont(doc, "normal", labelFontSize);
-  doc.setTextColor(...LABEL_COLOR);
-  const labelLines = doc.splitTextToSize(label, labelWidth) as string[];
-  let valueLines: string[] = [];
-
-  while (valueFontSize >= minValueFontSize) {
-    setFont(doc, "bold", valueFontSize);
-    valueLines = doc.splitTextToSize(value, valueWidth) as string[];
-
-    if (valueLines.length <= maxValueLines || valueFontSize === minValueFontSize) {
-      break;
-    }
-
-    valueFontSize = Number((valueFontSize - 0.2).toFixed(2));
-  }
-
-  setFont(doc, "normal", labelFontSize);
-  doc.text(labelLines, labelX, y);
-  setFont(doc, "bold", valueFontSize);
-  doc.setTextColor(...TEXT_COLOR);
-  doc.text(valueLines, valueX, y);
-
-  return y + Math.max(labelLines.length, valueLines.length) * lineHeight + 1.2;
-}
-
-function drawSectionRows(
-  doc: jsPDF,
-  y: number,
-  title: string,
-  rows: Array<[string, string]>,
-) {
-  let currentY = ensureContentPageSpace(doc, y, 10);
-  drawSectionBar(doc, currentY, title);
-  currentY += 11.6;
-
-  rows.forEach(([label, value]) => {
-    currentY = ensureContentPageSpace(doc, currentY, 8);
-    currentY = drawWrappedLabelValueRow(
-      doc,
-      FIRST_PAGE_LEFT + 2,
-      66,
-      108,
-      78,
-      currentY,
-      label,
-      value,
-      4.6,
-      {
-        labelFontSize: 8,
-        valueFontSize: 7.9,
-        minValueFontSize: 7.1,
-        maxValueLines: 2,
-      },
-    );
-  });
-
-  return currentY;
-}
-
 function drawCommentsBlock(doc: jsPDF, y: number, text: string) {
-  let currentY = ensureContentPageSpace(doc, y, 14);
-
-  setFont(doc, "bold", 9.6);
-  doc.setTextColor(...TEXT_COLOR);
-  doc.text("Comentarios:", FIRST_PAGE_LEFT, currentY);
-
-  const commentLines = doc.splitTextToSize(text, FIRST_PAGE_WIDTH - 6) as string[];
-  const boxHeight = Math.max(26, commentLines.length * 4.7 + 6);
-  currentY = ensureContentPageSpace(doc, currentY + 3, boxHeight + 4);
-
-  if (currentY !== y + 3) {
-    setFont(doc, "bold", 9.6);
-    doc.setTextColor(...TEXT_COLOR);
-    doc.text("Comentarios:", FIRST_PAGE_LEFT, currentY - 3);
-  }
-
-  doc.setDrawColor(...LIGHT_BORDER);
-  doc.roundedRect(FIRST_PAGE_LEFT, currentY, FIRST_PAGE_WIDTH, boxHeight, 2.2, 2.2);
-  setFont(doc, "normal", 8.2);
-  doc.text(commentLines, FIRST_PAGE_LEFT + 2, currentY + 5.6);
-
-  return currentY + boxHeight;
+  return drawReceiptTextBlock(doc, y, "Comentarios", text);
 }
 
 function drawContentFooter(doc: jsPDF, y: number, footerLegal: string) {
@@ -379,38 +276,312 @@ function drawSignatureBlock(
   name: string,
   subtitle: string,
 ) {
+  const imageAreaHeight = 26;
+
   if (signatureDataUrl) {
     const imageProps = doc.getImageProperties(signatureDataUrl);
-    const maxImageWidth = width - 6;
-    const maxImageHeight = 24;
+    const maxImageWidth = width - 8;
     let renderWidth = maxImageWidth;
     let renderHeight = (imageProps.height / imageProps.width) * renderWidth;
 
-    if (renderHeight > maxImageHeight) {
-      renderHeight = maxImageHeight;
+    if (renderHeight > imageAreaHeight) {
+      renderHeight = imageAreaHeight;
       renderWidth = (imageProps.width / imageProps.height) * renderHeight;
     }
 
     const renderX = x + (width - renderWidth) / 2;
-    const renderY = y + Math.max((maxImageHeight - renderHeight) / 2, 0);
-    doc.addImage(signatureDataUrl, "PNG", renderX, renderY, renderWidth, renderHeight, undefined, "FAST");
+    const renderY = y + Math.max((imageAreaHeight - renderHeight) / 2, 0);
+    doc.addImage(
+      signatureDataUrl,
+      "PNG",
+      renderX,
+      renderY,
+      renderWidth,
+      renderHeight,
+      undefined,
+      "FAST",
+    );
   }
 
-  doc.setDrawColor(116, 116, 116);
-  doc.setLineDashPattern([1.6, 1.6], 0);
-  doc.line(x, y + 25.5, x + width, y + 25.5);
+  const lineY = y + imageAreaHeight + 1.5;
+  doc.setDrawColor(140, 140, 140);
+  doc.setLineWidth(0.25);
+  doc.setLineDashPattern([1.4, 1.4], 0);
+  doc.line(x + 4, lineY, x + width - 4, lineY);
   doc.setLineDashPattern([], 0);
+  doc.setLineWidth(0.2);
 
-  setFont(doc, "bold", 9);
+  setFont(doc, "bold", 8.6);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text(name, x + width / 2, y + 30.6, { align: "center" });
+  doc.text(name, x + width / 2, lineY + 5.2, { align: "center" });
 
-  setFont(doc, "normal", 8.2);
-  doc.text(subtitle, x + width / 2, y + 35.1, { align: "center" });
+  setFont(doc, "normal", 7.4);
+  doc.setTextColor(...LABEL_COLOR);
+  doc.text(subtitle, x + width / 2, lineY + 10, { align: "center" });
 }
 
-function getEntregaName(draft: PreviewResguardoDraft) {
-  return draft.usuarioAsignaLabel.trim() || draft.usuarioResguardaLabel.trim() || EMPTY_VALUE;
+interface AccesorioPdfItem {
+  accesorio?: string;
+  marca?: string;
+  modelo?: string;
+  numeroSerie?: string;
+}
+
+/**
+ * El listado guardado manda solo el accesorio y la serie, asi que la marca y el
+ * modelo se completan con lo capturado en el formulario cuando el backend no
+ * los regresa.
+ */
+function buildAccesorioItems(
+  resguardo: Resguardo,
+  draft: PreviewResguardoDraft,
+): AccesorioPdfItem[] {
+  const captured = draft.detalles ?? [];
+  const stored = resguardo.detalles ?? [];
+
+  if (stored.length) {
+    return stored.map((detalle, index) => {
+      const fallback =
+        captured.find(
+          (item) =>
+            item.accesorioId &&
+            item.accesorioId === String(detalle.accesorio?.id ?? ""),
+        ) ?? captured[index];
+
+      return {
+        accesorio: detalle.accesorio?.descAccesorio || fallback?.accesorioLabel,
+        marca: getMarcaLabel(detalle.accesorio?.marca) || fallback?.marcaLabel,
+        modelo: detalle.accesorio?.modelo || fallback?.modeloLabel,
+        numeroSerie: detalle.numeroSerie || fallback?.numeroSerie,
+      };
+    });
+  }
+
+  return captured.map((item) => ({
+    accesorio: item.accesorioLabel,
+    marca: item.marcaLabel,
+    modelo: item.modeloLabel,
+    numeroSerie: item.numeroSerie,
+  }));
+}
+
+function measureWrappedLines(
+  doc: jsPDF,
+  text: string,
+  width: number,
+  fontStyle: "normal" | "bold",
+  fontSize: number,
+) {
+  setFont(doc, fontStyle, fontSize);
+  return doc.splitTextToSize(text, width) as string[];
+}
+
+function drawSectionLabel(doc: jsPDF, y: number, title: string) {
+  let currentY = ensureContentPageSpace(doc, y, 7);
+  doc.setFillColor(...MAROON);
+  doc.rect(FIRST_PAGE_LEFT, currentY + 0.4, 1.6, 4.2, "F");
+  setFont(doc, "bold", 7.8);
+  doc.setTextColor(...MAROON);
+  doc.text(title.toUpperCase(), FIRST_PAGE_LEFT + 4, currentY + 3.6);
+  doc.setDrawColor(...LIGHT_BORDER);
+  doc.setLineWidth(0.2);
+  doc.line(FIRST_PAGE_LEFT + 42, currentY + 4.8, FIRST_PAGE_RIGHT, currentY + 4.8);
+  return currentY + 7.4;
+}
+
+function drawCompactMetaRow(
+  doc: jsPDF,
+  y: number,
+  cells: Array<{ label: string; value: string }>,
+) {
+  let currentY = ensureContentPageSpace(doc, y, 12);
+  const height = 11;
+  const cellWidth = FIRST_PAGE_WIDTH / cells.length;
+
+  doc.setFillColor(247, 245, 246);
+  doc.rect(FIRST_PAGE_LEFT, currentY, FIRST_PAGE_WIDTH, height, "F");
+
+  cells.forEach((cell, index) => {
+    const x = FIRST_PAGE_LEFT + index * cellWidth + 2.4;
+    setFont(doc, "normal", 5.8);
+    doc.setTextColor(...LABEL_COLOR);
+    doc.text(cell.label.toUpperCase(), x, currentY + 3.4);
+
+    setFont(doc, "bold", 8.2);
+    doc.setTextColor(...TEXT_COLOR);
+    const lines = measureWrappedLines(
+      doc,
+      cell.value,
+      cellWidth - 5,
+      "bold",
+      8.2,
+    );
+    doc.text(lines[0] ?? EMPTY_VALUE, x, currentY + 8.2);
+  });
+
+  return currentY + height + 3.2;
+}
+
+function drawPersonLead(
+  doc: jsPDF,
+  y: number,
+  name: string,
+  details: string[],
+) {
+  let currentY = ensureContentPageSpace(doc, y, 12);
+  setFont(doc, "bold", 11);
+  doc.setTextColor(...TEXT_COLOR);
+  doc.text(name, FIRST_PAGE_LEFT, currentY + 3.2);
+
+  const detail = details.filter((item) => item && item !== EMPTY_VALUE).join("   ·   ");
+  if (detail) {
+    setFont(doc, "normal", 6.8);
+    doc.setTextColor(...LABEL_COLOR);
+    const lines = measureWrappedLines(doc, detail, FIRST_PAGE_WIDTH, "normal", 6.8);
+    doc.text(lines[0] ?? "", FIRST_PAGE_LEFT, currentY + 7.6);
+    return currentY + 11;
+  }
+
+  return currentY + 7.5;
+}
+
+/** Pares compactos Campo / Valor en dos columnas, sin celdas. */
+function drawCompactFields(
+  doc: jsPDF,
+  y: number,
+  title: string,
+  fields: Array<[string, string]>,
+  options?: { leadName?: string; leadDetails?: string[] },
+) {
+  let currentY = drawSectionLabel(doc, y, title);
+
+  if (options?.leadName) {
+    currentY = drawPersonLead(
+      doc,
+      currentY,
+      options.leadName,
+      options.leadDetails ?? [],
+    );
+  }
+
+  const colGap = 10;
+  const colWidth = (FIRST_PAGE_WIDTH - colGap) / 2;
+  const lineHeight = 3.3;
+
+  for (let index = 0; index < fields.length; index += 2) {
+    const left = fields[index];
+    const right = fields[index + 1];
+
+    const leftValueLines = left
+      ? measureWrappedLines(doc, left[1], colWidth, "bold", 7.6)
+      : [];
+    const rightValueLines = right
+      ? measureWrappedLines(doc, right[1], colWidth, "bold", 7.6)
+      : [];
+    const rowLines = Math.max(leftValueLines.length, rightValueLines.length, 1);
+    const rowHeight = 3.2 + rowLines * lineHeight;
+
+    currentY = ensureContentPageSpace(doc, currentY, rowHeight + 1);
+
+    if (currentY === CONTINUATION_PAGE_TOP) {
+      currentY = drawSectionLabel(doc, currentY, `${title} (cont.)`);
+    }
+
+    if (left) {
+      setFont(doc, "normal", 5.8);
+      doc.setTextColor(...LABEL_COLOR);
+      doc.text(left[0].toUpperCase(), FIRST_PAGE_LEFT, currentY + 2.2);
+      setFont(doc, "bold", 7.6);
+      doc.setTextColor(...TEXT_COLOR);
+      doc.text(leftValueLines, FIRST_PAGE_LEFT, currentY + 5.8);
+    }
+
+    if (right) {
+      const rightX = FIRST_PAGE_LEFT + colWidth + colGap;
+      setFont(doc, "normal", 5.8);
+      doc.setTextColor(...LABEL_COLOR);
+      doc.text(right[0].toUpperCase(), rightX, currentY + 2.2);
+      setFont(doc, "bold", 7.6);
+      doc.setTextColor(...TEXT_COLOR);
+      doc.text(rightValueLines, rightX, currentY + 5.8);
+    }
+
+    currentY += rowHeight + 0.8;
+  }
+
+  return currentY + 1.8;
+}
+
+function drawReceiptTextBlock(
+  doc: jsPDF,
+  y: number,
+  title: string,
+  text: string,
+) {
+  let currentY = drawSectionLabel(doc, y, title);
+  const lines = measureWrappedLines(doc, text, FIRST_PAGE_WIDTH, "normal", 7.2);
+  const blockHeight = Math.max(8, lines.length * 3.4 + 1);
+  currentY = ensureContentPageSpace(doc, currentY, blockHeight + 2);
+
+  if (currentY === CONTINUATION_PAGE_TOP) {
+    currentY = drawSectionLabel(doc, currentY, title);
+  }
+
+  setFont(doc, "normal", 7.2);
+  doc.setTextColor(...TEXT_COLOR);
+  doc.text(lines, FIRST_PAGE_LEFT, currentY + 2.2);
+  return currentY + blockHeight + 1.2;
+}
+
+function drawAccessoriesTable(
+  doc: jsPDF,
+  y: number,
+  items: AccesorioPdfItem[],
+) {
+  let currentY = drawSectionLabel(doc, y, "Accesorios");
+
+  if (!items.length) {
+    setFont(doc, "normal", 7.2);
+    doc.setTextColor(...LABEL_COLOR);
+    doc.text("Sin accesorios registrados", FIRST_PAGE_LEFT, currentY + 2);
+    return currentY + 6.5;
+  }
+
+  items.forEach((item, index) => {
+    currentY = ensureContentPageSpace(doc, currentY, 8);
+
+    if (currentY === CONTINUATION_PAGE_TOP) {
+      currentY = drawSectionLabel(doc, currentY, "Accesorios (cont.)");
+    }
+
+    setFont(doc, "bold", 7.4);
+    doc.setTextColor(...MAROON);
+    doc.text(String(index + 1).padStart(2, "0"), FIRST_PAGE_LEFT, currentY + 2.4);
+
+    setFont(doc, "bold", 7.6);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.text(getValue(item.accesorio), FIRST_PAGE_LEFT + 8, currentY + 2.4);
+
+    const meta = [
+      getValue(item.marca),
+      getValue(item.modelo),
+      getValue(item.numeroSerie),
+    ]
+      .filter((value) => value !== EMPTY_VALUE)
+      .join("   ·   ");
+
+    setFont(doc, "normal", 6.6);
+    doc.setTextColor(...LABEL_COLOR);
+    doc.text(
+      meta || "Sin marca, modelo o serie",
+      FIRST_PAGE_LEFT + 8,
+      currentY + 5.8,
+    );
+
+    currentY += 8.2;
+  });
+
+  return currentY + 1.5;
 }
 
 const NORMATIVE_TEXT = [
@@ -422,13 +593,19 @@ const NORMATIVE_TEXT = [
 export async function generateResguardoPdf({
   createdResguardoId,
   draft,
-  resguardo,
+  resguardo: storedResguardo,
+  accesoriosCatalogo,
 }: GenerateResguardoPdfParams) {
+  const resguardo = completeResguardoAccesorios(
+    storedResguardo,
+    accesoriosCatalogo,
+  );
+
   const [logosDataUrl, fondoDataUrl, cintaDataUrl, firmaEntregaDataUrl, poppinsRegular, poppinsBold] = await Promise.all([
     getAssetDataUrl("/img/logos.png"),
     getAssetDataUrl("/img/fondo.jpg"),
     getAssetDataUrl("/img/cinta.png"),
-    getAssetDataUrl("/img/firma.png"),
+    getAssetDataUrl("/img/firma2.png"),
     getBinaryAsset("/fonts/Poppins-Regular.ttf"),
     getBinaryAsset("/fonts/Poppins-Bold.ttf"),
   ]);
@@ -444,172 +621,155 @@ export async function generateResguardoPdf({
   registerPoppinsFonts(doc, poppinsRegular, poppinsBold);
 
   const folioId = String(resguardo.id ?? createdResguardoId).padStart(5, "0");
-  const generatedDate = formatCompactDate(resguardo.fechaCreacion || new Date().toISOString());
-  const titularName = getValue(draft.usuarioTitularLabel).toUpperCase();
-  const resguardaName = getValue(draft.usuarioResguardaLabel || draft.usuarioTitularLabel).toUpperCase();
-  const entregaName = getValue(getEntregaName(draft)).toUpperCase();
-  const accesorios: Array<[string, string]> =
-    resguardo.detalles?.map((detalle) => [
-      getValue(detalle.accesorio?.descAccesorio),
-      getValue(detalle.numeroSerie),
-    ]) ?? [];
+  const generatedDate = formatCompactDate(
+    resguardo.fechaCreacion || new Date().toISOString(),
+  );
+  const assignmentDate = formatCompactDate(
+    resguardo.fechaAsignacion || draft.fechaAsignacion,
+  );
+  const estadoLabel = getValue(
+    draft.estadoLabel || getEstadoLabel(resguardo.idEstadoResguardo),
+  );
+  const titularName = formatTitleCase(
+    draft.usuarioTitularLabel || resguardo.usuarioTitular?.nombre,
+    EMPTY_VALUE,
+  );
+  const resguardaName = formatTitleCase(
+    draft.usuarioResguardaLabel ||
+      resguardo.usuarioResguarda?.nombre ||
+      draft.usuarioTitularLabel,
+    EMPTY_VALUE,
+  );
+  const entregaName = FIXED_ASSIGN_USER_NAME;
+  const inventoryId = getValue(resguardo.idInventario || draft.idInventario);
+  const referenciaInterna = getValue(
+    resguardo.resguardo || draft.referenciaInterna || draft.resguardo,
+  );
+  const accesorios = buildAccesorioItems(resguardo, draft);
 
   drawTopRibbon(doc);
-  doc.addImage(logosDataUrl, "PNG", FIRST_PAGE_LEFT, 11.5, 66, 12.2);
+  doc.addImage(logosDataUrl, "PNG", FIRST_PAGE_LEFT, 9.8, 58, 10.6);
 
   setFont(doc, "bold", 7.6);
-  doc.setTextColor(...MAROON);
-  doc.text("Información General", FIRST_PAGE_LEFT, 37);
-
-  setFont(doc, "bold", 10.8);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text(titularName, FIRST_PAGE_LEFT, 41.9);
-
-  setFont(doc, "normal", 7.9);
-  doc.setTextColor(100, 100, 100);
-  doc.text(getValue(resguardo.usuarioTitular?.puesto?.des_neccat), FIRST_PAGE_LEFT, 45.7);
-  setFont(doc, "normal", 7.1);
-  doc.text(getValue(resguardo.usuarioTitular?.email), FIRST_PAGE_LEFT, 49.4);
-
-  setFont(doc, "bold", 8.2);
-  doc.setTextColor(...TEXT_COLOR);
-  doc.text("Dirección General de Personal", FIRST_PAGE_RIGHT_BLOCK_X, 16.3);
-  setFont(doc, "normal", 6.6);
-  doc.text("Dirección de Sistemas y", FIRST_PAGE_RIGHT_BLOCK_X, 20.3);
-  doc.text("Tecnologías De La Información.", FIRST_PAGE_RIGHT_BLOCK_X, 24);
-  doc.text("Subdirección de Desarrollo Tecnológico", FIRST_PAGE_RIGHT_BLOCK_X, 27.7);
-  doc.text(generatedDate, FIRST_PAGE_RIGHT_BLOCK_X, 34.9);
-
-  setFont(doc, "bold", 8.1);
+  doc.text("Dirección General de Personal", FIRST_PAGE_RIGHT_BLOCK_X - 4, 13.8);
+  setFont(doc, "normal", 6);
+  doc.setTextColor(...LABEL_COLOR);
+  doc.text("Dirección de Sistemas y Tecnologías de la Información", FIRST_PAGE_RIGHT_BLOCK_X - 4, 17.2);
+  doc.text("Subdirección de Desarrollo Tecnológico", FIRST_PAGE_RIGHT_BLOCK_X - 4, 20.4);
+  setFont(doc, "bold", 6.6);
   doc.setTextColor(...MAROON);
-  doc.text("Información", 132, 51.5);
+  doc.text(generatedDate, FIRST_PAGE_RIGHT_BLOCK_X - 4, 24.4);
 
-  let topInfoLeftY = 56.8;
-  topInfoLeftY = drawWrappedLabelValueRow(
-    doc,
-    FIRST_PAGE_LEFT,
-    34,
-    58,
-    60,
-    topInfoLeftY,
-    "Clave del Servidor:",
-    getValue(resguardo.usuarioTitular?.neyemp),
+  setFont(doc, "bold", 11.8);
+  doc.setTextColor(...MAROON);
+  doc.text("Tarjeta de Resguardo de Cómputo", FIRST_PAGE_LEFT, 34.2);
+
+  let y = drawCompactMetaRow(doc, 37.4, [
+    { label: "Folio", value: folioId },
+    { label: "Inventario", value: inventoryId },
+    { label: "Estatus", value: estadoLabel },
+    { label: "Asignación", value: assignmentDate },
+  ]);
+
+  const titularPuesto = formatTitleCase(
+    resguardo.usuarioTitular?.puesto?.des_neccat,
+    EMPTY_VALUE,
   );
-  topInfoLeftY = drawWrappedLabelValueRow(
-    doc,
-    FIRST_PAGE_LEFT,
-    34,
-    58,
-    60,
-    topInfoLeftY,
-    "Adscripción:",
-    getValue(resguardo.usuarioTitular?.adscripcion?.necads),
+  const titularEmail = getValue(
+    resguardo.usuarioTitular?.email || draft.usuarioTitularEmail,
   );
 
-  let topInfoRightY = 56.8;
-  topInfoRightY = drawWrappedLabelValueRow(
+  y = drawCompactFields(
     doc,
-    132,
-    24,
-    168,
-    24,
-    topInfoRightY,
-    "IP:",
-    getValue(resguardo.ip),
-  );
-  topInfoRightY = drawWrappedLabelValueRow(
-    doc,
-    132,
-    24,
-    168,
-    24,
-    topInfoRightY,
-    "Marca:",
-    getValue(resguardo.marca),
-  );
-  topInfoRightY = drawWrappedLabelValueRow(
-    doc,
-    132,
-    32,
-    168,
-    24,
-    topInfoRightY,
-    "Folio de Resguardo:",
-    folioId,
-  );
-
-  const areaBottomY = drawWrappedLabelValueRow(
-    doc,
-    FIRST_PAGE_LEFT,
-    34,
-    58,
-    56,
-    topInfoLeftY + 0.8,
-    "Dirección y/o Área:",
-    getValue(resguardo.usuarioTitular?.adscripcion?.desAds),
-    4.55,
+    y,
+    "Titular del resguardo",
+    [
+      ["Clave", getValue(resguardo.usuarioTitular?.neyemp || draft.usuarioTitularId)],
+      ["Teléfono", getValue(resguardo.telefono || draft.telefono)],
+      [
+        "Adscripción",
+        formatTitleCase(
+          resguardo.usuarioTitular?.adscripcion?.desAds,
+          EMPTY_VALUE,
+        ),
+      ],
+      [
+        "Clave adscripción",
+        getValue(resguardo.usuarioTitular?.adscripcion?.necads),
+      ],
+      ["Referencia interna", referenciaInterna],
+    ],
     {
-      labelFontSize: 8.1,
-      valueFontSize: 7.25,
-      minValueFontSize: 6.7,
-      maxValueLines: 3,
+      leadName: titularName,
+      leadDetails: [titularPuesto, titularEmail === EMPTY_VALUE ? "" : titularEmail],
     },
   );
 
-  let y = Math.max(areaBottomY, topInfoRightY) + 1.8;
+  y = drawCompactFields(doc, y, "Equipo asignado", [
+    ["Tipo de bien", getValue(resguardo.tipoBien?.descTipoBien || draft.tipoBienLabel)],
+    ["Marca", getValue(getMarcaLabel(resguardo.marca) || draft.marca)],
+    ["Modelo", getValue(resguardo.modelo?.descModelo || draft.modeloLabel)],
+    ["N. serie", getValue(resguardo.numeroSerie || draft.numeroSerie)],
+    [
+      "Sistema operativo",
+      getValue(resguardo.sistemaOperativo?.descSo || draft.sistemaOperativoLabel),
+    ],
+    [
+      "Procesador",
+      getValue(resguardo.procesador?.descProcesador || draft.procesadorLabel),
+    ],
+    [
+      "Color / material",
+      getValue(resguardo.colorMaterial?.descMaterial || draft.colorMaterialLabel),
+    ],
+    ["IP", getValue(resguardo.ip || draft.ip)],
+    ["MAC", getValue(resguardo.mac || draft.mac)],
+  ]);
 
-  const featureRows: Array<[string, string]> = [
-    ["Sistema Operativo:", getValue(resguardo.sistemaOperativo?.descSo || draft.sistemaOperativoLabel)],
-    ["Tipo de Bien:", getValue(resguardo.tipoBien?.descTipoBien || draft.tipoBienLabel)],
-    ["Modelo:", getValue(resguardo.modelo?.descModelo || draft.modeloLabel)],
-    ["N. Serie:", getValue(resguardo.numeroSerie)],
-    ["Mac:", getValue(resguardo.mac)],
-    ["Color y Material:", getValue(resguardo.colorMaterial?.descMaterial || draft.colorMaterialLabel)],
-    ["Procesador:", getValue(resguardo.procesador?.descProcesador || draft.procesadorLabel)],
-  ];
+  y = drawAccessoriesTable(doc, y, accesorios);
 
-  y += 2.4;
-  y = drawSectionRows(doc, y, "Características", featureRows);
-
-  y += 2.2;
-  y = drawSectionRows(
+  y = drawCommentsBlock(
     doc,
     y,
-    "Accesorios",
-    accesorios.length ? accesorios : [["Sin accesorios:", EMPTY_VALUE]],
+    getValue(resguardo.observaciones || draft.observaciones),
   );
 
-  y += 2;
-  y = drawCommentsBlock(doc, y, getValue(resguardo.observaciones || draft.observaciones));
+  y += 4;
+  y = ensureContentPageSpace(doc, y, 48);
 
-  y += 2.4;
-  y = ensureContentPageSpace(doc, y, 47);
+  const signatureWidth = 68;
+  const signatureGap = 36;
+  const signaturesTotalWidth = signatureWidth * 2 + signatureGap;
+  const leftSignatureX =
+    FIRST_PAGE_LEFT + (FIRST_PAGE_WIDTH - signaturesTotalWidth) / 2;
+  const rightSignatureX = leftSignatureX + signatureWidth + signatureGap;
 
   drawSignatureBlock(
     doc,
     trimmedTitularSignatureDataUrl,
-    35,
+    leftSignatureX,
     y,
-    56,
+    signatureWidth,
     resguardaName,
-    "Nombre y Persona de quien resguarda",
+    "Nombre y firma de quien resguarda",
   );
 
   drawSignatureBlock(
     doc,
     trimmedEntregaSignatureDataUrl,
-    120,
+    rightSignatureX,
     y,
-    56,
+    signatureWidth,
     entregaName,
-    "Nombre y Persona de quien entrega",
+    "Nombre y firma de quien entrega",
   );
 
-  setFont(doc, "normal", 6.4);
+  setFont(doc, "normal", 6.2);
   doc.setTextColor(...TEXT_COLOR);
   const footerLegal =
     "Los datos personales recabados serán utilizados exclusivamente para fines administrativos y de control interno por la Dirección de Sistemas y Tecnologías de la Información. Serán resguardados conforme a la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados, garantizando su confidencialidad y seguridad.";
-  drawContentFooter(doc, y + 42, footerLegal);
+  drawContentFooter(doc, y + 44, footerLegal);
 
   drawNormativePageBase(doc, fondoDataUrl, cintaDataUrl);
 

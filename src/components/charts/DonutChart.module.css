@@ -1,0 +1,122 @@
+.wrapper {
+  display: grid;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.chartWrap {
+  position: relative;
+  width: min(11rem, 100%);
+  justify-self: center;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  transform: rotate(-90deg);
+}
+
+.track {
+  fill: none;
+  stroke: var(--chart-track);
+}
+
+.segment {
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.primary {
+  stroke: var(--chart-primary);
+  background: var(--chart-primary);
+}
+
+.secondary {
+  stroke: var(--chart-secondary);
+  background: var(--chart-secondary);
+}
+
+.tertiary {
+  stroke: var(--chart-tertiary);
+  background: var(--chart-tertiary);
+}
+
+.neutral {
+  stroke: var(--chart-neutral);
+  background: var(--chart-neutral);
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  gap: var(--space-1);
+  align-content: center;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.center strong {
+  color: var(--color-ink-900);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.center span {
+  color: var(--color-ink-600);
+  font-size: var(--text-xs);
+}
+
+.legend {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.legendItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: var(--radius-pill);
+}
+
+.legendLabel {
+  overflow: hidden;
+  color: var(--color-ink-700);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendValue {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  color: var(--color-ink-900);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.legendValue small {
+  color: var(--color-ink-500);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.empty {
+  padding: var(--space-5) 0;
+  color: var(--color-ink-600);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+@media (min-width: 30rem) {
+  .wrapper {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}

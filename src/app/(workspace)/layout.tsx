@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
 
-import AppShell from "@/components/layout/AppShell";
+import AuthenticatedShell from "@/components/layout/AuthenticatedShell";
+import { requireSession } from "@/lib/auth/session";
 
-export default function WorkspaceLayout({ children }: { children: ReactNode }) {
-  return <AppShell>{children}</AppShell>;
+export default async function WorkspaceLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const session = await requireSession();
+  return (
+    <AuthenticatedShell session={session}>{children}</AuthenticatedShell>
+  );
 }

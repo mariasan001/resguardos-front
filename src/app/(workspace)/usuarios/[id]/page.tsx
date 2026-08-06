@@ -2,7 +2,9 @@ import DefinitionList from "@/components/ui/DefinitionList";
 import PageHeader from "@/components/ui/PageHeader";
 import Panel from "@/components/ui/Panel";
 import UserEmailForm from "@/features/usuarios/UserEmailForm";
-import { getUsuarioById } from "@/lib/services/usuarios.service";
+import { requireRole } from "@/lib/auth/session";
+import { USER_ROLES } from "@/lib/auth/types";
+import { getUsuarioById } from "@/lib/services/usuarios.server";
 import { formatText } from "@/lib/utils/format";
 import styles from "@/app/(workspace)/usuarios/[id]/page.module.css";
 
@@ -13,6 +15,7 @@ interface UsuarioDetailPageProps {
 export default async function UsuarioDetailPage({
   params,
 }: UsuarioDetailPageProps) {
+  await requireRole([USER_ROLES.admin]);
   const { id } = await params;
   const usuario = await getUsuarioById(id);
 

@@ -11,6 +11,7 @@ interface PageHeaderProps {
   actionHref?: string;
   actionLabel?: string;
   compact?: boolean;
+  plain?: boolean;
 }
 
 export default function PageHeader({
@@ -20,11 +21,14 @@ export default function PageHeader({
   actionHref,
   actionLabel,
   compact = false,
+  plain = false,
 }: PageHeaderProps) {
   return (
     <MotionItem
       as="section"
-      className={`${styles.header} ${compact ? styles.headerCompact : ""}`}
+      className={`${styles.header} ${compact ? styles.headerCompact : ""} ${
+        plain ? styles.headerPlain : ""
+      }`}
     >
       <div className={`${styles.copy} ${compact ? styles.copyCompact : ""}`}>
         {eyebrow ? (

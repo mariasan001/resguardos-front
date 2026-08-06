@@ -1,66 +1,102 @@
 import PageHeader from "@/components/ui/PageHeader";
-import Panel from "@/components/ui/Panel";
+import CatalogosExplorer, {
+  type CatalogGroup,
+} from "@/features/catalogos/CatalogosExplorer";
+import { requireRole } from "@/lib/auth/session";
+import { USER_ROLES } from "@/lib/auth/types";
 import { getCatalogosBundle } from "@/lib/services/catalogos.service";
-import { formatText } from "@/lib/utils/format";
-import styles from "@/app/(workspace)/catalogos/page.module.css";
-
-function CatalogList({
-  title,
-  items,
-}: {
-  title: string;
-  items: string[];
-}) {
-  return (
-    <Panel title={title} description={`${items.length} elemento(s) disponibles.`}>
-      <ul className={styles.list}>
-        {items.length ? (
-          items.map((item) => <li key={item}>{item}</li>)
-        ) : (
-          <li>Sin registros cargados.</li>
-        )}
-      </ul>
-    </Panel>
-  );
-}
+import { formatText, getMarcaId, getMarcaLabel } from "@/lib/utils/format";
 
 export default async function CatalogosPage() {
+  await requireRole([USER_ROLES.admin]);
   const catalogos = await getCatalogosBundle();
+
+  const groups: CatalogGroup[] = [
+    {
+      id: "tiposBien",
+      label: "Tipos de bien",
+      singular: "tipo de bien",
+      description: "Clasificacion principal del equipo resguardado.",
+      items: catalogos.tiposBien.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descTipoBien),
+      })),
+    },
+    {
+      id: "marcas",
+      label: "Marcas",
+      singular: "marca",
+      description: "Fabricantes disponibles para equipos y accesorios.",
+      items: catalogos.marcas.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descMarca),
+      })),
+    },
+    {
+      id: "modelos",
+      label: "Modelos",
+      singular: "modelo",
+      description: "Modelos asociados a cada marca disponible.",
+      items: catalogos.modelos.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descModelo),
+      })),
+    },
+    {
+      id: "sistemasOperativos",
+      label: "Sistemas operativos",
+      singular: "sistema operativo",
+      description: "Plataformas instaladas en los equipos de computo.",
+      items: catalogos.sistemasOperativos.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descSo),
+      })),
+    },
+    {
+      id: "colores",
+      label: "Colores y materiales",
+      singular: "color o material",
+      description: "Acabados usados para identificar fisicamente el bien.",
+      items: catalogos.colores.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descMaterial),
+      })),
+    },
+    {
+      id: "procesadores",
+      label: "Procesadores",
+      singular: "procesador",
+      description: "Capacidad de computo registrada por equipo.",
+      items: catalogos.procesadores.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descProcesador),
+      })),
+    },
+    {
+      id: "accesorios",
+      label: "Accesorios",
+      singular: "accesorio",
+      description: "Define cada complemento con su marca y modelo; asi se completa solo en el resguardo.",
+      items: catalogos.accesorios.map((item) => ({
+        id: String(item.id ?? ""),
+        label: formatText(item.descAccesorio),
+        marca: getMarcaLabel(item.marca) || undefined,
+        marcaId: getMarcaId(item.marca, item.idMarca) || undefined,
+        modelo: item.modelo?.trim() || undefined,
+      })),
+    },
+  ];
 
   return (
     <>
       <PageHeader
-        eyebrow="Catálogos"
-        title="Maestros de captura"
-        description="Vista consolidada de catálogos usados para formularios, clasificación y consistencia operativa."
+        plain
+        compact
+        title="Catálogos"
+        description="Administra los valores disponibles en los formularios de resguardo."
       />
 
-      <section className={styles.grid}>
-        <CatalogList
-          title="Tipos de bien"
-          items={catalogos.tiposBien.map((item) => formatText(item.descTipoBien))}
-        />
-        <CatalogList
-          title="Modelos"
-          items={catalogos.modelos.map((item) => formatText(item.descModelo))}
-        />
-        <CatalogList
-          title="Sistemas operativos"
-          items={catalogos.sistemasOperativos.map((item) => formatText(item.descSo))}
-        />
-        <CatalogList
-          title="Colores y materiales"
-          items={catalogos.colores.map((item) => formatText(item.descMaterial))}
-        />
-        <CatalogList
-          title="Procesadores"
-          items={catalogos.procesadores.map((item) => formatText(item.descProcesador))}
-        />
-        <CatalogList
-          title="Accesorios"
-          items={catalogos.accesorios.map((item) => formatText(item.descAccesorio))}
-        />
-      </section>
+      <CatalogosExplorer groups={groups} />
     </>
   );
 }

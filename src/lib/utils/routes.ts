@@ -1,7 +1,6 @@
 export const ROUTES = {
-  dashboard: "/resguardos",
+  dashboard: "/",
   resguardos: "/resguardos",
   resguardosNuevo: "/resguardos/nuevo",
-  usuarios: "/usuarios",
   catalogos: "/catalogos",
 } as const;

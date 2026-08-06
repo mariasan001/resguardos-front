@@ -1,38 +1,65 @@
-import { backendRequest } from "@/lib/api/backend-client";
-import type { Accesorio, CatalogosBundle, CatColorMaterial, CatModelo, CatProcesador, CatSo, CatTipoBien, Puesto } from "@/lib/types/api";
+import "server-only";
+
+import { serverBackendRequest } from "@/lib/api/server-backend";
+import type {
+  Accesorio,
+  CatalogosBundle,
+  CatColorMaterial,
+  CatMarca,
+  CatModelo,
+  CatProcesador,
+  CatSo,
+  CatTipoBien,
+  Puesto,
+} from "@/lib/types/api";
+
+export type CatalogApiKey =
+  | "accesorios"
+  | "colores"
+  | "marcas"
+  | "modelos"
+  | "procesadores"
+  | "puestos"
+  | "sistemas-operativos"
+  | "tipos-bien";
 
 export function getAccesorios() {
-  return backendRequest<Accesorio[]>("/api/catalogos/accesorios");
+  return serverBackendRequest<Accesorio[]>("/api/catalogos/accesorios");
 }
 
 export function getColoresMateriales() {
-  return backendRequest<CatColorMaterial[]>("/api/catalogos/colores");
+  return serverBackendRequest<CatColorMaterial[]>("/api/catalogos/colores");
+}
+
+export function getMarcas() {
+  return serverBackendRequest<CatMarca[]>("/api/catalogos/marcas");
 }
 
 export function getModelos() {
-  return backendRequest<CatModelo[]>("/api/catalogos/modelos");
+  return serverBackendRequest<CatModelo[]>("/api/catalogos/modelos");
 }
 
 export function getProcesadores() {
-  return backendRequest<CatProcesador[]>("/api/catalogos/procesadores");
+  return serverBackendRequest<CatProcesador[]>("/api/catalogos/procesadores");
 }
 
 export function getPuestos() {
-  return backendRequest<Puesto[]>("/api/catalogos/puestos");
+  return serverBackendRequest<Puesto[]>("/api/catalogos/puestos");
 }
 
 export function getSistemasOperativos() {
-  return backendRequest<CatSo[]>("/api/catalogos/sistemas-operativos");
+  return serverBackendRequest<CatSo[]>("/api/catalogos/sistemas-operativos");
 }
 
 export function getTiposBien() {
-  return backendRequest<CatTipoBien[]>("/api/catalogos/tipos-bien");
+  return serverBackendRequest<CatTipoBien[]>("/api/catalogos/tipos-bien");
 }
 
 export async function getCatalogosBundle(): Promise<CatalogosBundle> {
   const [
     accesorios,
     colores,
+    marcas,
     modelos,
     procesadores,
     puestos,
@@ -41,6 +68,7 @@ export async function getCatalogosBundle(): Promise<CatalogosBundle> {
   ] = await Promise.all([
     getAccesorios(),
     getColoresMateriales(),
+    getMarcas(),
     getModelos(),
     getProcesadores(),
     getPuestos(),
@@ -51,10 +79,41 @@ export async function getCatalogosBundle(): Promise<CatalogosBundle> {
   return {
     accesorios,
     colores,
+    marcas,
     modelos,
     procesadores,
     puestos,
     sistemasOperativos,
     tiposBien,
   };
+}
+
+export function createCatalogItem<T>(
+  catalog: CatalogApiKey,
+  body: Record<string, unknown>,
+) {
+  return serverBackendRequest<T>(`/api/catalogos/${catalog}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function updateCatalogItem<T>(
+  catalog: CatalogApiKey,
+  id: string | number,
+  body: Record<string, unknown>,
+) {
+  return serverBackendRequest<T>(`/api/catalogos/${catalog}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteCatalogItem(catalog: CatalogApiKey, id: string | number) {
+  return serverBackendRequest<null>(`/api/catalogos/${catalog}/${id}`, {
+    method: "DELETE",
+    parse: "text",
+  });
 }

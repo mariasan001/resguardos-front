@@ -21,6 +21,9 @@ export interface AppUser {
 export interface Accesorio {
   id?: number;
   descAccesorio?: string;
+  marca?: CatMarca | string | null;
+  modelo?: string | null;
+  idMarca?: number;
 }
 
 export interface CatColorMaterial {
@@ -48,6 +51,11 @@ export interface CatTipoBien {
   descTipoBien?: string;
 }
 
+export interface CatMarca {
+  id?: number;
+  descMarca?: string;
+}
+
 export interface DetalleResguardo {
   id?: number;
   accesorio?: Accesorio;
@@ -57,9 +65,11 @@ export interface DetalleResguardo {
 export interface Resguardo {
   id?: number;
   ip?: string;
-  marca?: string;
+  marca?: CatMarca | string;
+  idMarca?: number;
   idInventario?: string;
   fechaAsignacion?: string;
+  fechaActualizacion?: string;
   resguardo?: string;
   observaciones?: string;
   usuarioResguarda?: AppUser;
@@ -91,6 +101,7 @@ export type UploadResguardoFirmaResponse = Record<string, unknown>;
 export interface CatalogosBundle {
   accesorios: Accesorio[];
   colores: CatColorMaterial[];
+  marcas: CatMarca[];
   modelos: CatModelo[];
   procesadores: CatProcesador[];
   puestos: Puesto[];
@@ -104,6 +115,9 @@ export interface OptionItem {
   helper?: string;
   searchText?: string;
   email?: string;
+  marca?: string;
+  marcaId?: string;
+  modelo?: string;
 }
 
 export type SelectOptionsState = "ready" | "empty" | "error";
@@ -117,6 +131,7 @@ export interface SelectOptionsSource {
 export interface ResguardoCatalogSources {
   accesorios: SelectOptionsSource;
   colores: SelectOptionsSource;
+  marcas: SelectOptionsSource;
   modelos: SelectOptionsSource;
   procesadores: SelectOptionsSource;
   sistemasOperativos: SelectOptionsSource;
@@ -128,12 +143,17 @@ export interface PreviewAccesorioDraft {
   id: string;
   accesorioId: string;
   accesorioLabel: string;
+  marcaId?: string;
+  marcaLabel?: string;
+  modeloId?: string;
+  modeloLabel?: string;
   numeroSerie: string;
 }
 
 export interface PreviewResguardoDraft {
   idInventario: string;
   marca: string;
+  marcaId?: string;
   referenciaInterna: string;
   fechaAsignacion: string;
   observaciones: string;
@@ -158,6 +178,8 @@ export interface PreviewResguardoDraft {
   resguardo?: string;
   signatureDataUrl?: string;
   createdResguardoId?: number;
+  editingResguardoId?: number;
+  editSignatureMode?: "saved" | "new";
   tipoBienId?: string;
   modeloId?: string;
   sistemaOperativoId?: string;

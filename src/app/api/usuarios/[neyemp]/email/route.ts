@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { rejectUnauthenticatedRequest } from "@/lib/auth/api-authorization";
+import { getBackendAuthHeaders } from "@/lib/auth/backend-headers";
 import { getBackendBaseUrl } from "@/lib/config/env";
 
 interface RouteContext {
@@ -9,6 +11,12 @@ interface RouteContext {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const unauthorizedResponse = await rejectUnauthenticatedRequest();
+
+  if (unauthorizedResponse) {
+    return unauthorizedResponse;
+  }
+
   const { neyemp } = await context.params;
 
   if (!neyemp?.trim()) {
@@ -34,10 +42,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     {
       method: "PATCH",
       cache: "no-store",
-      headers: {
-        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+      headers: await getBackendAuthHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       body: JSON.stringify(body),
     },
   );

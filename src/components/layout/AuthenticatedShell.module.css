@@ -1,0 +1,207 @@
+.shell {
+  min-height: 100vh;
+  background: var(--surface-page);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: 4.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+}
+
+.identity,
+.session {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.identity {
+  gap: var(--space-5);
+}
+
+.logos {
+  width: clamp(9rem, 22vw, 14rem);
+  height: auto;
+  object-fit: contain;
+}
+
+.product {
+  display: none;
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.product span,
+.product strong,
+.userCopy span,
+.userCopy strong {
+  display: block;
+}
+
+.product span {
+  color: var(--color-ink-500);
+  font-size: var(--text-xs);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.product strong {
+  color: var(--color-ink-900);
+  font-size: var(--text-sm);
+}
+
+.session {
+  gap: var(--space-3);
+}
+
+.avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  color: var(--color-wine-700);
+  background: rgba(140, 67, 88, 0.1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.userCopy {
+  display: none;
+  min-width: 0;
+}
+
+.userCopy strong {
+  max-width: 13rem;
+  overflow: hidden;
+  color: var(--color-ink-900);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userCopy span {
+  color: var(--color-ink-500);
+  font-size: var(--text-xs);
+}
+
+.logoutButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-600);
+  background: var(--surface-card);
+  cursor: pointer;
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.logoutButton:hover {
+  color: var(--color-wine-700);
+  border-color: rgba(140, 67, 88, 0.25);
+  background: rgba(140, 67, 88, 0.05);
+}
+
+.navBar {
+  position: sticky;
+  top: 4.75rem;
+  z-index: 25;
+  overflow-x: auto;
+  background: var(--color-wine-600);
+  scrollbar-width: none;
+}
+
+.navBar::-webkit-scrollbar {
+  display: none;
+}
+
+.navigation {
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-5);
+}
+
+.navLink {
+  position: relative;
+  min-height: 3.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  transition:
+    color var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.navLink::after {
+  position: absolute;
+  right: var(--space-4);
+  bottom: 0;
+  left: var(--space-4);
+  height: 3px;
+  content: "";
+  border-radius: var(--radius-pill);
+  background: transparent;
+}
+
+.navLink:hover {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLinkActive {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.navLinkActive::after {
+  background: var(--color-white);
+}
+
+.content {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-5);
+}
+
+@media (min-width: 48rem) {
+  .product,
+  .userCopy {
+    display: block;
+  }
+}
+
+@media (min-width: 64rem) {
+  .header,
+  .navigation {
+    padding-right: var(--space-7);
+    padding-left: var(--space-7);
+  }
+
+  .content {
+    padding: var(--space-7);
+  }
+}

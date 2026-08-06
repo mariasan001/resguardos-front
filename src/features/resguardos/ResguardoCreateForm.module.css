@@ -10,6 +10,15 @@
   flex-wrap: wrap;
 }
 
+.formError {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--color-danger-700, #9f1239);
+  font-size: 0.84rem;
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
 .section {
   position: relative;
   border: 1px solid var(--border-subtle);
@@ -150,9 +159,17 @@
 }
 
 .label {
-  color: var(--color-ink-700);
-  font-size: 0.78rem;
+  color: var(--color-ink-600);
+  font-size: 0.72rem;
   font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.requiredMark {
+  color: var(--color-brand-700, #851935);
+  font-weight: var(--font-weight-bold);
+  text-transform: none;
 }
 
 .input,
@@ -160,13 +177,28 @@
 .textarea {
   width: 100%;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.8rem;
-  background: var(--surface-card);
+  border-radius: 0.7rem;
+  background: var(--surface-alt);
   color: var(--color-ink-900);
+  font-weight: var(--font-weight-medium);
   transition:
     border-color var(--transition-base),
     box-shadow var(--transition-base),
     background-color var(--transition-base);
+}
+
+.inputInvalid {
+  border-color: #c45b6e;
+  background: #fff5f6;
+  box-shadow: 0 0 0 3px rgba(196, 91, 110, 0.18);
+}
+
+.select {
+  appearance: none;
+  padding-right: 2.2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
 }
 
 .select:disabled,
@@ -174,42 +206,53 @@
 .textarea:disabled {
   cursor: not-allowed;
   color: var(--color-ink-500);
-  background: var(--surface-alt);
+  background-color: var(--surface-muted);
+  opacity: 0.85;
+}
+
+.input:read-only {
+  cursor: default;
+  color: var(--color-wine-700);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  background-color: var(--surface-muted);
 }
 
 .input,
 .select {
-  min-height: 2.7rem;
-  padding: 0 0.9rem;
+  min-height: 2.6rem;
+  padding: 0 0.85rem;
   font-size: var(--text-sm);
 }
 
 .textarea {
   min-height: 6rem;
-  padding: 0.8rem 0.9rem;
+  padding: 0.75rem 0.85rem;
   resize: vertical;
   font-size: var(--text-sm);
+  line-height: 1.5;
 }
 
 .input::placeholder,
 .textarea::placeholder {
   color: var(--color-ink-500);
+  font-weight: 400;
 }
 
-.input:hover,
-.select:hover,
-.textarea:hover {
+.input:hover:not(:disabled):not(:read-only),
+.select:hover:not(:disabled),
+.textarea:hover:not(:disabled) {
   border-color: var(--border-strong);
+  background-color: var(--surface-card);
 }
 
 .input:focus,
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: rgba(17, 24, 39, 0.26);
-  box-shadow:
-    0 0 0 3px rgba(17, 24, 39, 0.06),
-    0 10px 18px rgba(15, 23, 42, 0.04);
+  border-color: var(--color-wine-600);
+  background-color: var(--surface-card);
+  box-shadow: 0 0 0 3px rgba(140, 67, 88, 0.12);
 }
 
 .fieldHint {
@@ -227,8 +270,8 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.8rem;
-  background: var(--surface-card);
+  border-radius: 0.7rem;
+  background: var(--surface-alt);
   transition:
     border-color var(--transition-base),
     box-shadow var(--transition-base),
@@ -237,27 +280,35 @@
 
 .combobox:hover {
   border-color: var(--border-strong);
+  background: var(--surface-card);
 }
 
 .comboboxOpen {
-  border-color: rgba(17, 24, 39, 0.26);
-  box-shadow:
-    0 0 0 3px rgba(17, 24, 39, 0.06),
-    0 10px 18px rgba(15, 23, 42, 0.04);
+  border-color: var(--color-wine-600);
+  background: var(--surface-card);
+  box-shadow: 0 0 0 3px rgba(140, 67, 88, 0.12);
 }
 
 .comboboxDisabled {
-  background: var(--surface-alt);
+  background: var(--surface-muted);
+  opacity: 0.85;
+}
+
+.comboboxInvalid {
+  border-color: #c45b6e;
+  background: #fff5f6;
+  box-shadow: 0 0 0 3px rgba(196, 91, 110, 0.18);
 }
 
 .comboboxInput {
   width: 100%;
-  min-height: 2.7rem;
-  padding: 0 4.4rem 0 0.9rem;
+  min-height: 2.6rem;
+  padding: 0 4.4rem 0 0.85rem;
   border: 0;
   background: transparent;
   color: var(--color-ink-900);
   font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .comboboxInput:focus {
@@ -266,17 +317,24 @@
 
 .comboboxInput::placeholder {
   color: var(--color-ink-500);
+  font-weight: 400;
 }
 
 .staticUserField {
-  min-height: 2.7rem;
+  min-height: 2.6rem;
   display: flex;
   align-items: center;
-  padding: 0 0.9rem;
+  padding: 0 0.85rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 0.8rem;
-  background: var(--surface-alt);
+  border-radius: 0.7rem;
+  background: var(--surface-muted);
   color: var(--color-ink-900);
+}
+
+.staticUserFieldInvalid {
+  border-color: #c45b6e;
+  background: #fff5f6;
+  box-shadow: 0 0 0 3px rgba(196, 91, 110, 0.18);
 }
 
 .staticUserValue {
@@ -368,116 +426,154 @@
   padding: 0.8rem 0.75rem;
 }
 
-.emptyAccessories {
-  color: var(--color-ink-500);
-  font-size: var(--text-sm);
-  line-height: 1.45;
-  text-align: center;
-}
-
-.emptyAccessoriesCard {
-  min-height: 10.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  border: 1px dashed var(--border-subtle);
-  border-radius: 0.95rem;
-  background: var(--surface-alt);
-}
-
-.detailList {
+.detailBlock {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border-subtle);
 }
 
-.detailAddCard {
-  min-height: 10.25rem;
-  height: 100%;
+.detailHeader {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  padding: 1rem;
-  border: 1px dashed var(--border-strong);
-  border-radius: 0.95rem;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.detailHeaderCopy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.detailHeaderTitle {
+  color: var(--color-ink-900);
+  font-size: 0.88rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+}
+
+.detailHeaderHint {
+  color: var(--color-ink-500);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.detailAddButton {
+  min-height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
   background: var(--surface-card);
-  color: var(--color-ink-700);
+  color: var(--color-ink-800);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  text-align: center;
   transition:
     border-color var(--transition-base),
     background-color var(--transition-base),
     box-shadow var(--transition-base);
 }
 
-.detailAddCard:hover {
-  border-color: var(--color-ink-500);
+.detailAddButton:hover {
+  border-color: var(--color-wine-600);
   background: var(--surface-alt);
+  color: var(--color-wine-700);
 }
 
-.detailAddCard:focus-visible {
+.detailAddButton:focus-visible {
   outline: none;
-  border-color: rgba(17, 24, 39, 0.26);
-  box-shadow:
-    0 0 0 3px rgba(17, 24, 39, 0.06),
-    0 10px 18px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 0 0 3px rgba(140, 67, 88, 0.14);
 }
 
-.detailAddIcon {
-  width: 2.5rem;
-  height: 2.5rem;
+.detailList {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.detailCard {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem 0.95rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.95rem;
+  background: var(--surface-card);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.detailCard:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+}
+
+.detailCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+.detailIndex {
+  flex: 0 0 auto;
+  width: 1.55rem;
+  height: 1.55rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.85rem;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-alt);
-  color: var(--color-ink-700);
-}
-
-.detailAddLabel {
-  font-size: 0.88rem;
+  border-radius: 0.55rem;
+  background: var(--color-wine-50, var(--surface-alt));
+  color: var(--color-wine-700);
+  font-size: 0.72rem;
   font-weight: var(--font-weight-semibold);
-  line-height: 1.2;
 }
 
-.detailRow {
-  position: relative;
+.detailCardTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-ink-800);
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.detailCardBody {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem 0.9rem 0.85rem;
-  border-radius: 0.95rem;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-subtle);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.7rem 0.85rem;
 }
 
 .removeIconButton {
-  position: absolute;
-  top: 0.8rem;
-  right: 0.8rem;
-  width: 1.9rem;
-  height: 1.9rem;
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(209, 67, 91, 0.16);
-  border-radius: 0.65rem;
-  background: var(--color-danger-50);
-  color: var(--color-danger-600);
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--color-ink-500);
   cursor: pointer;
   transition:
     background-color var(--transition-base),
     border-color var(--transition-base),
     box-shadow var(--transition-base),
-    transform var(--transition-base);
+    color var(--transition-base);
 }
 
 .removeIconButton:hover {
-  border-color: rgba(209, 67, 91, 0.28);
-  background: #ffe7eb;
-  transform: translateY(-1px);
+  border-color: rgba(209, 67, 91, 0.24);
+  background: var(--color-danger-50);
+  color: var(--color-danger-600);
 }
 
 .removeIconButton:focus-visible {
@@ -485,13 +581,67 @@
   box-shadow: 0 0 0 3px rgba(209, 67, 91, 0.12);
 }
 
-.detailRow .fieldBlock:first-of-type {
-  padding-top: 0.5rem;
+.detailEmptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.35rem 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 0.95rem;
+  background: var(--surface-alt);
+  color: var(--color-ink-700);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    background-color var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
-.detailRow .fieldBlock:first-of-type .label {
-  padding-right: 2.65rem;
+.detailEmptyCard:hover {
+  border-color: var(--color-wine-600);
+  background: var(--surface-card);
 }
+
+.detailEmptyCard:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(140, 67, 88, 0.12);
+}
+
+.detailEmptyCardInvalid {
+  border-color: #c45b6e;
+  border-style: solid;
+  background: #fff5f6;
+  box-shadow: 0 0 0 3px rgba(196, 91, 110, 0.18);
+}
+
+.detailAddIcon {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--color-wine-700);
+}
+
+.detailAddLabel {
+  font-size: 0.86rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+
+.emptyAccessories {
+  color: var(--color-ink-500);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
 
 .primaryButton,
 .cancelLink {
@@ -551,9 +701,8 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .detailList {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
+  .detailCardBody {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .spanFull {
@@ -596,20 +745,7 @@
     grid-column: span 8;
   }
 
-  .detailList {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-auto-rows: 1fr;
-    align-items: start;
-  }
-
-  .detailRow {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-}
-
-@media (min-width: 96rem) {
-  .detailList {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+  .detailCardBody {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 }

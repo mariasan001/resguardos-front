@@ -1,16 +1,18 @@
 "use client";
 
-import { Download, Mail } from "lucide-react";
+import { CheckCircle2, Download, Mail, PenLine } from "lucide-react";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import ResguardoSummary from "@/features/resguardos/ResguardoSummary";
 import ResguardoVerificationCard from "@/features/resguardos/ResguardoVerificationCard";
 import { getApiErrorMessage } from "@/lib/api/errors";
+import { getAccesoriosCatalog } from "@/lib/services/catalogos.client";
 import { sendResguardoEmailWithPdf } from "@/lib/services/email.service";
 import {
   createResguardo,
   getResguardoById,
   getResguardoFirma,
+  updateResguardo,
   uploadResguardoFirma,
 } from "@/lib/services/resguardos.service";
 import { generateResguardoPdf } from "@/lib/services/resguardo-pdf.service";
@@ -24,7 +26,7 @@ import {
   mapPreviewDraftToResguardoPayload,
   mapResguardoToPreviewDraft,
 } from "@/lib/utils/resguardo-payload";
-import { buildDraftSummarySections } from "@/lib/utils/resguardo-summary";
+import { buildDraftSummary } from "@/lib/utils/resguardo-summary";
 import { patchUpdatedUser } from "@/lib/utils/user-cache";
 import {
   useIsHydrated,
@@ -41,6 +43,8 @@ type SubmissionStage =
   | "uploading_firma"
   | "success"
   | "signature_error";
+
+type EditSignatureMode = "choose" | "saved" | "new";
 
 interface SignatureRetryState {
   createdResguardoId: number;
@@ -109,9 +113,13 @@ export default function ResguardoPreview() {
   const [pdfPreviewPending, setPdfPreviewPending] = useState(false);
   const [pdfPreviewError, setPdfPreviewError] = useState<string | null>(null);
   const [emailPending, setEmailPending] = useState(false);
+  const [savedEditSignature, setSavedEditSignature] = useState<string | null>(null);
+  const [savedEditSignatureLoading, setSavedEditSignatureLoading] = useState(true);
+  const [editSignatureMode, setEditSignatureMode] =
+    useState<EditSignatureMode>(draft?.editSignatureMode ?? "choose");
 
-  const summarySections = useMemo(
-    () => (draft ? buildDraftSummarySections(draft) : []),
+  const summary = useMemo(
+    () => (draft ? buildDraftSummary(draft) : null),
     [draft],
   );
 
@@ -158,6 +166,35 @@ export default function ResguardoPreview() {
     prepareGeneratedPdfOnResume(draft.createdResguardoId);
   }, [draft?.createdResguardoId, generatedPdf?.resguardoId]);
 
+  useEffect(() => {
+    const editingResguardoId = draft?.editingResguardoId;
+
+    if (!editingResguardoId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getResguardoFirma(editingResguardoId)
+      .then(blobToDataUrl)
+      .then((signatureDataUrl) => {
+        if (!cancelled) {
+          setSavedEditSignature(signatureDataUrl);
+          setSavedEditSignatureLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSavedEditSignature(null);
+          setSavedEditSignatureLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [draft?.editingResguardoId]);
+
   if (!hydrated) {
     return <section className={styles.emptyState} aria-busy="true" />;
   }
@@ -196,11 +233,16 @@ export default function ResguardoPreview() {
       const resguardo = await getResguardoById(resguardoId);
       const signatureBlob = await getResguardoFirma(resguardoId);
       const signatureDataUrl = await blobToDataUrl(signatureBlob);
+      const accesoriosCatalogo = await getAccesoriosCatalog();
       const nextDraft = mapResguardoToPreviewDraft(resguardo, signatureDataUrl);
+      const capturedDetalles = draft?.detalles ?? [];
       const pdf = await generateResguardoPdf({
         createdResguardoId: resguardoId,
-        draft: nextDraft,
+        draft: capturedDetalles.length
+          ? { ...nextDraft, detalles: capturedDetalles }
+          : nextDraft,
         resguardo,
+        accesoriosCatalogo,
       });
 
       replaceGeneratedPdf({
@@ -223,8 +265,34 @@ export default function ResguardoPreview() {
   }
 
   function handleSignatureValidated(signatureDataUrl: string) {
+    setEditSignatureMode("new");
     patchPreviewResguardoDraft({
       signatureDataUrl,
+      editSignatureMode: "new",
+    });
+  }
+
+  function useSavedSignature() {
+    if (!savedEditSignature) {
+      notify.warning(
+        "Firma no disponible",
+        "Este resguardo no tiene una firma guardada disponible.",
+      );
+      return;
+    }
+
+    setEditSignatureMode("saved");
+    patchPreviewResguardoDraft({
+      signatureDataUrl: savedEditSignature,
+      editSignatureMode: "saved",
+    });
+  }
+
+  function registerNewSignature() {
+    setEditSignatureMode("new");
+    patchPreviewResguardoDraft({
+      signatureDataUrl: undefined,
+      editSignatureMode: "new",
     });
   }
 
@@ -291,10 +359,14 @@ export default function ResguardoPreview() {
       return;
     }
 
+    const editingResguardoId = currentDraft.editingResguardoId;
+
     setConfirmationPending(true);
     setSignatureRetry(null);
     setSubmissionStage("saving_resguardo");
-    setStatusMessage("Guardando el resguardo...");
+    setStatusMessage(
+      editingResguardoId ? "Actualizando el resguardo..." : "Guardando el resguardo...",
+    );
     setPdfPreviewError(null);
 
     try {
@@ -304,10 +376,15 @@ export default function ResguardoPreview() {
         "firma-resguardo.png",
       );
 
-      const createdResponse = await createResguardo(
-        mapPreviewDraftToResguardoPayload(currentDraft),
-      );
-      const createdResguardoId = extractCreatedResguardoId(createdResponse);
+      const payload = mapPreviewDraftToResguardoPayload(currentDraft);
+      let createdResguardoId: number;
+
+      if (editingResguardoId) {
+        await updateResguardo(editingResguardoId, payload);
+        createdResguardoId = editingResguardoId;
+      } else {
+        createdResguardoId = extractCreatedResguardoId(await createResguardo(payload));
+      }
 
       patchPreviewResguardoDraft({
         createdResguardoId,
@@ -322,7 +399,9 @@ export default function ResguardoPreview() {
 
         setSubmissionStage("success");
         setStatusMessage(
-          `El resguardo ${createdResguardoId} fue generado correctamente. Revisa el PDF antes de descargarlo o enviarlo.`,
+          editingResguardoId
+            ? `El resguardo ${createdResguardoId} fue actualizado correctamente. Revisa el PDF antes de descargarlo o enviarlo.`
+            : `El resguardo ${createdResguardoId} fue generado correctamente. Revisa el PDF antes de descargarlo o enviarlo.`,
         );
 
         try {
@@ -355,8 +434,15 @@ export default function ResguardoPreview() {
       setStatusMessage(null);
 
       notify.error(
-        "No fue posible completar el resguardo",
-        getApiErrorMessage(error, "Ocurrio un error al registrar el resguardo."),
+        editingResguardoId
+          ? "No fue posible actualizar el resguardo"
+          : "No fue posible completar el resguardo",
+        getApiErrorMessage(
+          error,
+          editingResguardoId
+            ? "Ocurrio un error al actualizar el resguardo."
+            : "Ocurrio un error al registrar el resguardo.",
+        ),
       );
     } finally {
       setConfirmationPending(false);
@@ -428,16 +514,63 @@ export default function ResguardoPreview() {
 
   return (
     <ResguardoSummary
-      sections={summarySections}
+      hero={summary?.hero}
+      sections={summary?.sections ?? []}
+      accessories={summary?.accessories}
       footer={
         <>
           <ResguardoVerificationCard
+            key={`verification-${currentDraft.editingResguardoId ?? "new"}-${editSignatureMode}`}
             titular={draft.usuarioTitularLabel.trim() || "—"}
             titularEmail={currentDraft.usuarioTitularEmail}
             initialSignatureDataUrl={currentDraft.signatureDataUrl}
             initialSignatureValidated={Boolean(currentDraft.signatureDataUrl)}
             confirmationPending={confirmationPending}
             readOnly={isReadOnlyFlow}
+            signatureLocked={editSignatureMode === "saved"}
+            signatureChoice={
+              currentDraft.editingResguardoId && !isReadOnlyFlow ? (
+                <div
+                  className={styles.signatureModes}
+                  role="group"
+                  aria-label="Firma a utilizar"
+                >
+                  <button
+                    type="button"
+                    className={styles.signatureMode}
+                    data-active={editSignatureMode === "saved"}
+                    disabled={
+                      savedEditSignatureLoading ||
+                      !savedEditSignature ||
+                      confirmationPending
+                    }
+                    title={
+                      savedEditSignatureLoading
+                        ? "Consultando la firma registrada..."
+                        : savedEditSignature
+                          ? "Conservar la firma registrada"
+                          : "Este resguardo no tiene firma registrada"
+                    }
+                    onClick={useSavedSignature}
+                  >
+                    <CheckCircle2 size={15} strokeWidth={1.9} />
+                    Firma guardada
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.signatureMode}
+                    data-active={editSignatureMode === "new"}
+                    disabled={confirmationPending}
+                    title="Reemplazar la firma registrada"
+                    onClick={registerNewSignature}
+                  >
+                    <PenLine size={15} strokeWidth={1.9} />
+                    Nueva firma
+                  </button>
+                </div>
+              ) : null
+            }
             onTitularEmailChange={handleTitularEmailChange}
             onSignatureValidated={handleSignatureValidated}
             onReceptionConfirmed={handleReceptionConfirmed}

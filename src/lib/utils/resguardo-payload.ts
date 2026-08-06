@@ -1,17 +1,36 @@
 import type {
   CreateResguardoResponse,
+  DetalleResguardo,
   PreviewAccesorioDraft,
   PreviewResguardoDraft,
   Resguardo,
 } from "@/lib/types/api";
+import { FIXED_ASSIGN_USER_NAME } from "@/lib/constants/assigner";
+import { getMarcaId, getMarcaLabel } from "@/lib/utils/format";
 
-function mapDetalles(detalles: PreviewAccesorioDraft[]) {
+/**
+ * El accesorio viaja completo: la marca como objeto de catalogo y el modelo
+ * como su descripcion, que es lo que el backend guarda del detalle.
+ */
+function mapDetalles(detalles: PreviewAccesorioDraft[]): DetalleResguardo[] {
   return detalles
     .filter((detalle) => detalle.accesorioId)
-    .map((detalle) => ({
-      accesorio: { id: Number(detalle.accesorioId) },
-      numeroSerie: detalle.numeroSerie || undefined,
-    }));
+    .map((detalle) => {
+      const idMarca = detalle.marcaId ? Number(detalle.marcaId) : undefined;
+
+      return {
+        accesorio: {
+          id: Number(detalle.accesorioId),
+          descAccesorio: detalle.accesorioLabel || undefined,
+          marca: idMarca
+            ? { id: idMarca, descMarca: detalle.marcaLabel || undefined }
+            : undefined,
+          idMarca,
+          modelo: detalle.modeloLabel || undefined,
+        },
+        numeroSerie: detalle.numeroSerie || undefined,
+      };
+    });
 }
 
 export function mapPreviewDraftToResguardoPayload(
@@ -21,7 +40,7 @@ export function mapPreviewDraftToResguardoPayload(
 
   return {
     idInventario: draft.idInventario || undefined,
-    marca: draft.marca || undefined,
+    idMarca: draft.marcaId ? Number(draft.marcaId) : undefined,
     resguardo: referenciaInterna || undefined,
     fechaAsignacion: draft.fechaAsignacion || undefined,
     observaciones: draft.observaciones || undefined,
@@ -80,7 +99,8 @@ export function mapResguardoToPreviewDraft(
 ): PreviewResguardoDraft {
   return {
     idInventario: resguardo.idInventario ?? "",
-    marca: resguardo.marca ?? "",
+    marca: getMarcaLabel(resguardo.marca),
+    marcaId: getMarcaId(resguardo.marca, resguardo.idMarca),
     referenciaInterna: resguardo.resguardo ?? "",
     fechaAsignacion: resguardo.fechaAsignacion ?? "",
     observaciones: resguardo.observaciones ?? "",
@@ -91,10 +111,10 @@ export function mapResguardoToPreviewDraft(
     idEstadoResguardo: String(resguardo.idEstadoResguardo ?? 1),
     estadoLabel:
       resguardo.idEstadoResguardo === 2
-        ? "Devuelto"
+        ? "Modificado"
         : resguardo.idEstadoResguardo === 3
-          ? "Cancelado"
-          : "Activo",
+          ? "Baja"
+          : "Entregado",
     tipoBienLabel: resguardo.tipoBien?.descTipoBien ?? "",
     modeloLabel: resguardo.modelo?.descModelo ?? "",
     sistemaOperativoLabel: resguardo.sistemaOperativo?.descSo ?? "",
@@ -111,11 +131,8 @@ export function mapResguardoToPreviewDraft(
       [resguardo.usuarioResguarda?.neyemp, resguardo.usuarioResguarda?.adscripcion?.desAds]
         .filter(Boolean)
         .join(" · ") || undefined,
-    usuarioAsignaLabel: resguardo.usuarioAsigna?.nombre ?? "",
-    usuarioAsignaHelper:
-      [resguardo.usuarioAsigna?.neyemp, resguardo.usuarioAsigna?.adscripcion?.desAds]
-        .filter(Boolean)
-        .join(" · ") || undefined,
+    usuarioAsignaLabel: FIXED_ASSIGN_USER_NAME,
+    usuarioAsignaHelper: "Asignador predeterminado",
     signatureDataUrl,
     createdResguardoId: resguardo.id,
     tipoBienId: resguardo.tipoBien?.id ? String(resguardo.tipoBien.id) : "",
@@ -135,7 +152,25 @@ export function mapResguardoToPreviewDraft(
         id: `${resguardo.id ?? "resguardo"}-detalle-${index}`,
         accesorioId: detalle.accesorio?.id ? String(detalle.accesorio.id) : "",
         accesorioLabel: detalle.accesorio?.descAccesorio ?? "",
+        marcaId: getMarcaId(detalle.accesorio?.marca, detalle.accesorio?.idMarca),
+        marcaLabel: getMarcaLabel(detalle.accesorio?.marca),
+        modeloLabel: detalle.accesorio?.modelo ?? "",
         numeroSerie: detalle.numeroSerie ?? "",
       })) ?? [],
+  };
+}
+
+/**
+ * El borrador de edicion reutiliza el mapeo de preview, pero sin marcarlo como
+ * resguardo ya generado: eso reactivaria el flujo de PDF en lugar del de captura.
+ */
+export function mapResguardoToEditDraft(resguardo: Resguardo): PreviewResguardoDraft {
+  const draft = mapResguardoToPreviewDraft(resguardo);
+
+  return {
+    ...draft,
+    createdResguardoId: undefined,
+    signatureDataUrl: undefined,
+    editingResguardoId: resguardo.id,
   };
 }
