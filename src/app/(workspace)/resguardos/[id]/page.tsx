@@ -1,10 +1,15 @@
 import ResguardoDetailVerification from "@/features/resguardos/ResguardoDetailVerification";
+import ResguardoLogsCard from "@/features/resguardos/ResguardoLogsCard";
 import ResguardoRecordActions from "@/features/resguardos/ResguardoRecordActions";
 import ResguardoSummary from "@/features/resguardos/ResguardoSummary";
 import { requireSession } from "@/lib/auth/session";
 import { USER_ROLES } from "@/lib/auth/types";
 import { getAccesorios } from "@/lib/services/catalogos.service";
-import { getResguardoByIdServer } from "@/lib/services/resguardos.server";
+import {
+  getResguardoByIdServer,
+  getResguardoLogsServer,
+} from "@/lib/services/resguardos.server";
+import type { ResguardoLog } from "@/lib/types/api";
 import { formatText } from "@/lib/utils/format";
 import { completeResguardoAccesorios } from "@/lib/utils/resguardo-accesorios";
 import { buildResguardoSummary } from "@/lib/utils/resguardo-summary";
@@ -19,15 +24,27 @@ export default async function ResguardoDetailPage({
 }: ResguardoDetailPageProps) {
   const { id } = await params;
   const session = await requireSession();
-  const [resguardo, accesorios] = await Promise.all([
-    getResguardoByIdServer(Number(id)),
+  const isAdmin = session.role === USER_ROLES.admin;
+  const resguardoId = Number(id);
+
+  const [resguardo, accesorios, logsResult] = await Promise.all([
+    getResguardoByIdServer(resguardoId),
     getAccesorios().catch(() => []),
+    isAdmin
+      ? getResguardoLogsServer(resguardoId)
+          .then((logs) => ({ logs, error: null as string | null }))
+          .catch(() => ({
+            logs: [] as ResguardoLog[],
+            error: "No fue posible cargar la bitácora de este resguardo.",
+          }))
+      : Promise.resolve({ logs: [] as ResguardoLog[], error: null }),
   ]);
+
   const summary = buildResguardoSummary(
     completeResguardoAccesorios(resguardo, accesorios),
   );
-  const resguardoId = Number(resguardo.id ?? id);
-  const canEdit = session.role === USER_ROLES.admin && Number.isInteger(resguardoId);
+  const resolvedId = Number(resguardo.id ?? id);
+  const canEdit = isAdmin && Number.isInteger(resolvedId);
 
   return (
     <section className={styles.page}>
@@ -40,7 +57,7 @@ export default async function ResguardoDetailPage({
         </div>
 
         <ResguardoRecordActions
-          editHref={canEdit ? `/resguardos/nuevo?edit=${resguardoId}` : undefined}
+          editHref={canEdit ? `/resguardos/nuevo?edit=${resolvedId}` : undefined}
         />
       </div>
 
@@ -49,11 +66,22 @@ export default async function ResguardoDetailPage({
         sections={summary.sections}
         accessories={summary.accessories}
         footer={
-          <ResguardoDetailVerification
-            resguardoId={Number(resguardo.id ?? id)}
-            titular={formatText(resguardo.usuarioTitular?.nombre, "Titular asignado")}
-            titularEmail={resguardo.usuarioTitular?.email ?? ""}
-          />
+          <>
+            {isAdmin ? (
+              <ResguardoLogsCard
+                logs={logsResult.logs}
+                errorMessage={logsResult.error}
+              />
+            ) : null}
+            <ResguardoDetailVerification
+              resguardoId={resolvedId}
+              titular={formatText(
+                resguardo.usuarioTitular?.nombre,
+                "Titular asignado",
+              )}
+              titularEmail={resguardo.usuarioTitular?.email ?? ""}
+            />
+          </>
         }
       />
     </section>

@@ -28,11 +28,13 @@ describe("canAccessPath", () => {
 });
 
 describe("canUseApiCapability", () => {
-  it("bloquea updateResguardo para encargado", () => {
+  it("bloquea updateResguardo y readLogs para encargado", () => {
     expect(
       canUseApiCapability(USER_ROLES.encargado, "updateResguardo"),
     ).toBe(false);
     expect(canUseApiCapability(USER_ROLES.admin, "updateResguardo")).toBe(true);
+    expect(canUseApiCapability(USER_ROLES.encargado, "readLogs")).toBe(false);
+    expect(canUseApiCapability(USER_ROLES.admin, "readLogs")).toBe(true);
   });
 
   it("permite operaciones de alta y firma a ambos roles", () => {

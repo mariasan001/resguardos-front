@@ -95,6 +95,17 @@ export interface Resguardo {
   firmaUrl?: string;
 }
 
+export interface ResguardoLog {
+  id?: number;
+  resguardoId?: number;
+  campo?: string;
+  valorAnterior?: string | null;
+  valorNuevo?: string | null;
+  fechaCambio?: string;
+  tipoEvento?: string;
+  usuarioModifica?: string | null;
+}
+
 export type CreateResguardoResponse = Record<string, unknown>;
 export type UploadResguardoFirmaResponse = Record<string, unknown>;
 
