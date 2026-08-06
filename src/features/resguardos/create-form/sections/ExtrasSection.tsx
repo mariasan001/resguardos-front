@@ -76,17 +76,13 @@ export function ExtrasSection({
           <div className={styles.detailHeaderCopy}>
             <span className={styles.detailHeaderTitle}>
               Accesorios
-              <span className={styles.requiredMark} aria-hidden="true">
-                {" "}
-                *
-              </span>
             </span>
             <span className={styles.detailHeaderHint}>
               {detalles.length
                 ? `${detalles.length} accesorio${detalles.length === 1 ? "" : "s"} agregado${
                     detalles.length === 1 ? "" : "s"
-                  }.`
-                : "Agrega al menos un accesorio con su serie."}
+                  }. Completa accesorio y serie en cada uno.`
+                : "Opcional. Si agregas uno, no puede quedar vacío."}
             </span>
           </div>
           <button
@@ -172,19 +168,16 @@ export function ExtrasSection({
         ) : (
           <button
             type="button"
-            className={`${styles.detailEmptyCard} ${
-              isFieldInvalid("accesorios") ? styles.detailEmptyCardInvalid : ""
-            }`}
+            className={styles.detailEmptyCard}
             onClick={addDetalle}
             data-motion-item
           >
             <span className={styles.detailAddIcon}>
               <Plus size={18} strokeWidth={2} />
             </span>
-            <span className={styles.detailAddLabel}>Agregar el primer accesorio</span>
+            <span className={styles.detailAddLabel}>Agregar accesorio (opcional)</span>
             <span className={styles.emptyAccessories}>
-              Elige el accesorio del catalogo; su marca y modelo se completan solos
-              y tu capturas la serie.
+              Si agregas uno, selecciona el del catalogo y captura su serie.
             </span>
           </button>
         )}

@@ -16,6 +16,7 @@ export type SectionKey =
 
 export interface DetalleItem {
   id: string;
+  detalleId?: number;
   accesorioId: string;
   numeroSerie: string;
 }

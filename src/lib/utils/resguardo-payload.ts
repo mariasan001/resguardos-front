@@ -6,37 +6,54 @@ import type {
   Resguardo,
 } from "@/lib/types/api";
 import { FIXED_ASSIGN_USER_NAME } from "@/lib/constants/assigner";
-import { getMarcaId, getMarcaLabel } from "@/lib/utils/format";
+import { getEstadoLabel, getMarcaId, getMarcaLabel } from "@/lib/utils/format";
+
+export const ESTADO_ENTREGADO = 1;
+export const ESTADO_MODIFICADO = 2;
+export const ESTADO_BAJA = 3;
 
 /**
- * El accesorio viaja completo: la marca como objeto de catalogo y el modelo
- * como su descripcion, que es lo que el backend guarda del detalle.
+ * Contrato backend: detalles solo necesita accesorio.id + numeroSerie.
+ * En PUT, si se manda detalles se reemplaza toda la lista.
  */
 function mapDetalles(detalles: PreviewAccesorioDraft[]): DetalleResguardo[] {
   return detalles
     .filter((detalle) => detalle.accesorioId)
-    .map((detalle) => {
-      const idMarca = detalle.marcaId ? Number(detalle.marcaId) : undefined;
+    .map((detalle) => ({
+      accesorio: {
+        id: Number(detalle.accesorioId),
+      },
+      numeroSerie: detalle.numeroSerie || undefined,
+    }));
+}
 
-      return {
-        accesorio: {
-          id: Number(detalle.accesorioId),
-          descAccesorio: detalle.accesorioLabel || undefined,
-          marca: idMarca
-            ? { id: idMarca, descMarca: detalle.marcaLabel || undefined }
-            : undefined,
-          idMarca,
-          modelo: detalle.modeloLabel || undefined,
-        },
-        numeroSerie: detalle.numeroSerie || undefined,
-      };
-    });
+/**
+ * En actualización: Baja se respeta; cualquier otro estado pasa a Modificado
+ * (incluye Entregado si el usuario olvidó cambiarlo).
+ */
+export function resolveEstadoForUpdate(selectedEstado: number) {
+  if (selectedEstado === ESTADO_BAJA) {
+    return ESTADO_BAJA;
+  }
+
+  return ESTADO_MODIFICADO;
+}
+
+export interface MapResguardoPayloadOptions {
+  mode?: "create" | "update";
+  usuarioModifica?: string;
 }
 
 export function mapPreviewDraftToResguardoPayload(
   draft: PreviewResguardoDraft,
+  options: MapResguardoPayloadOptions = {},
 ): Resguardo {
   const referenciaInterna = draft.referenciaInterna || draft.resguardo || "";
+  const selectedEstado = Number(draft.idEstadoResguardo || String(ESTADO_ENTREGADO));
+  const idEstadoResguardo =
+    options.mode === "update"
+      ? resolveEstadoForUpdate(selectedEstado)
+      : selectedEstado;
 
   return {
     idInventario: draft.idInventario || undefined,
@@ -48,7 +65,7 @@ export function mapPreviewDraftToResguardoPayload(
     ip: draft.ip || undefined,
     numeroSerie: draft.numeroSerie || undefined,
     mac: draft.mac || undefined,
-    idEstadoResguardo: Number(draft.idEstadoResguardo || "1"),
+    idEstadoResguardo,
     tipoBien: draft.tipoBienId ? { id: Number(draft.tipoBienId) } : undefined,
     modelo: draft.modeloId ? { id: Number(draft.modeloId) } : undefined,
     sistemaOperativo: draft.sistemaOperativoId
@@ -69,7 +86,17 @@ export function mapPreviewDraftToResguardoPayload(
     usuarioAsigna: draft.usuarioAsignaId
       ? { neyemp: draft.usuarioAsignaId }
       : undefined,
-    detalles: mapDetalles(draft.detalles),
+    ...(options.mode === "update" && options.usuarioModifica?.trim()
+      ? { usuarioModifica: options.usuarioModifica.trim() }
+      : {}),
+    detalles: mapDetalles(draft.detalles ?? []),
+  };
+}
+
+export function getEstadoDraftFields(idEstadoResguardo: number) {
+  return {
+    idEstadoResguardo: String(idEstadoResguardo),
+    estadoLabel: getEstadoLabel(idEstadoResguardo),
   };
 }
 
@@ -149,7 +176,11 @@ export function mapResguardoToPreviewDraft(
     usuarioAsignaId: resguardo.usuarioAsigna?.neyemp ?? "",
     detalles:
       resguardo.detalles?.map((detalle, index) => ({
-        id: `${resguardo.id ?? "resguardo"}-detalle-${index}`,
+        id: `${resguardo.id ?? "resguardo"}-detalle-${detalle.id ?? index}`,
+        detalleId:
+          typeof detalle.id === "number" && detalle.id > 0
+            ? detalle.id
+            : undefined,
         accesorioId: detalle.accesorio?.id ? String(detalle.accesorio.id) : "",
         accesorioLabel: detalle.accesorio?.descAccesorio ?? "",
         marcaId: getMarcaId(detalle.accesorio?.marca, detalle.accesorio?.idMarca),

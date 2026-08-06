@@ -10,7 +10,13 @@ import ResguardoPreviewPdfCard from "./preview/ResguardoPreviewPdfCard";
 import ResguardoPreviewStatusCard from "./preview/ResguardoPreviewStatusCard";
 import { useResguardoPreviewController } from "./preview/useResguardoPreviewController";
 
-export default function ResguardoPreview() {
+interface ResguardoPreviewProps {
+  usuarioModifica?: string;
+}
+
+export default function ResguardoPreview({
+  usuarioModifica,
+}: ResguardoPreviewProps) {
   const {
     hydrated,
     draft,
@@ -39,7 +45,7 @@ export default function ResguardoPreview() {
     handleDownloadGeneratedPdf,
     handleSendGeneratedPdf,
     handleRetryPdfPreview,
-  } = useResguardoPreviewController();
+  } = useResguardoPreviewController({ usuarioModifica });
 
   if (!hydrated) {
     return <section className={styles.emptyState} aria-busy="true" />;

@@ -17,9 +17,10 @@ import {
 } from "@/lib/services/catalogos.service";
 import { getResguardoByIdServer, getResguardos } from "@/lib/services/resguardos.server";
 import { getUsuarios } from "@/lib/services/usuarios.server";
-import type { OptionItem, SelectOptionsSource } from "@/lib/types/api";
+import type { Accesorio, OptionItem, SelectOptionsSource } from "@/lib/types/api";
 import { getMarcaId, getMarcaLabel, toUserOptions } from "@/lib/utils/format";
 import { getNextInventoryId } from "@/lib/utils/inventory-id";
+import { completeResguardoAccesorios } from "@/lib/utils/resguardo-accesorios";
 import { mapResguardoToEditDraft } from "@/lib/utils/resguardo-payload";
 import styles from "@/app/(resguardos-list)/resguardos/nuevo/page.module.css";
 
@@ -50,6 +51,25 @@ function buildOptionsSource(
   };
 }
 
+function toAccesorioOptions(items: Accesorio[]): OptionItem[] {
+  return items.map((item) => {
+    const marcaLabel = getMarcaLabel(item.marca);
+
+    return {
+      value: String(item.id ?? ""),
+      label: item.descAccesorio ?? "Sin descripcion",
+      marca: marcaLabel || undefined,
+      marcaId: getMarcaId(item.marca, item.idMarca) || undefined,
+      modelo: item.modelo?.trim() || undefined,
+      helper: [marcaLabel, item.modelo].filter(Boolean).join(" · ") || undefined,
+      searchText: [item.descAccesorio, marcaLabel, item.modelo]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
+    };
+  });
+}
+
 interface NuevoResguardoPageProps {
   searchParams: Promise<{
     continue?: string;
@@ -67,19 +87,10 @@ export default async function NuevoResguardoPage({
   const cancelHref = getHomeRoute(session.role);
   const editId = isAdmin ? Number(params.edit) : Number.NaN;
   const isEditing = Number.isInteger(editId) && editId > 0;
-  // Con continue=1 el borrador vive en el cliente: volver a leer el backend
-  // sobrescribiria los cambios que el usuario aun no confirma.
-  const editDraft =
-    isEditing && !preserveDraft
-      ? mapResguardoToEditDraft(await getResguardoByIdServer(editId))
-      : null;
 
-  if (isEditing && !preserveDraft && !editDraft?.editingResguardoId) {
-    notFound();
-  }
   const [
     usuariosResult,
-    accesoriosResult,
+    accesoriosCatalogResult,
     coloresResult,
     marcasResult,
     modelosResult,
@@ -87,26 +98,10 @@ export default async function NuevoResguardoPage({
     sistemasOperativosResult,
     tiposBienResult,
     resguardosResult,
+    editResguardoResult,
   ] = await Promise.allSettled([
     getUsuarios().then(toUserOptions),
-    getAccesorios().then((items) =>
-      items.map((item) => {
-        const marcaLabel = getMarcaLabel(item.marca);
-
-        return {
-          value: String(item.id ?? ""),
-          label: item.descAccesorio ?? "Sin descripcion",
-          marca: marcaLabel || undefined,
-          marcaId: getMarcaId(item.marca, item.idMarca) || undefined,
-          modelo: item.modelo?.trim() || undefined,
-          helper: [marcaLabel, item.modelo].filter(Boolean).join(" · ") || undefined,
-          searchText: [item.descAccesorio, marcaLabel, item.modelo]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase(),
-        };
-      }),
-    ),
+    getAccesorios(),
     getColoresMateriales().then((items) =>
       items.map((item) => ({
         value: String(item.id ?? ""),
@@ -144,7 +139,40 @@ export default async function NuevoResguardoPage({
       })),
     ),
     getResguardos(),
+    isEditing && !preserveDraft
+      ? getResguardoByIdServer(editId)
+      : Promise.resolve(null),
   ]);
+
+  const accesoriosCatalog =
+    accesoriosCatalogResult.status === "fulfilled"
+      ? accesoriosCatalogResult.value
+      : [];
+  const accesoriosResult: PromiseSettledResult<OptionItem[]> =
+    accesoriosCatalogResult.status === "fulfilled"
+      ? {
+          status: "fulfilled",
+          value: toAccesorioOptions(accesoriosCatalogResult.value),
+        }
+      : {
+          status: "rejected",
+          reason: accesoriosCatalogResult.reason,
+        };
+
+  const editDraft =
+    editResguardoResult.status === "fulfilled" && editResguardoResult.value
+      ? mapResguardoToEditDraft(
+          completeResguardoAccesorios(
+            editResguardoResult.value,
+            accesoriosCatalog,
+          ),
+        )
+      : null;
+
+  if (isEditing && !preserveDraft && !editDraft?.editingResguardoId) {
+    notFound();
+  }
+
   if (resguardosResult.status === "rejected") {
     throw new Error(
       "No fue posible calcular el siguiente folio de inventario sin riesgo de duplicarlo.",

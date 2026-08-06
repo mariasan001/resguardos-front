@@ -93,6 +93,8 @@ export interface Resguardo {
   firmaSizeBytes?: number;
   fechaFirma?: string;
   firmaUrl?: string;
+  /** Solo en PUT: usuario que modifica, para bitácora. No se persiste en el resguardo. */
+  usuarioModifica?: string;
 }
 
 export interface ResguardoLog {
@@ -152,6 +154,8 @@ export interface ResguardoCatalogSources {
 
 export interface PreviewAccesorioDraft {
   id: string;
+  /** Id del detalle en backend; necesario para actualizar sin perder el primero. */
+  detalleId?: number;
   accesorioId: string;
   accesorioLabel: string;
   marcaId?: string;

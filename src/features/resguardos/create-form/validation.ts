@@ -29,15 +29,8 @@ export function collectValidationIssues(params: {
     }
   }
 
-  if (detalles.length === 0) {
-    invalidKeys.push("accesorios");
-
-    if (!firstSection) {
-      firstSection = "extras";
-      firstMessage = "Agrega al menos un accesorio con serie.";
-    }
-  }
-
+  // Accesorios opcionales: sin filas está bien.
+  // Si hay filas, cada una debe venir completa (accesorio + serie + catálogo).
   for (const [index, detalle] of detalles.entries()) {
     const position = index + 1;
 

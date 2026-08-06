@@ -38,6 +38,7 @@ const FIELD_LABELS: Record<string, string> = {
   colorMaterial: "Color / material",
   procesador: "Procesador",
   firmaPath: "Firma",
+  accesorios: "Accesorios",
 };
 
 function isEmptyValue(value?: string | null) {
@@ -134,6 +135,14 @@ function buildChangeSummary(log: ResguardoLog) {
       kind: "firma" as const,
       title: "Firma",
       summary: formatFirmaSummary(log.valorAnterior, log.valorNuevo),
+    };
+  }
+
+  if (log.campo?.trim() === "accesorios") {
+    return {
+      kind: "firma" as const,
+      title: "Accesorios",
+      summary: "Se actualizó la lista de accesorios del resguardo.",
     };
   }
 

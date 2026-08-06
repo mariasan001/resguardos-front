@@ -18,6 +18,7 @@ import { notify } from "@/lib/utils/notify";
 import { patchPreviewResguardoDraft } from "@/lib/utils/resguardo-draft";
 import {
   extractCreatedResguardoId,
+  getEstadoDraftFields,
   mapPreviewDraftToResguardoPayload,
   mapResguardoToPreviewDraft,
 } from "@/lib/utils/resguardo-payload";
@@ -35,7 +36,14 @@ import type {
   SubmissionStage,
 } from "./types";
 
-export function useResguardoPreviewController() {
+interface UseResguardoPreviewControllerOptions {
+  usuarioModifica?: string;
+}
+
+export function useResguardoPreviewController(
+  options: UseResguardoPreviewControllerOptions = {},
+) {
+  const { usuarioModifica } = options;
   const hydrated = useIsHydrated();
   const draft = usePreviewResguardoDraft();
   const pdfCardRef = useRef<HTMLElement | null>(null);
@@ -295,12 +303,21 @@ export function useResguardoPreviewController() {
         "firma-resguardo.png",
       );
 
-      const payload = mapPreviewDraftToResguardoPayload(draft);
+      const payload = mapPreviewDraftToResguardoPayload(
+        draft,
+        editingResguardoId
+          ? { mode: "update", usuarioModifica }
+          : { mode: "create" },
+      );
       let createdResguardoId: number;
 
       if (editingResguardoId) {
         await updateResguardo(editingResguardoId, payload);
         createdResguardoId = editingResguardoId;
+        patchPreviewResguardoDraft({
+          ...getEstadoDraftFields(payload.idEstadoResguardo ?? 2),
+          usuarioTitularEmail: syncedEmail || draft.usuarioTitularEmail,
+        });
       } else {
         createdResguardoId = extractCreatedResguardoId(await createResguardo(payload));
       }

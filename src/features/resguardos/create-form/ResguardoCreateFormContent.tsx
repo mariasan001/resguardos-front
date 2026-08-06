@@ -37,6 +37,7 @@ export function ResguardoCreateFormContent({
   const [detalles, setDetalles] = useState<DetalleItem[]>(
     initialDraft?.detalles?.map((detalle) => ({
       id: detalle.id || nextDetailId(),
+      detalleId: detalle.detalleId,
       accesorioId: detalle.accesorioId,
       numeroSerie: detalle.numeroSerie,
     })) ?? [],

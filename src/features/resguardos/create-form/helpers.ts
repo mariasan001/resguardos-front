@@ -82,13 +82,13 @@ export function getSectionStatus(
       };
     case "extras": {
       const hasNotes = Boolean(values.observaciones?.trim());
-      const completeAccessories = details.filter(
-        (detail) => detail.accesorioId.trim() && detail.numeroSerie.trim(),
-      );
-      const hasAccessories =
-        details.length > 0 && completeAccessories.length === details.length;
+      const accessoriesOk =
+        details.length === 0 ||
+        details.every(
+          (detail) => detail.accesorioId.trim() && detail.numeroSerie.trim(),
+        );
       return {
-        completed: Number(hasNotes) + Number(hasAccessories),
+        completed: Number(hasNotes) + Number(accessoriesOk),
         total: 2,
       };
     }
@@ -113,6 +113,7 @@ export function toDraftDetalles(
 
     return {
       id: detalle.id,
+      detalleId: detalle.detalleId,
       accesorioId: detalle.accesorioId,
       accesorioLabel: option?.label ?? "",
       marcaId: option?.marcaId ?? "",
