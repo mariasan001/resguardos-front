@@ -363,18 +363,26 @@ export default function ResguardoVerificationCard({
               <Mail size={15} strokeWidth={1.9} />
             </span>
             <div className={styles.metaCopy}>
-              <span className={styles.metaLabel}>Correo del titular</span>
-              {readOnly ? (
-                <strong className={styles.metaValue}>{titularEmail.trim() || "—"}</strong>
+              <span className={styles.metaLabel}>Correo de envío</span>
+              {onTitularEmailChange ? (
+                <>
+                  <input
+                    className={styles.metaInput}
+                    type="email"
+                    value={titularEmail}
+                    placeholder="correo@institucion.gob.mx"
+                    disabled={confirmationPending}
+                    aria-label="Correo al que se enviará el PDF"
+                    onChange={(event) => onTitularEmailChange(event.target.value)}
+                  />
+                  <span className={styles.metaHint}>
+                    Al confirmar la recepción se registra para el envío del PDF.
+                  </span>
+                </>
               ) : (
-                <input
-                  className={styles.metaInput}
-                  type="email"
-                  value={titularEmail}
-                  placeholder="correo@institucion.gob.mx"
-                  disabled={confirmationPending}
-                  onChange={(event) => onTitularEmailChange?.(event.target.value)}
-                />
+                <strong className={styles.metaValue}>
+                  {titularEmail.trim() || "—"}
+                </strong>
               )}
             </div>
           </div>

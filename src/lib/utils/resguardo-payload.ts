@@ -6,25 +6,43 @@ import type {
   Resguardo,
 } from "@/lib/types/api";
 import { FIXED_ASSIGN_USER_NAME } from "@/lib/constants/assigner";
-import { getEstadoLabel, getMarcaId, getMarcaLabel } from "@/lib/utils/format";
+import {
+  getEstadoLabel,
+  getMarcaId,
+  getMarcaLabel,
+  getModeloId,
+  getModeloLabel,
+} from "@/lib/utils/format";
 
 export const ESTADO_ENTREGADO = 1;
 export const ESTADO_MODIFICADO = 2;
 export const ESTADO_BAJA = 3;
 
 /**
- * Contrato backend: detalles solo necesita accesorio.id + numeroSerie.
+ * Contrato backend: detalles usa accesorio.id + numeroSerie y, si aplica,
+ * marca/modelo del detalle (ya no viven en el catalogo de accesorios).
  * En PUT, si se manda detalles se reemplaza toda la lista.
  */
 function mapDetalles(detalles: PreviewAccesorioDraft[]): DetalleResguardo[] {
   return detalles
     .filter((detalle) => detalle.accesorioId)
-    .map((detalle) => ({
-      accesorio: {
-        id: Number(detalle.accesorioId),
-      },
-      numeroSerie: detalle.numeroSerie || undefined,
-    }));
+    .map((detalle) => {
+      const marcaId = detalle.marcaId ? Number(detalle.marcaId) : undefined;
+      const modeloId = detalle.modeloId ? Number(detalle.modeloId) : undefined;
+
+      return {
+        accesorio: {
+          id: Number(detalle.accesorioId),
+        },
+        ...(Number.isFinite(marcaId)
+          ? { marca: { id: marcaId }, idMarca: marcaId }
+          : {}),
+        ...(Number.isFinite(modeloId)
+          ? { modelo: { id: modeloId }, idModelo: modeloId }
+          : {}),
+        numeroSerie: detalle.numeroSerie || undefined,
+      };
+    });
 }
 
 /**
@@ -152,7 +170,10 @@ export function mapResguardoToPreviewDraft(
       [resguardo.usuarioTitular?.neyemp, resguardo.usuarioTitular?.adscripcion?.desAds]
         .filter(Boolean)
         .join(" · ") || undefined,
-    usuarioTitularEmail: resguardo.usuarioTitular?.email ?? "",
+    usuarioTitularEmail:
+      resguardo.usuarioTitular?.email?.trim() ||
+      resguardo.usuarioResguarda?.email?.trim() ||
+      "",
     usuarioResguardaLabel: resguardo.usuarioResguarda?.nombre ?? "",
     usuarioResguardaHelper:
       [resguardo.usuarioResguarda?.neyemp, resguardo.usuarioResguarda?.adscripcion?.desAds]
@@ -183,9 +204,18 @@ export function mapResguardoToPreviewDraft(
             : undefined,
         accesorioId: detalle.accesorio?.id ? String(detalle.accesorio.id) : "",
         accesorioLabel: detalle.accesorio?.descAccesorio ?? "",
-        marcaId: getMarcaId(detalle.accesorio?.marca, detalle.accesorio?.idMarca),
-        marcaLabel: getMarcaLabel(detalle.accesorio?.marca),
-        modeloLabel: detalle.accesorio?.modelo ?? "",
+        marcaId:
+          getMarcaId(detalle.marca, detalle.idMarca) ||
+          getMarcaId(detalle.accesorio?.marca, detalle.accesorio?.idMarca),
+        marcaLabel:
+          getMarcaLabel(detalle.marca) ||
+          getMarcaLabel(detalle.accesorio?.marca),
+        modeloId: getModeloId(detalle.modelo, detalle.idModelo),
+        modeloLabel:
+          getModeloLabel(detalle.modelo) ||
+          (typeof detalle.accesorio?.modelo === "string"
+            ? detalle.accesorio.modelo
+            : ""),
         numeroSerie: detalle.numeroSerie ?? "",
       })) ?? [],
   };

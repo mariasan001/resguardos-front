@@ -28,7 +28,7 @@ import {
   usePreviewResguardoDraft,
 } from "@/lib/utils/use-preview-resguardo-draft";
 
-import { syncTitularEmailIfNeeded } from "./syncTitularEmail";
+import { syncEmailsForResguardoSend } from "./syncTitularEmail";
 import type {
   EditSignatureMode,
   GeneratedPdfState,
@@ -297,7 +297,7 @@ export function useResguardoPreviewController(
     setPdfPreviewError(null);
 
     try {
-      const syncedEmail = await syncTitularEmailIfNeeded(draft);
+      const syncedEmail = await syncEmailsForResguardoSend(draft);
       const signatureFile = await dataUrlToFile(
         draft.signatureDataUrl,
         "firma-resguardo.png",
@@ -399,22 +399,23 @@ export function useResguardoPreviewController(
   }
 
   async function handleSendGeneratedPdf() {
-    if (!generatedPdf) {
+    if (!generatedPdf || !draft) {
       return;
     }
 
     setEmailPending(true);
     const toastId = notify.loading(
       "Enviando resguardo",
-      "Adjuntando el PDF generado al correo del resguardo...",
+      "Registrando el correo y adjuntando el PDF...",
     );
 
     try {
+      await syncEmailsForResguardoSend(draft);
       await sendResguardoEmailWithPdf(generatedPdf.resguardoId, generatedPdf.file);
       notify.dismiss(toastId);
       notify.success(
         "Correo enviado",
-        `El PDF del resguardo ${generatedPdf.resguardoId} fue enviado correctamente.`,
+        `El PDF del resguardo ${generatedPdf.resguardoId} fue enviado a ${draft.usuarioTitularEmail?.trim() || "el correo registrado"}.`,
       );
     } catch (error) {
       notify.dismiss(toastId);

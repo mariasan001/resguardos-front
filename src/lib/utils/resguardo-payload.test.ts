@@ -46,12 +46,20 @@ function buildDraft(
         id: "d1",
         accesorioId: "12",
         accesorioLabel: "Monitor",
+        marcaId: "4",
+        marcaLabel: "HP",
+        modeloId: "6",
+        modeloLabel: "E24",
         numeroSerie: "SERIE-12",
       },
       {
         id: "d2",
         accesorioId: "13",
         accesorioLabel: "Teclado",
+        marcaId: "5",
+        marcaLabel: "Lenovo",
+        modeloId: "7",
+        modeloLabel: "KB-1",
         numeroSerie: "SERIE-13",
       },
     ],
@@ -76,8 +84,22 @@ describe("mapPreviewDraftToResguardoPayload", () => {
     expect(payload.idEstadoResguardo).toBe(ESTADO_ENTREGADO);
     expect(payload.usuarioModifica).toBeUndefined();
     expect(payload.detalles).toEqual([
-      { accesorio: { id: 12 }, numeroSerie: "SERIE-12" },
-      { accesorio: { id: 13 }, numeroSerie: "SERIE-13" },
+      {
+        accesorio: { id: 12 },
+        marca: { id: 4 },
+        idMarca: 4,
+        modelo: { id: 6 },
+        idModelo: 6,
+        numeroSerie: "SERIE-12",
+      },
+      {
+        accesorio: { id: 13 },
+        marca: { id: 5 },
+        idMarca: 5,
+        modelo: { id: 7 },
+        idModelo: 7,
+        numeroSerie: "SERIE-13",
+      },
     ]);
   });
 

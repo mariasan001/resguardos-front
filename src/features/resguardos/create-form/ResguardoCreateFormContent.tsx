@@ -31,7 +31,6 @@ export function ResguardoCreateFormContent({
   sources,
   cancelHref = "/resguardos",
   initialDraft,
-  generatedInventoryId,
 }: ResguardoCreateFormContentProps) {
   const router = useRouter();
   const [detalles, setDetalles] = useState<DetalleItem[]>(
@@ -39,6 +38,8 @@ export function ResguardoCreateFormContent({
       id: detalle.id || nextDetailId(),
       detalleId: detalle.detalleId,
       accesorioId: detalle.accesorioId,
+      marcaId: detalle.marcaId ?? "",
+      modeloId: detalle.modeloId ?? "",
       numeroSerie: detalle.numeroSerie,
     })) ?? [],
   );
@@ -47,7 +48,7 @@ export function ResguardoCreateFormContent({
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [formValues, setFormValues] = useState<Record<string, string>>({
     ...initialSectionValues,
-    idInventario: initialDraft?.idInventario ?? generatedInventoryId,
+    idInventario: initialDraft?.idInventario ?? "",
     marcaId: initialDraft?.marcaId ?? "",
     marca: initialDraft?.marca ?? "",
     referenciaInterna:
@@ -115,14 +116,10 @@ export function ResguardoCreateFormContent({
 
   function updateDetalle(
     id: string,
-    key: "accesorioId" | "numeroSerie",
+    key: "accesorioId" | "numeroSerie" | "marcaId" | "modeloId",
     value: string,
   ) {
     clearFieldInvalid(`detalle-${id}-${key}`);
-    if (key === "accesorioId") {
-      clearFieldInvalid(`detalle-${id}-marca`);
-      clearFieldInvalid(`detalle-${id}-modelo`);
-    }
     setFormError("");
     setDetalles((current) =>
       current.map((item) =>
@@ -140,6 +137,8 @@ export function ResguardoCreateFormContent({
       {
         id: nextDetailId(),
         accesorioId: "",
+        marcaId: "",
+        modeloId: "",
         numeroSerie: "",
       },
     ]);
@@ -152,8 +151,8 @@ export function ResguardoCreateFormContent({
         (key) =>
           key !== `detalle-${id}-accesorioId` &&
           key !== `detalle-${id}-numeroSerie` &&
-          key !== `detalle-${id}-marca` &&
-          key !== `detalle-${id}-modelo`,
+          key !== `detalle-${id}-marcaId` &&
+          key !== `detalle-${id}-modeloId`,
       ),
     );
     setFormError("");

@@ -238,20 +238,72 @@ export default async function ResguardosPage({
           </Link>
         </header>
 
-        <DataTable
-          embedded
-          data={paginated}
-          keyExtractor={(item) => String(item.id ?? item.idInventario)}
-          emptyTitle="Sin coincidencias"
-          emptyDescription="No hay resguardos con los filtros actuales."
-          sort={{
-            key: sortKey,
-            direction: sortDirection,
-            buildHref: (key, direction) =>
-              buildHref({ sort: key, dir: direction, page: 1 }),
-          }}
-          emptyContent={
-            resguardos.length === 0 ? (
+        {resguardos.length > 0 ? (
+          <div className={styles.mobileFilters} aria-label="Filtros del listado">
+            <ColumnSearch
+              param="titular"
+              placeholder="Buscar titular"
+              ariaLabel="Buscar por titular"
+            />
+            <ColumnSearch
+              param="adscripcion"
+              placeholder="Buscar adscripción"
+              ariaLabel="Buscar por adscripción"
+            />
+            <ColumnDateFilter
+              param="fechaAsignacion"
+              ariaLabel="Filtrar por fecha de asignación"
+            />
+            <ColumnDateFilter
+              param="fechaActualizacion"
+              ariaLabel="Filtrar por fecha de actualización"
+            />
+          </div>
+        ) : null}
+
+        {paginated.length ? (
+          <ul className={styles.mobileList}>
+            {paginated.map((item) => (
+              <li key={String(item.id ?? item.idInventario)} className={styles.mobileCard}>
+                <div className={styles.mobileCardTop}>
+                  <div className={styles.mobileCardCopy}>
+                    <Link
+                      href={`/resguardos/${item.id}`}
+                      className={styles.mobileCardTitle}
+                    >
+                      {formatTitleCase(item.usuarioTitular?.nombre)}
+                    </Link>
+                    <p className={styles.mobileCardMeta}>
+                      {formatTitleCase(
+                        item.usuarioTitular?.adscripcion?.desAds,
+                        "Sin adscripción",
+                      )}
+                    </p>
+                  </div>
+                  <div className={styles.mobileCardActions}>
+                    <StatusBadge value={item.idEstadoResguardo} />
+                    <ResguardoRowActions
+                      id={item.id}
+                      inventario={item.idInventario}
+                    />
+                  </div>
+                </div>
+                <dl className={styles.mobileCardFacts}>
+                  <div>
+                    <dt>Asignación</dt>
+                    <dd>{formatDate(item.fechaAsignacion)}</dd>
+                  </div>
+                  <div>
+                    <dt>Actualización</dt>
+                    <dd>{formatDate(item.fechaActualizacion)}</dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className={styles.mobileEmpty}>
+            {resguardos.length === 0 ? (
               <EmptyState
                 title="Aun no hay resguardos"
                 description="Registra el primer resguardo para comenzar el seguimiento."
@@ -262,7 +314,7 @@ export default async function ResguardosPage({
                   </Link>
                 }
               />
-            ) : hasActiveFilters ? (
+            ) : (
               <EmptyState
                 title="Sin resultados"
                 description="No se encontraron resguardos con los filtros actuales."
@@ -272,91 +324,131 @@ export default async function ResguardosPage({
                   </Link>
                 }
               />
-            ) : undefined
-          }
-          columns={[
-            {
-              key: "titular",
-              header: "Titular",
-              sortable: true,
-              filter:
-                resguardos.length > 0 ? (
-                  <ColumnSearch
-                    param="titular"
-                    placeholder="Buscar titular"
-                    ariaLabel="Buscar por titular"
-                  />
-                ) : undefined,
-              render: (item) => (
-                <Link href={`/resguardos/${item.id}`} className={styles.primaryLink}>
-                  {formatTitleCase(item.usuarioTitular?.nombre)}
-                </Link>
-              ),
-            },
-            {
-              key: "adscripcion",
-              header: "Adscripción",
-              sortable: true,
-              filter:
-                resguardos.length > 0 ? (
-                  <ColumnSearch
-                    param="adscripcion"
-                    placeholder="Buscar adscripción"
-                    ariaLabel="Buscar por adscripción"
-                  />
-                ) : undefined,
-              render: (item) =>
-                formatTitleCase(
-                  item.usuarioTitular?.adscripcion?.desAds,
-                  "Sin adscripción",
+            )}
+          </div>
+        )}
+
+        <div className={styles.desktopTable}>
+          <DataTable
+            embedded
+            data={paginated}
+            keyExtractor={(item) => String(item.id ?? item.idInventario)}
+            emptyTitle="Sin coincidencias"
+            emptyDescription="No hay resguardos con los filtros actuales."
+            sort={{
+              key: sortKey,
+              direction: sortDirection,
+              buildHref: (key, direction) =>
+                buildHref({ sort: key, dir: direction, page: 1 }),
+            }}
+            emptyContent={
+              resguardos.length === 0 ? (
+                <EmptyState
+                  title="Aun no hay resguardos"
+                  description="Registra el primer resguardo para comenzar el seguimiento."
+                  actions={
+                    <Link href="/resguardos/nuevo" className={styles.primaryAction}>
+                      <Plus size={16} strokeWidth={2} />
+                      Nuevo resguardo
+                    </Link>
+                  }
+                />
+              ) : hasActiveFilters ? (
+                <EmptyState
+                  title="Sin resultados"
+                  description="No se encontraron resguardos con los filtros actuales."
+                  actions={
+                    <Link href="/resguardos" className={styles.secondaryAction}>
+                      Limpiar filtros
+                    </Link>
+                  }
+                />
+              ) : undefined
+            }
+            columns={[
+              {
+                key: "titular",
+                header: "Titular",
+                sortable: true,
+                filter:
+                  resguardos.length > 0 ? (
+                    <ColumnSearch
+                      param="titular"
+                      placeholder="Buscar titular"
+                      ariaLabel="Buscar por titular"
+                    />
+                  ) : undefined,
+                render: (item) => (
+                  <Link href={`/resguardos/${item.id}`} className={styles.primaryLink}>
+                    {formatTitleCase(item.usuarioTitular?.nombre)}
+                  </Link>
                 ),
-            },
-            {
-              key: "fechaAsignacion",
-              header: "Fecha de asignación",
-              sortable: true,
-              filter:
-                resguardos.length > 0 ? (
-                  <ColumnDateFilter
-                    param="fechaAsignacion"
-                    ariaLabel="Filtrar por fecha de asignación"
-                  />
-                ) : undefined,
-              render: (item) => formatDate(item.fechaAsignacion),
-            },
-            {
-              key: "fechaActualizacion",
-              header: "Fecha de actualización",
-              sortable: true,
-              align: "center",
-              filter:
-                resguardos.length > 0 ? (
-                  <ColumnDateFilter
-                    param="fechaActualizacion"
-                    ariaLabel="Filtrar por fecha de actualización"
-                  />
-                ) : undefined,
-              render: (item) => formatDate(item.fechaActualizacion),
-            },
-            {
-              key: "estatus",
-              header: "Estatus",
-              sortable: true,
-              align: "center",
-              render: (item) => <StatusBadge value={item.idEstadoResguardo} />,
-            },
-            {
-              key: "acciones",
-              header: "Acciones",
-              align: "center",
-              headerClassName: styles.actionsHeader,
-              cellClassName: styles.actionsCell,
-              render: (item) => (
-                <ResguardoRowActions id={item.id} inventario={item.idInventario} />
-              ),
-            },
-          ]}
-        />
+              },
+              {
+                key: "adscripcion",
+                header: "Adscripción",
+                sortable: true,
+                filter:
+                  resguardos.length > 0 ? (
+                    <ColumnSearch
+                      param="adscripcion"
+                      placeholder="Buscar adscripción"
+                      ariaLabel="Buscar por adscripción"
+                    />
+                  ) : undefined,
+                render: (item) =>
+                  formatTitleCase(
+                    item.usuarioTitular?.adscripcion?.desAds,
+                    "Sin adscripción",
+                  ),
+              },
+              {
+                key: "fechaAsignacion",
+                header: "Fecha de asignación",
+                sortable: true,
+                filter:
+                  resguardos.length > 0 ? (
+                    <ColumnDateFilter
+                      param="fechaAsignacion"
+                      ariaLabel="Filtrar por fecha de asignación"
+                    />
+                  ) : undefined,
+                render: (item) => formatDate(item.fechaAsignacion),
+              },
+              {
+                key: "fechaActualizacion",
+                header: "Fecha de actualización",
+                sortable: true,
+                align: "center",
+                filter:
+                  resguardos.length > 0 ? (
+                    <ColumnDateFilter
+                      param="fechaActualizacion"
+                      ariaLabel="Filtrar por fecha de actualización"
+                    />
+                  ) : undefined,
+                render: (item) => formatDate(item.fechaActualizacion),
+              },
+              {
+                key: "estatus",
+                header: "Estatus",
+                sortable: true,
+                align: "center",
+                render: (item) => <StatusBadge value={item.idEstadoResguardo} />,
+              },
+              {
+                key: "acciones",
+                header: "Acciones",
+                align: "center",
+                headerClassName: styles.actionsHeader,
+                cellClassName: styles.actionsCell,
+                render: (item) => (
+                  <ResguardoRowActions id={item.id} inventario={item.idInventario} />
+                ),
+              },
+            ]}
+          />
+        </div>
 
         {filtered.length ? (
           <footer className={styles.pagination}>

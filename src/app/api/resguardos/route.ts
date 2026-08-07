@@ -4,9 +4,7 @@ import { authorizeApiRequest } from "@/lib/auth/api-authorization";
 import { getBackendAuthHeaders } from "@/lib/auth/backend-headers";
 import { rolesForApiCapability } from "@/lib/auth/permissions";
 import { getBackendBaseUrl } from "@/lib/config/env";
-import { getResguardos } from "@/lib/services/resguardos.server";
 import type { Resguardo } from "@/lib/types/api";
-import { resolveInventoryId } from "@/lib/utils/inventory-id";
 
 export async function POST(request: Request) {
   const { error } = await authorizeApiRequest(
@@ -34,8 +32,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const existingResguardos = await getResguardos();
-  const idInventario = resolveInventoryId(body.idInventario, existingResguardos);
+  const idInventario = body.idInventario?.trim() || undefined;
   const response = await fetch(
     new URL("/api/resguardos", getBackendBaseUrl()),
     {
@@ -58,7 +55,15 @@ export async function POST(request: Request) {
 
   const responsePayload =
     payload && typeof payload === "object" && !Array.isArray(payload)
-      ? { ...payload, idInventario }
+      ? {
+          ...payload,
+          idInventario:
+            "idInventario" in payload &&
+            typeof payload.idInventario === "string" &&
+            payload.idInventario.trim()
+              ? payload.idInventario
+              : idInventario,
+        }
       : payload;
 
   return NextResponse.json(responsePayload, {

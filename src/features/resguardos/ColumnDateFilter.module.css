@@ -38,7 +38,8 @@
 .popover {
   position: fixed;
   z-index: 60;
-  width: 17.5rem;
+  width: min(17.5rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
   display: grid;
   gap: var(--space-3);
   padding: var(--space-4);

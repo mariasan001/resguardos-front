@@ -9,8 +9,6 @@ import styles from "@/features/resguardos/ResguardoCreateForm.module.css";
 import { Field } from "../fields/Field";
 import { FieldLabel } from "../fields/FieldLabel";
 import { SelectField } from "../fields/SelectField";
-import { StaticUserField } from "../fields/StaticUserField";
-import { getAccesorioOption } from "../helpers";
 import { Section } from "../Section";
 import type { DetalleItem, SectionKey, SectionStatus } from "../types";
 
@@ -39,7 +37,7 @@ export function ExtrasSection({
   updateField: (name: string, value: string) => void;
   updateDetalle: (
     id: string,
-    key: "accesorioId" | "numeroSerie",
+    key: "accesorioId" | "numeroSerie" | "marcaId" | "modeloId",
     value: string,
   ) => void;
   addDetalle: () => void;
@@ -74,14 +72,12 @@ export function ExtrasSection({
       <div className={`${styles.detailBlock} ${styles.spanFull}`}>
         <div className={styles.detailHeader}>
           <div className={styles.detailHeaderCopy}>
-            <span className={styles.detailHeaderTitle}>
-              Accesorios
-            </span>
+            <span className={styles.detailHeaderTitle}>Accesorios</span>
             <span className={styles.detailHeaderHint}>
               {detalles.length
                 ? `${detalles.length} accesorio${detalles.length === 1 ? "" : "s"} agregado${
                     detalles.length === 1 ? "" : "s"
-                  }. Completa accesorio y serie en cada uno.`
+                  }. Completa tipo, marca, modelo y serie.`
                 : "Opcional. Si agregas uno, no puede quedar vacío."}
             </span>
           </div>
@@ -133,7 +129,7 @@ export function ExtrasSection({
                     label="Serie del accesorio"
                     name={`detalle-serie-${index}`}
                     value={detalle.numeroSerie}
-                    placeholder="Numero de serie"
+                    placeholder="Número de serie"
                     required
                     invalid={isFieldInvalid(`detalle-${detalle.id}-numeroSerie`)}
                     onChange={(event) =>
@@ -141,25 +137,29 @@ export function ExtrasSection({
                     }
                     span="half"
                   />
-                  <StaticUserField
+                  <SelectField
                     label="Marca"
-                    value={
-                      getAccesorioOption(accesorios, detalle.accesorioId)?.marca ||
-                      "Sin marca en el catalogo"
+                    name={`detalle-marca-${index}`}
+                    source={sources.marcas}
+                    value={detalle.marcaId}
+                    required
+                    invalid={isFieldInvalid(`detalle-${detalle.id}-marcaId`)}
+                    onChange={(event) =>
+                      updateDetalle(detalle.id, "marcaId", event.target.value)
                     }
                     span="half"
-                    required
-                    invalid={isFieldInvalid(`detalle-${detalle.id}-marca`)}
                   />
-                  <StaticUserField
+                  <SelectField
                     label="Modelo"
-                    value={
-                      getAccesorioOption(accesorios, detalle.accesorioId)?.modelo ||
-                      "Sin modelo en el catalogo"
+                    name={`detalle-modelo-${index}`}
+                    source={sources.modelos}
+                    value={detalle.modeloId}
+                    required
+                    invalid={isFieldInvalid(`detalle-${detalle.id}-modeloId`)}
+                    onChange={(event) =>
+                      updateDetalle(detalle.id, "modeloId", event.target.value)
                     }
                     span="half"
-                    required
-                    invalid={isFieldInvalid(`detalle-${detalle.id}-modelo`)}
                   />
                 </div>
               </article>
@@ -177,7 +177,7 @@ export function ExtrasSection({
             </span>
             <span className={styles.detailAddLabel}>Agregar accesorio (opcional)</span>
             <span className={styles.emptyAccessories}>
-              Si agregas uno, selecciona el del catalogo y captura su serie.
+              Si agregas uno, elige el tipo del catálogo y captura marca, modelo y serie.
             </span>
           </button>
         )}

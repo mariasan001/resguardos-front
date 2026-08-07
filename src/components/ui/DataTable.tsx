@@ -74,6 +74,7 @@ export default function DataTable<T>({
                 <th
                   key={column.key}
                   className={column.headerClassName}
+                  data-column={column.key}
                   data-align={column.align}
                   aria-sort={
                     isSorted
@@ -120,6 +121,7 @@ export default function DataTable<T>({
                   <td
                     key={column.key}
                     className={column.cellClassName}
+                    data-column={column.key}
                     data-align={column.align}
                   >
                     {column.render(item)}

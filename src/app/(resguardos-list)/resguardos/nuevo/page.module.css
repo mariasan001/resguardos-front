@@ -51,6 +51,17 @@
   box-shadow: var(--shadow-sm);
 }
 
+@media (max-width: 47.99rem) {
+  .formShell {
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+  }
+
+  .backLink {
+    width: 100%;
+  }
+}
+
 @media (min-width: 48rem) {
   .headerRow {
     flex-direction: row;

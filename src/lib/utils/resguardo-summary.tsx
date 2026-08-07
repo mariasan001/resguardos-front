@@ -10,6 +10,7 @@ import {
   formatText,
   getEstadoLabel,
   getMarcaLabel,
+  getModeloLabel,
 } from "@/lib/utils/format";
 import type {
   EstadoTone,
@@ -147,8 +148,15 @@ export function buildResguardoSummary(
   const accessories: ResguardoAccessoryItem[] =
     resguardo.detalles?.map((detalle) => ({
       accesorio: formatValue(detalle.accesorio?.descAccesorio),
-      marca: formatValue(getMarcaLabel(detalle.accesorio?.marca)),
-      modelo: formatValue(detalle.accesorio?.modelo ?? undefined),
+      marca: formatValue(
+        getMarcaLabel(detalle.marca) || getMarcaLabel(detalle.accesorio?.marca),
+      ),
+      modelo: formatValue(
+        getModeloLabel(detalle.modelo) ||
+          (typeof detalle.accesorio?.modelo === "string"
+            ? detalle.accesorio.modelo
+            : undefined),
+      ),
       numeroSerie: formatValue(detalle.numeroSerie),
     })) ?? [];
 

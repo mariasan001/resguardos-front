@@ -15,11 +15,10 @@ import {
   getSistemasOperativos,
   getTiposBien,
 } from "@/lib/services/catalogos.service";
-import { getResguardoByIdServer, getResguardos } from "@/lib/services/resguardos.server";
+import { getResguardoByIdServer } from "@/lib/services/resguardos.server";
 import { getUsuarios } from "@/lib/services/usuarios.server";
 import type { Accesorio, OptionItem, SelectOptionsSource } from "@/lib/types/api";
-import { getMarcaId, getMarcaLabel, toUserOptions } from "@/lib/utils/format";
-import { getNextInventoryId } from "@/lib/utils/inventory-id";
+import { toUserOptions } from "@/lib/utils/format";
 import { completeResguardoAccesorios } from "@/lib/utils/resguardo-accesorios";
 import { mapResguardoToEditDraft } from "@/lib/utils/resguardo-payload";
 import styles from "@/app/(resguardos-list)/resguardos/nuevo/page.module.css";
@@ -52,22 +51,11 @@ function buildOptionsSource(
 }
 
 function toAccesorioOptions(items: Accesorio[]): OptionItem[] {
-  return items.map((item) => {
-    const marcaLabel = getMarcaLabel(item.marca);
-
-    return {
-      value: String(item.id ?? ""),
-      label: item.descAccesorio ?? "Sin descripcion",
-      marca: marcaLabel || undefined,
-      marcaId: getMarcaId(item.marca, item.idMarca) || undefined,
-      modelo: item.modelo?.trim() || undefined,
-      helper: [marcaLabel, item.modelo].filter(Boolean).join(" · ") || undefined,
-      searchText: [item.descAccesorio, marcaLabel, item.modelo]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase(),
-    };
-  });
+  return items.map((item) => ({
+    value: String(item.id ?? ""),
+    label: item.descAccesorio ?? "Sin descripcion",
+    searchText: (item.descAccesorio ?? "").toLowerCase(),
+  }));
 }
 
 interface NuevoResguardoPageProps {
@@ -97,7 +85,6 @@ export default async function NuevoResguardoPage({
     procesadoresResult,
     sistemasOperativosResult,
     tiposBienResult,
-    resguardosResult,
     editResguardoResult,
   ] = await Promise.allSettled([
     getUsuarios().then(toUserOptions),
@@ -138,7 +125,6 @@ export default async function NuevoResguardoPage({
         label: item.descTipoBien ?? "Sin descripcion",
       })),
     ),
-    getResguardos(),
     isEditing && !preserveDraft
       ? getResguardoByIdServer(editId)
       : Promise.resolve(null),
@@ -172,15 +158,6 @@ export default async function NuevoResguardoPage({
   if (isEditing && !preserveDraft && !editDraft?.editingResguardoId) {
     notFound();
   }
-
-  if (resguardosResult.status === "rejected") {
-    throw new Error(
-      "No fue posible calcular el siguiente folio de inventario sin riesgo de duplicarlo.",
-      { cause: resguardosResult.reason },
-    );
-  }
-
-  const nextInventoryId = getNextInventoryId(resguardosResult.value);
 
   const sources = {
     usuarios: buildOptionsSource(
@@ -253,7 +230,6 @@ export default async function NuevoResguardoPage({
           cancelHref={cancelHref}
           preserveDraft={preserveDraft}
           serverDraft={editDraft}
-          generatedInventoryId={nextInventoryId}
         />
       </section>
     </section>

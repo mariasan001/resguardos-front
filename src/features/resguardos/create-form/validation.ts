@@ -1,7 +1,6 @@
 import type { OptionItem } from "@/lib/types/api";
 
 import { REQUIRED_FORM_FIELDS } from "./constants";
-import { getAccesorioOption } from "./helpers";
 import type { DetalleItem, SectionKey } from "./types";
 
 export function collectValidationIssues(params: {
@@ -13,7 +12,7 @@ export function collectValidationIssues(params: {
   section: SectionKey;
   invalidKeys: string[];
 } | null {
-  const { formValues, detalles, accesorios } = params;
+  const { formValues, detalles } = params;
   const invalidKeys: string[] = [];
   let firstSection: SectionKey | null = null;
   let firstMessage = "";
@@ -30,7 +29,7 @@ export function collectValidationIssues(params: {
   }
 
   // Accesorios opcionales: sin filas está bien.
-  // Si hay filas, cada una debe venir completa (accesorio + serie + catálogo).
+  // Si hay filas, cada una pide tipo + marca + modelo + serie en el detalle.
   for (const [index, detalle] of detalles.entries()) {
     const position = index + 1;
 
@@ -52,23 +51,21 @@ export function collectValidationIssues(params: {
       }
     }
 
-    const option = getAccesorioOption(accesorios, detalle.accesorioId);
-
-    if (detalle.accesorioId.trim() && !option?.marca?.trim()) {
-      invalidKeys.push(`detalle-${detalle.id}-marca`);
+    if (!detalle.marcaId.trim()) {
+      invalidKeys.push(`detalle-${detalle.id}-marcaId`);
 
       if (!firstSection) {
         firstSection = "extras";
-        firstMessage = `El accesorio ${position} no tiene marca en el catalogo.`;
+        firstMessage = `Selecciona la marca del accesorio ${position}.`;
       }
     }
 
-    if (detalle.accesorioId.trim() && !option?.modelo?.trim()) {
-      invalidKeys.push(`detalle-${detalle.id}-modelo`);
+    if (!detalle.modeloId.trim()) {
+      invalidKeys.push(`detalle-${detalle.id}-modeloId`);
 
       if (!firstSection) {
         firstSection = "extras";
-        firstMessage = `El accesorio ${position} no tiene modelo en el catalogo.`;
+        firstMessage = `Selecciona el modelo del accesorio ${position}.`;
       }
     }
   }

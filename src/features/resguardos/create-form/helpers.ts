@@ -45,13 +45,12 @@ export function getSectionStatus(
     case "equipo":
       return {
         completed: getCount(values, [
-          "idInventario",
           "marcaId",
           "tipoBienId",
           "modeloId",
           "numeroSerie",
         ]),
-        total: 5,
+        total: 4,
       };
     case "tecnico":
       return {
@@ -60,9 +59,8 @@ export function getSectionStatus(
           "sistemaOperativoId",
           "colorMaterialId",
           "ip",
-          "mac",
         ]),
-        total: 5,
+        total: 4,
       };
     case "responsable":
       return {
@@ -85,7 +83,11 @@ export function getSectionStatus(
       const accessoriesOk =
         details.length === 0 ||
         details.every(
-          (detail) => detail.accesorioId.trim() && detail.numeroSerie.trim(),
+          (detail) =>
+            detail.accesorioId.trim() &&
+            detail.numeroSerie.trim() &&
+            detail.marcaId.trim() &&
+            detail.modeloId.trim(),
         );
       return {
         completed: Number(hasNotes) + Number(accessoriesOk),
@@ -107,18 +109,23 @@ export function getAccesorioOption(accesorios: OptionItem[], accesorioId: string
 export function toDraftDetalles(
   detalles: DetalleItem[],
   accesorios: OptionItem[],
+  marcas: OptionItem[] = [],
+  modelos: OptionItem[] = [],
 ): PreviewAccesorioDraft[] {
   return detalles.map((detalle) => {
     const option = getAccesorioOption(accesorios, detalle.accesorioId);
+    const marca = marcas.find((item) => item.value === detalle.marcaId);
+    const modelo = modelos.find((item) => item.value === detalle.modeloId);
 
     return {
       id: detalle.id,
       detalleId: detalle.detalleId,
       accesorioId: detalle.accesorioId,
       accesorioLabel: option?.label ?? "",
-      marcaId: option?.marcaId ?? "",
-      marcaLabel: option?.marca ?? "",
-      modeloLabel: option?.modelo ?? "",
+      marcaId: detalle.marcaId,
+      marcaLabel: marca?.label ?? "",
+      modeloId: detalle.modeloId,
+      modeloLabel: modelo?.label ?? "",
       numeroSerie: detalle.numeroSerie,
     };
   });

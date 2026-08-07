@@ -7,7 +7,7 @@ import type { OptionItem } from "@/lib/types/api";
  * Hoy puede no existir en la BD; cuando lo den de alta con este nombre exacto,
  * el front tomara su neyemp al guardar.
  */
-export const FIXED_ASSIGN_USER_NAME = "Carlos Augusto Núñez Mancilla";
+export const FIXED_ASSIGN_USER_NAME = "Carlos Augusto Nuñez Mancilla";
 
 function normalizePersonName(value: string) {
   return value

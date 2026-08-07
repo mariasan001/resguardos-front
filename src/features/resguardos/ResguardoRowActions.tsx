@@ -241,7 +241,11 @@ export default function ResguardoRowActions({
 
   return (
     <>
-      <div ref={wrapperRef} className={styles.wrapper}>
+      <div
+        ref={wrapperRef}
+        className={styles.wrapper}
+        data-menu-open={open || undefined}
+      >
         <button
           ref={triggerRef}
           type="button"

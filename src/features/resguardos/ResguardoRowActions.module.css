@@ -4,9 +4,13 @@
   justify-content: center;
 }
 
+.wrapper[data-menu-open="true"] {
+  z-index: 5;
+}
+
 .trigger {
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -20,6 +24,7 @@
     box-shadow 160ms ease,
     color 160ms ease;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .trigger:hover {
@@ -49,7 +54,7 @@
 }
 
 .menuItem {
-  min-height: 2.1rem;
+  min-height: 2.4rem;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -62,6 +67,7 @@
   font-weight: var(--font-weight-medium);
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .menuItem:hover {

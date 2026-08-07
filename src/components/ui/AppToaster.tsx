@@ -15,7 +15,7 @@ const icons: NonNullable<ToasterProps["icons"]> = {
 export default function AppToaster() {
   return (
     <Toaster
-      position="top-right"
+      position="bottom-right"
       expand={false}
       visibleToasts={4}
       closeButton

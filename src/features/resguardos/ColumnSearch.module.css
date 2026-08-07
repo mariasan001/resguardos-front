@@ -34,13 +34,21 @@
   gap: 0.35rem;
   align-items: center;
   width: 100%;
-  min-width: 7rem;
+  min-width: 5.5rem;
   max-width: 14rem;
   height: 1.75rem;
   padding: 0 0.5rem;
   border-radius: var(--radius-pill);
   background: var(--surface-card);
   box-shadow: inset 0 0 0 1px var(--color-wine-600);
+}
+
+@media (max-width: 47.99rem) {
+  .field {
+    width: 8.5rem;
+    min-width: 8.5rem;
+    max-width: 8.5rem;
+  }
 }
 
 .field[data-pending="true"] {

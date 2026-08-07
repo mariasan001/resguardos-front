@@ -62,7 +62,9 @@ export function buildPreviewDraft(params: {
     usuarioTitularHelper:
       users.find((option) => option.value === formValues.usuarioTitularId)?.helper ?? "",
     usuarioTitularEmail:
-      users.find((option) => option.value === formValues.usuarioTitularId)?.email ?? "",
+      users.find((option) => option.value === formValues.usuarioTitularId)?.email?.trim() ||
+      users.find((option) => option.value === formValues.usuarioResguardaId)?.email?.trim() ||
+      "",
     usuarioResguardaLabel: getOptionLabel(users, formValues.usuarioResguardaId),
     usuarioResguardaHelper:
       users.find((option) => option.value === formValues.usuarioResguardaId)?.helper ?? "",
@@ -77,6 +79,6 @@ export function buildPreviewDraft(params: {
     usuarioResguardaId: formValues.usuarioResguardaId ?? "",
     usuarioAsignaId: assignerNeyemp,
     editingResguardoId,
-    detalles: toDraftDetalles(detalles, accesorios),
+    detalles: toDraftDetalles(detalles, accesorios, marcas, modelos),
   };
 }

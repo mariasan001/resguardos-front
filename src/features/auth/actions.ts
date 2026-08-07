@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
 import { getHomeRoute } from "@/lib/auth/permissions";
 import { authenticateUser } from "@/lib/auth/provider";
@@ -45,14 +45,23 @@ export async function loginAction(
     await createSession(user, user.expiresIn);
     redirect(getHomeRoute(user.role));
   } catch (error) {
+    unstable_rethrow(error);
+
     if (error instanceof ApiError) {
       return {
         success: false,
-        message: "No fue posible iniciar sesión. Intenta de nuevo.",
+        message:
+          error.status === 503
+            ? "No se pudo conectar con el servidor. Verifica que el backend esté en ejecución."
+            : "No fue posible iniciar sesión. Intenta de nuevo.",
       };
     }
 
-    throw error;
+    return {
+      success: false,
+      message:
+        "No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.",
+    };
   }
 }
 

@@ -1,7 +1,15 @@
 "use client";
 
 import { Check, ChevronDown } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 
 import type { SelectOptionsSource } from "@/lib/types/api";
 import styles from "@/features/resguardos/FormSelect.module.css";
@@ -28,10 +36,11 @@ export default function FormSelect({
   onChange,
 }: FormSelectProps) {
   const listboxId = `${useId()}-listbox`;
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const isUnavailable = source.state !== "ready";
   const selectedOption =
@@ -43,20 +52,81 @@ export default function FormSelect({
         ? "Sin registros"
         : "Selecciona una opcion";
 
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+
+    if (!trigger) {
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const margin = 8;
+    const width = Math.max(rect.width, 12 * 16);
+    const height = popoverRef.current?.offsetHeight ?? 12 * 16;
+    const left = Math.min(
+      Math.max(rect.left, margin),
+      window.innerWidth - width - margin,
+    );
+    const spaceBelow = window.innerHeight - rect.bottom - margin;
+    const shouldFlip = spaceBelow < height && rect.top > spaceBelow;
+    const top = shouldFlip
+      ? Math.max(rect.top - height - margin, margin)
+      : Math.min(rect.bottom + margin, window.innerHeight - height - margin);
+
+    setPosition({
+      top: Math.max(top, margin),
+      left,
+      width: Math.min(width, window.innerWidth - margin * 2),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    updatePosition();
+    const frame = window.requestAnimationFrame(updatePosition);
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, updatePosition, source.options.length]);
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
     function handlePointerDown(event: MouseEvent) {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (
+        popoverRef.current?.contains(target) ||
+        triggerRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setIsOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
         setIsOpen(false);
+        triggerRef.current?.focus();
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [isOpen]);
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen, updatePosition]);
 
   function open() {
     if (isUnavailable) {
@@ -73,7 +143,7 @@ export default function FormSelect({
   function commit(nextValue: string) {
     onChange(nextValue);
     setIsOpen(false);
-    triggerRef.current?.focus();
+    triggerRef.current?.focus({ preventScroll: true });
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
@@ -114,47 +184,18 @@ export default function FormSelect({
     }
   }
 
-  return (
-    <div className={`${styles.fieldBlock} ${className ?? ""}`} ref={wrapperRef}>
-      <span className={styles.label} id={`${listboxId}-label`}>
-        {label}
-        {required ? (
-          <span className={styles.requiredMark} aria-hidden="true">
-            {" "}
-            *
-          </span>
-        ) : null}
-      </span>
-      <input type="hidden" name={name} value={value} />
-
-      <div className={styles.control}>
-        <button
-          ref={triggerRef}
-          type="button"
-          className={styles.trigger}
-          data-empty={!selectedOption || undefined}
-          data-invalid={invalid || undefined}
-          disabled={isUnavailable}
-          onClick={() => (isOpen ? setIsOpen(false) : open())}
-          onKeyDown={handleKeyDown}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-labelledby={`${listboxId}-label`}
-        >
-          <span className={styles.triggerLabel}>
-            {selectedOption?.label ?? placeholder}
-          </span>
-          <ChevronDown
-            size={15}
-            strokeWidth={2}
-            className={styles.chevron}
-            data-open={isOpen || undefined}
-            aria-hidden="true"
-          />
-        </button>
-
-        {isOpen ? (
-          <div className={styles.popover}>
+  const popover =
+    isOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={popoverRef}
+            className={styles.popover}
+            style={{
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              width: `${position.width}px`,
+            }}
+          >
             <ul className={styles.list} role="listbox" id={listboxId}>
               <li>
                 <button
@@ -189,7 +230,14 @@ export default function FormSelect({
                       onMouseEnter={() => setActiveIndex(index)}
                       onClick={() => commit(option.value)}
                     >
-                      <span className={styles.optionLabel}>{option.label}</span>
+                      <span className={styles.optionCopy}>
+                        <span className={styles.optionLabel}>{option.label}</span>
+                        {option.helper ? (
+                          <span className={styles.optionHelper}>
+                            {option.helper}
+                          </span>
+                        ) : null}
+                      </span>
                       {isSelected ? (
                         <Check size={14} strokeWidth={2.4} aria-hidden="true" />
                       ) : null}
@@ -198,9 +246,58 @@ export default function FormSelect({
                 );
               })}
             </ul>
-          </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
+  return (
+    <div className={`${styles.fieldBlock} ${className ?? ""}`}>
+      <span className={styles.label} id={`${listboxId}-label`}>
+        {label}
+        {required ? (
+          <span className={styles.requiredMark} aria-hidden="true">
+            {" "}
+            *
+          </span>
         ) : null}
+      </span>
+      <input type="hidden" name={name} value={value} />
+
+      <div className={styles.control}>
+        <button
+          ref={triggerRef}
+          type="button"
+          className={styles.trigger}
+          data-empty={!selectedOption || undefined}
+          data-invalid={invalid || undefined}
+          disabled={isUnavailable}
+          onClick={() => (isOpen ? setIsOpen(false) : open())}
+          onKeyDown={handleKeyDown}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-labelledby={`${listboxId}-label`}
+        >
+          <span className={styles.triggerCopy}>
+            <span className={styles.triggerLabel}>
+              {selectedOption?.label ?? placeholder}
+            </span>
+            {selectedOption?.helper ? (
+              <span className={styles.triggerHelper}>{selectedOption.helper}</span>
+            ) : null}
+          </span>
+          <ChevronDown
+            size={15}
+            strokeWidth={2}
+            className={styles.chevron}
+            data-open={isOpen || undefined}
+            aria-hidden="true"
+          />
+        </button>
       </div>
+
+      {popover}
 
       {source.message ? (
         <span

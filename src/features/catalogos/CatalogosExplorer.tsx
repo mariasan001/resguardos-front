@@ -34,12 +34,8 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
     () => Object.fromEntries(groups.map((group) => [group.id, group.items])),
   );
   const [draftLabel, setDraftLabel] = useState<string | null>(null);
-  const [draftMarcaId, setDraftMarcaId] = useState("");
-  const [draftModelo, setDraftModelo] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
-  const [editingMarcaId, setEditingMarcaId] = useState("");
-  const [editingModelo, setEditingModelo] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -49,9 +45,6 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
     () => (activeGroup ? itemsByGroup[activeGroup.id] ?? [] : []),
     [activeGroup, itemsByGroup],
   );
-  const supportsAccessoryMeta = activeGroup?.id === "accesorios";
-  const brandItems = itemsByGroup.marcas ?? [];
-  const modelItems = itemsByGroup.modelos ?? [];
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalize(query);
@@ -61,9 +54,7 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
     }
 
     return activeItems.filter((item) =>
-      normalize(`${item.label} ${item.marca ?? ""} ${item.modelo ?? ""}`).includes(
-        normalizedQuery,
-      ),
+      normalize(item.label).includes(normalizedQuery),
     );
   }, [activeItems, query]);
 
@@ -76,12 +67,8 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
 
   function resetEditors() {
     setDraftLabel(null);
-    setDraftMarcaId("");
-    setDraftModelo("");
     setEditingId(null);
     setEditingLabel("");
-    setEditingMarcaId("");
-    setEditingModelo("");
     setError("");
   }
 
@@ -92,71 +79,21 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
     );
   }
 
-  function validateAccessoryFields(label: string, marcaId: string, modelo: string) {
-    if (!label.trim()) {
-      return "Escribe el nombre del accesorio.";
-    }
-
-    if (!marcaId.trim()) {
-      return "Selecciona la marca del accesorio.";
-    }
-
-    if (!modelo.trim()) {
-      return "Selecciona el modelo del accesorio.";
-    }
-
-    return null;
-  }
-
-  function resolveAccessoryItem(
-    item: CatalogItem,
-    marcaId: string,
-    modelo: string,
-  ): CatalogItem {
-    if (activeGroup.id !== "accesorios") {
-      return item;
-    }
-
-    const brand = brandItems.find(
-      (entry) => entry.id === (item.marcaId || marcaId),
-    );
-
-    return {
-      ...item,
-      marcaId: item.marcaId || marcaId || undefined,
-      marca: item.marca || brand?.label,
-      modelo: item.modelo || modelo || undefined,
-    };
-  }
-
   function commitDraft() {
-    if (supportsAccessoryMeta) {
-      const accessoryError = validateAccessoryFields(
-        draftLabel ?? "",
-        draftMarcaId,
-        draftModelo,
-      );
-
-      if (accessoryError) {
-        setError(accessoryError);
-        return;
-      }
-    } else if (!draftLabel?.trim()) {
+    if (!draftLabel?.trim()) {
       setError("Escribe un nombre para el nuevo elemento.");
       return;
     }
 
-    if (findDuplicate(draftLabel ?? "")) {
-      setError("Ese elemento ya existe en el catalogo.");
+    if (findDuplicate(draftLabel)) {
+      setError("Ese elemento ya existe en el catálogo.");
       return;
     }
 
     startTransition(async () => {
       const result = await createCatalogAction({
         groupId: activeGroup.id,
-        label: draftLabel ?? "",
-        marcaId: draftMarcaId,
-        modelo: draftModelo,
+        label: draftLabel,
       });
 
       if (!result.success || !result.item) {
@@ -166,10 +103,7 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
 
       setItemsByGroup((current) => ({
         ...current,
-        [activeGroup.id]: [
-          ...(current[activeGroup.id] ?? []),
-          resolveAccessoryItem(result.item!, draftMarcaId, draftModelo),
-        ],
+        [activeGroup.id]: [...(current[activeGroup.id] ?? []), result.item!],
       }));
       resetEditors();
     });
@@ -180,24 +114,13 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
       return;
     }
 
-    if (supportsAccessoryMeta) {
-      const accessoryError = validateAccessoryFields(
-        editingLabel,
-        editingMarcaId,
-        editingModelo,
-      );
-
-      if (accessoryError) {
-        setError(accessoryError);
-        return;
-      }
-    } else if (!editingLabel.trim()) {
-      setError("El nombre no puede quedar vacio.");
+    if (!editingLabel.trim()) {
+      setError("El nombre no puede quedar vacío.");
       return;
     }
 
     if (findDuplicate(editingLabel, editingId)) {
-      setError("Ese elemento ya existe en el catalogo.");
+      setError("Ese elemento ya existe en el catálogo.");
       return;
     }
 
@@ -206,8 +129,6 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
         groupId: activeGroup.id,
         id: editingId,
         label: editingLabel,
-        marcaId: editingMarcaId,
-        modelo: editingModelo,
       });
 
       if (!result.success || !result.item) {
@@ -218,9 +139,7 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
       setItemsByGroup((current) => ({
         ...current,
         [activeGroup.id]: (current[activeGroup.id] ?? []).map((item) =>
-          item.id === editingId
-            ? resolveAccessoryItem(result.item!, editingMarcaId, editingModelo)
-            : item,
+          item.id === editingId ? result.item! : item,
         ),
       }));
       resetEditors();
@@ -291,53 +210,49 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
               <p className={styles.panelDescription}>{activeGroup.description}</p>
             </div>
           </div>
-
-          <div className={styles.panelTools}>
-            <div className={styles.searchField}>
-              <Search
-                size={15}
-                strokeWidth={2}
-                className={styles.searchIcon}
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                className={styles.searchInput}
-                value={query}
-                placeholder={
-                  supportsAccessoryMeta
-                    ? "Buscar por nombre, marca o modelo"
-                    : "Buscar"
-                }
-                aria-label={`Buscar en ${activeGroup.label}`}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              {isSearching ? (
-                <button
-                  type="button"
-                  className={styles.searchClear}
-                  onClick={() => setQuery("")}
-                  aria-label="Limpiar búsqueda"
-                >
-                  <X size={13} strokeWidth={2.2} />
-                </button>
-              ) : null}
-            </div>
-
-            <button
-              type="button"
-              className={styles.addButton}
-              disabled={pending}
-              onClick={() => {
-                resetEditors();
-                setDraftLabel("");
-              }}
-            >
-              <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
-              Nuevo {activeGroup.singular}
-            </button>
-          </div>
         </header>
+
+        <div className={styles.panelTools}>
+          <div className={styles.searchField}>
+            <Search
+              size={15}
+              strokeWidth={2}
+              className={styles.searchIcon}
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              className={styles.searchInput}
+              value={query}
+              placeholder="Buscar"
+              aria-label={`Buscar en ${activeGroup.label}`}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {isSearching ? (
+              <button
+                type="button"
+                className={styles.searchClear}
+                onClick={() => setQuery("")}
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={13} strokeWidth={2.2} />
+              </button>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            className={styles.addButton}
+            disabled={pending}
+            onClick={() => {
+              resetEditors();
+              setDraftLabel("");
+            }}
+          >
+            <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
+            Nuevo {activeGroup.singular}
+          </button>
+        </div>
 
         <div className={styles.panelMeta}>
           <span className={styles.metaCount}>
@@ -352,56 +267,36 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
         {draftLabel !== null ? (
           <CatalogDraftEditor
             singular={activeGroup.singular}
-            supportsAccessoryMeta={supportsAccessoryMeta}
             label={draftLabel}
-            marcaId={draftMarcaId}
-            modelo={draftModelo}
-            brandItems={brandItems}
-            modelItems={modelItems}
             pending={pending}
             onLabelChange={(value) => {
               setDraftLabel(value);
               setError("");
             }}
-            onMarcaChange={setDraftMarcaId}
-            onModeloChange={setDraftModelo}
             onSave={commitDraft}
             onCancel={resetEditors}
           />
         ) : null}
 
         {filteredItems.length ? (
-          <ul
-            className={
-              supportsAccessoryMeta ? styles.accessoryGrid : styles.itemGrid
-            }
-          >
+          <ul className={styles.itemGrid}>
             {filteredItems.map((item) => (
               <CatalogItemRow
                 key={`${activeGroup.id}-${item.id}`}
                 item={item}
-                supportsAccessoryMeta={supportsAccessoryMeta}
                 isEditing={editingId === item.id}
                 editingLabel={editingLabel}
-                editingMarcaId={editingMarcaId}
-                editingModelo={editingModelo}
-                brandItems={brandItems}
-                modelItems={modelItems}
                 pending={pending}
                 onEditingLabelChange={(value) => {
                   setEditingLabel(value);
                   setError("");
                 }}
-                onEditingMarcaChange={setEditingMarcaId}
-                onEditingModeloChange={setEditingModelo}
                 onSave={commitEdit}
                 onCancel={resetEditors}
                 onStartEdit={(entry) => {
                   resetEditors();
                   setEditingId(entry.id);
                   setEditingLabel(entry.label);
-                  setEditingMarcaId(entry.marcaId ?? "");
-                  setEditingModelo(entry.modelo ?? "");
                 }}
                 onRemove={removeItem}
               />
@@ -420,9 +315,7 @@ export default function CatalogosExplorer({ groups }: { groups: CatalogGroup[] }
             <p className={styles.emptyText}>
               {isSearching
                 ? `No encontramos resultados para "${query.trim()}".`
-                : supportsAccessoryMeta
-                  ? "Agrega el primer accesorio con su marca y modelo del catalogo."
-                  : `Agrega el primer ${activeGroup.singular} con el boton de arriba.`}
+                : `Agrega el primer ${activeGroup.singular} con el botón de arriba.`}
             </p>
           </div>
         ) : null}

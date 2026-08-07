@@ -5,7 +5,7 @@ import CatalogosExplorer, {
 import { requireRole } from "@/lib/auth/session";
 import { USER_ROLES } from "@/lib/auth/types";
 import { getCatalogosBundle } from "@/lib/services/catalogos.service";
-import { formatText, getMarcaId, getMarcaLabel } from "@/lib/utils/format";
+import { formatText } from "@/lib/utils/format";
 
 export default async function CatalogosPage() {
   await requireRole([USER_ROLES.admin]);
@@ -76,13 +76,11 @@ export default async function CatalogosPage() {
       id: "accesorios",
       label: "Accesorios",
       singular: "accesorio",
-      description: "Define cada complemento con su marca y modelo; asi se completa solo en el resguardo.",
+      description:
+        "Tipo de complemento. La marca y el modelo se capturan en el detalle del resguardo.",
       items: catalogos.accesorios.map((item) => ({
         id: String(item.id ?? ""),
         label: formatText(item.descAccesorio),
-        marca: getMarcaLabel(item.marca) || undefined,
-        marcaId: getMarcaId(item.marca, item.idMarca) || undefined,
-        modelo: item.modelo?.trim() || undefined,
       })),
     },
   ];

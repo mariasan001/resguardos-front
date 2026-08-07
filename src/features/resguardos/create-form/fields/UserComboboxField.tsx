@@ -49,6 +49,10 @@ export function UserComboboxField({
   const displayValue = isOpen ? query : selectedOption?.label ?? query;
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     function handlePointerDown(event: MouseEvent) {
       if (!wrapperRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
@@ -57,9 +61,9 @@ export function UserComboboxField({
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, []);
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () => document.removeEventListener("pointerdown", handlePointerDown, true);
+  }, [isOpen]);
 
   function emitValueChange(nextValue: string) {
     onChange?.({

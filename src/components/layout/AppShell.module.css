@@ -38,8 +38,15 @@
 
 .content {
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-5) var(--space-4) var(--space-8);
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-4) var(--space-7);
+}
+
+@media (min-width: 48rem) {
+  .content {
+    gap: var(--space-6);
+    padding: var(--space-5) var(--space-4) var(--space-8);
+  }
 }
 
 @media (min-width: 64rem) {

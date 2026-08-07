@@ -5,6 +5,7 @@ import {
   formatInventoryId,
   getNextInventoryId,
   isValidInventoryId,
+  parseInventorySequence,
   resolveInventoryId,
 } from "@/lib/utils/inventory-id";
 
@@ -22,6 +23,11 @@ describe("inventory-id", () => {
     expect(isValidInventoryId("DGP-INV-0000001")).toBe(true);
     expect(isValidInventoryId("INV-1")).toBe(false);
     expect(isValidInventoryId("")).toBe(false);
+  });
+
+  it("extrae la secuencia numerica del folio", () => {
+    expect(parseInventorySequence("DGP-INV-0000010")).toBe(10);
+    expect(parseInventorySequence("malo")).toBeNull();
   });
 
   it("calcula el siguiente folio a partir del maximo existente", () => {

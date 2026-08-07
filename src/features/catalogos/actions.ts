@@ -11,8 +11,7 @@ import {
   updateCatalogItem,
   type CatalogApiKey,
 } from "@/lib/services/catalogos.service";
-import type { CatMarca } from "@/lib/types/api";
-import { formatSentenceCase, getMarcaId, getMarcaLabel } from "@/lib/utils/format";
+import { formatSentenceCase } from "@/lib/utils/format";
 
 export type CatalogGroupId =
   | "tiposBien"
@@ -29,9 +28,6 @@ export interface CatalogMutationResult {
   item?: {
     id: string;
     label: string;
-    marca?: string;
-    marcaId?: string;
-    modelo?: string;
   };
 }
 
@@ -55,24 +51,16 @@ const LABEL_FIELD: Record<CatalogGroupId, string> = {
   accesorios: "descAccesorio",
 };
 
-function buildBody(
-  groupId: CatalogGroupId,
-  label: string,
-  marcaId?: string,
-  modelo?: string,
-) {
+function buildBody(groupId: CatalogGroupId, label: string) {
   const normalizedLabel = formatSentenceCase(label);
   const field = LABEL_FIELD[groupId];
-  const body: Record<string, unknown> = {
-    [field]: normalizedLabel,
+
+  return {
+    body: {
+      [field]: normalizedLabel,
+    },
+    normalizedLabel,
   };
-
-  if (groupId === "accesorios") {
-    body.idMarca = marcaId ? Number(marcaId) : null;
-    body.modelo = (modelo ?? "").trim() || null;
-  }
-
-  return { body, normalizedLabel };
 }
 
 function mapError(
@@ -97,11 +85,7 @@ function mapError(
   return fallback;
 }
 
-function toItem(
-  groupId: CatalogGroupId,
-  payload: Record<string, unknown>,
-  fallbackLabel: string,
-) {
+function toItem(groupId: CatalogGroupId, payload: Record<string, unknown>, fallbackLabel: string) {
   const field = LABEL_FIELD[groupId];
   const label =
     typeof payload[field] === "string" && payload[field]
@@ -111,46 +95,19 @@ function toItem(
   return {
     id: String(payload.id ?? ""),
     label,
-    marca: getMarcaLabel(payload.marca as CatMarca | string | null) || undefined,
-    marcaId:
-      getMarcaId(
-        payload.marca as CatMarca | string | null,
-        typeof payload.idMarca === "number" ? payload.idMarca : undefined,
-      ) || undefined,
-    modelo:
-      typeof payload.modelo === "string" && payload.modelo
-        ? payload.modelo
-        : undefined,
   };
 }
 
 export async function createCatalogAction(input: {
   groupId: CatalogGroupId;
   label: string;
-  marcaId?: string;
-  modelo?: string;
 }): Promise<CatalogMutationResult> {
   await requireRole([USER_ROLES.admin]);
 
-  const { body, normalizedLabel } = buildBody(
-    input.groupId,
-    input.label,
-    input.marcaId,
-    input.modelo,
-  );
+  const { body, normalizedLabel } = buildBody(input.groupId, input.label);
 
   if (!normalizedLabel) {
     return { success: false, message: "Escribe un nombre para el nuevo elemento." };
-  }
-
-  if (input.groupId === "accesorios") {
-    if (!input.marcaId?.trim()) {
-      return { success: false, message: "Selecciona la marca del accesorio." };
-    }
-
-    if (!input.modelo?.trim()) {
-      return { success: false, message: "Selecciona el modelo del accesorio." };
-    }
   }
 
   try {
@@ -177,30 +134,13 @@ export async function updateCatalogAction(input: {
   groupId: CatalogGroupId;
   id: string;
   label: string;
-  marcaId?: string;
-  modelo?: string;
 }): Promise<CatalogMutationResult> {
   await requireRole([USER_ROLES.admin]);
 
-  const { body, normalizedLabel } = buildBody(
-    input.groupId,
-    input.label,
-    input.marcaId,
-    input.modelo,
-  );
+  const { body, normalizedLabel } = buildBody(input.groupId, input.label);
 
   if (!normalizedLabel) {
-    return { success: false, message: "El nombre no puede quedar vacio." };
-  }
-
-  if (input.groupId === "accesorios") {
-    if (!input.marcaId?.trim()) {
-      return { success: false, message: "Selecciona la marca del accesorio." };
-    }
-
-    if (!input.modelo?.trim()) {
-      return { success: false, message: "Selecciona el modelo del accesorio." };
-    }
+    return { success: false, message: "El nombre no puede quedar vacío." };
   }
 
   try {

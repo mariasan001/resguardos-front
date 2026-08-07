@@ -248,7 +248,8 @@
   position: absolute;
   top: var(--space-3);
   z-index: 2;
-  min-width: 11rem;
+  min-width: min(11rem, calc(100% - 2rem));
+  max-width: min(16rem, calc(100% - 1.5rem));
   display: grid;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
@@ -257,6 +258,14 @@
   background: var(--surface-card);
   box-shadow: var(--shadow-md);
   pointer-events: none;
+}
+
+@media (max-width: 47.99rem) {
+  .tooltip {
+    left: var(--space-3) !important;
+    right: var(--space-3);
+    min-width: 0;
+  }
 }
 
 .tooltipTitle {

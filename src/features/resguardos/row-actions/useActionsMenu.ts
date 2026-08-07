@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+
+const VIEWPORT_PADDING = 12;
+const MENU_GAP = 8;
 
 export function useActionsMenu() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -9,12 +12,56 @@ export function useActionsMenu() {
   const [open, setOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    const menu = menuRef.current;
+
+    if (!trigger || !menu) {
+      return;
+    }
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+
+    // Trigger scrolled out of view (e.g. under sticky chrome / table header).
+    if (
+      triggerRect.bottom < VIEWPORT_PADDING ||
+      triggerRect.top > window.innerHeight - VIEWPORT_PADDING ||
+      triggerRect.right < VIEWPORT_PADDING ||
+      triggerRect.left > window.innerWidth - VIEWPORT_PADDING
+    ) {
+      setOpen(false);
+      return;
+    }
+
+    let left = triggerRect.right - menuRect.width;
+    let top = triggerRect.bottom + MENU_GAP;
+
+    if (left < VIEWPORT_PADDING) {
+      left = VIEWPORT_PADDING;
+    }
+
+    if (left + menuRect.width > window.innerWidth - VIEWPORT_PADDING) {
+      left = window.innerWidth - menuRect.width - VIEWPORT_PADDING;
+    }
+
+    if (top + menuRect.height > window.innerHeight - VIEWPORT_PADDING) {
+      top = triggerRect.top - menuRect.height - MENU_GAP;
+    }
+
+    if (top < VIEWPORT_PADDING) {
+      top = VIEWPORT_PADDING;
+    }
+
+    setMenuPosition((current) =>
+      current.top === top && current.left === left ? current : { top, left },
+    );
+  }, []);
+
   useEffect(() => {
     if (!open) {
       return;
     }
-
-    const closeMenu = () => setOpen(false);
 
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node;
@@ -35,46 +82,26 @@ export function useActionsMenu() {
 
     document.addEventListener("mousedown", handlePointerDown);
     window.addEventListener("keydown", handleEscape);
-    window.addEventListener("resize", closeMenu);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
 
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
-      window.removeEventListener("resize", closeMenu);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [open]);
+  }, [open, updatePosition]);
 
   useLayoutEffect(() => {
-    if (!open || !triggerRef.current || !menuRef.current) {
+    if (!open) {
       return;
     }
 
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const menuRect = menuRef.current.getBoundingClientRect();
-    const gap = 8;
-    const viewportPadding = 12;
-
-    let left = triggerRect.right - menuRect.width;
-    let top = triggerRect.bottom + gap;
-
-    if (left < viewportPadding) {
-      left = viewportPadding;
-    }
-
-    if (left + menuRect.width > window.innerWidth - viewportPadding) {
-      left = window.innerWidth - menuRect.width - viewportPadding;
-    }
-
-    if (top + menuRect.height > window.innerHeight - viewportPadding) {
-      top = triggerRect.top - menuRect.height - gap;
-    }
-
-    if (top < viewportPadding) {
-      top = viewportPadding;
-    }
-
-    setMenuPosition({ top, left });
-  }, [open]);
+    updatePosition();
+    const frame = window.requestAnimationFrame(updatePosition);
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, updatePosition]);
 
   useEffect(() => {
     if (!open) {
@@ -85,7 +112,9 @@ export function useActionsMenu() {
       'a[href], button:not([disabled]), [role="menuitem"]',
     );
 
-    focusTarget?.focus();
+    // preventScroll avoids the table overflow container jumping and
+    // immediately closing / misaligning the menu on short monitors.
+    focusTarget?.focus({ preventScroll: true });
   }, [open]);
 
   return {

@@ -39,13 +39,13 @@ export function EquipoSection({
     >
       <div className={styles.grid}>
         <Field
-          label="Inventario"
+          label="Número inventario SICOPA"
           name="idInventario"
           value={formValues.idInventario ?? ""}
           span="third"
-          required
           invalid={isFieldInvalid("idInventario")}
-          readOnly
+          placeholder="Opcional. Ej. DGP-INV-0000001"
+          onChange={(event) => updateField("idInventario", event.target.value)}
         />
         <SelectField
           label="Marca"

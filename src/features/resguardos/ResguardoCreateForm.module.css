@@ -4,10 +4,44 @@
 }
 
 .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
   display: flex;
   justify-content: flex-end;
   gap: 0.625rem;
   flex-wrap: wrap;
+  margin-top: 0.25rem;
+  padding: 0.65rem 0 0.15rem;
+  background: linear-gradient(
+    to top,
+    var(--surface-page) 55%,
+    color-mix(in srgb, var(--surface-page) 88%, transparent)
+  );
+}
+
+@media (max-width: 47.99rem) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .formError {
+    text-align: left;
+  }
+
+  .sectionSummary {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .sectionTools {
+    flex-shrink: 0;
+  }
 }
 
 .formError {
@@ -376,7 +410,9 @@
   top: calc(100% + 0.35rem);
   left: 0;
   right: 0;
-  z-index: 30;
+  z-index: 35;
+  max-height: min(16rem, 42vh);
+  overflow: auto;
   padding: 0.35rem;
   border: 1px solid var(--border-subtle);
   border-radius: 0.9rem;
@@ -553,8 +589,8 @@
 
 .removeIconButton {
   flex: 0 0 auto;
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 2.25rem;
+  height: 2.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -563,6 +599,7 @@
   background: transparent;
   color: var(--color-ink-500);
   cursor: pointer;
+  touch-action: manipulation;
   transition:
     background-color var(--transition-base),
     border-color var(--transition-base),
@@ -645,7 +682,7 @@
 
 .primaryButton,
 .cancelLink {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -653,6 +690,7 @@
   padding: 0 1rem;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold);
+  touch-action: manipulation;
 }
 
 .primaryButton {
@@ -676,24 +714,12 @@
   opacity: 0.65;
 }
 
-.spanFull {
-  grid-column: span 12;
-}
-
-.spanHalf {
-  grid-column: span 6;
-}
-
-.spanThird {
-  grid-column: span 4;
-}
-
-.spanQuarter {
-  grid-column: span 3;
-}
-
+.spanFull,
+.spanHalf,
+.spanThird,
+.spanQuarter,
 .spanTwoThirds {
-  grid-column: span 8;
+  grid-column: 1 / -1;
 }
 
 @media (min-width: 48rem) {

@@ -5,9 +5,6 @@ export type { CatalogGroupId };
 export interface CatalogItem {
   id: string;
   label: string;
-  marca?: string;
-  marcaId?: string;
-  modelo?: string;
 }
 
 export interface CatalogGroup {

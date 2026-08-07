@@ -183,14 +183,57 @@
 
 .content {
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-5);
+  gap: var(--space-5);
+  padding: var(--space-4);
+  /* Keep first interactive controls clear of dual sticky header + nav. */
+  scroll-margin-top: 8rem;
+}
+
+@media (max-width: 47.99rem) {
+  .header {
+    min-height: 4.25rem;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .logos {
+    width: clamp(7.5rem, 42vw, 11rem);
+  }
+
+  .identity {
+    gap: var(--space-3);
+  }
+
+  .avatar,
+  .logoutButton {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .navBar {
+    top: 4.25rem;
+  }
+
+  .navigation {
+    padding: 0 var(--space-3);
+  }
+
+  .navLink {
+    min-height: 2.85rem;
+    padding: 0 var(--space-3);
+    font-size: var(--text-xs);
+  }
 }
 
 @media (min-width: 48rem) {
   .product,
   .userCopy {
     display: block;
+  }
+
+  .content {
+    gap: var(--space-6);
+    padding: var(--space-5);
   }
 }
 

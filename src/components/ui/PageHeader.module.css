@@ -92,6 +92,16 @@
   background: var(--color-button-800);
 }
 
+@media (max-width: 47.99rem) {
+  .header {
+    padding: var(--space-4);
+  }
+
+  .action {
+    width: 100%;
+  }
+}
+
 @media (min-width: 48rem) {
   .header {
     flex-direction: row;

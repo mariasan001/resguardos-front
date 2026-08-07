@@ -6,8 +6,11 @@ import "./globals.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
+  // Varios pesos: el preload genera avisos en consola si no todos se usan al cargar.
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -23,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={poppins.variable}>
-      <body>
+      <body className={poppins.className}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

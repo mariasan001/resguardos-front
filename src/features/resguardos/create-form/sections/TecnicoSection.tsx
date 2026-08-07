@@ -86,7 +86,6 @@ export function TecnicoSection({
           value={formValues.mac ?? ""}
           span="quarter"
           placeholder="00:00:00:00:00:00"
-          required
           invalid={isFieldInvalid("mac")}
           onChange={(event) => updateField("mac", event.target.value)}
         />

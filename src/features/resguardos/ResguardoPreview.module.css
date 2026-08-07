@@ -400,16 +400,28 @@
   }
 
   .pdfActions {
-    justify-content: start;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .pdfActions > * {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
   .pdfPreviewFrame,
   .pdfPreview {
-    min-height: 34rem;
-    height: 34rem;
+    min-height: min(34rem, 70dvh);
+    height: min(34rem, 70dvh);
   }
 
   .statusActions {
-    justify-content: start;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .statusActions > * {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }

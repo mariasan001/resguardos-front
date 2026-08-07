@@ -1,4 +1,4 @@
-import type { AppUser, CatMarca, OptionItem, Resguardo } from "@/lib/types/api";
+import type { AppUser, CatMarca, CatModelo, OptionItem, Resguardo } from "@/lib/types/api";
 
 const dateFormatter = new Intl.DateTimeFormat("es-MX", {
   dateStyle: "medium",
@@ -45,6 +45,29 @@ export function getMarcaId(
 
   if (marca && typeof marca !== "string" && typeof marca.id === "number") {
     return String(marca.id);
+  }
+
+  return "";
+}
+
+export function getModeloLabel(modelo?: CatModelo | string | null) {
+  if (!modelo) {
+    return "";
+  }
+
+  return (typeof modelo === "string" ? modelo : modelo.descModelo ?? "").trim();
+}
+
+export function getModeloId(
+  modelo?: CatModelo | string | null,
+  idModelo?: number | null,
+) {
+  if (typeof idModelo === "number") {
+    return String(idModelo);
+  }
+
+  if (modelo && typeof modelo !== "string" && typeof modelo.id === "number") {
+    return String(modelo.id);
   }
 
   return "";

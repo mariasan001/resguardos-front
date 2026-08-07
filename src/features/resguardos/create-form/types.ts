@@ -18,6 +18,8 @@ export interface DetalleItem {
   id: string;
   detalleId?: number;
   accesorioId: string;
+  marcaId: string;
+  modeloId: string;
   numeroSerie: string;
 }
 
@@ -26,7 +28,6 @@ export interface ResguardoCreateFormProps {
   cancelHref?: string;
   preserveDraft?: boolean;
   serverDraft?: PreviewResguardoDraft | null;
-  generatedInventoryId: string;
 }
 
 export interface ResguardoCreateFormContentProps extends ResguardoCreateFormProps {

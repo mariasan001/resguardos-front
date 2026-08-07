@@ -46,8 +46,26 @@
 
 .content {
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-5);
+  gap: var(--space-5);
+  padding: var(--space-4);
+}
+
+@media (max-width: 47.99rem) {
+  .topbar {
+    min-height: 4rem;
+    padding: 0 var(--space-4);
+  }
+
+  .logoImage {
+    width: clamp(7.5rem, 42vw, 11rem);
+  }
+}
+
+@media (min-width: 48rem) {
+  .content {
+    gap: var(--space-6);
+    padding: var(--space-5);
+  }
 }
 
 @media (min-width: 64rem) {

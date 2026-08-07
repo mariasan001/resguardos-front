@@ -12,6 +12,16 @@ export function isValidInventoryId(value: string | undefined | null) {
   return Boolean(value?.trim() && INVENTORY_PATTERN.test(value.trim()));
 }
 
+export function parseInventorySequence(value: string | undefined | null) {
+  const match = value?.trim().match(INVENTORY_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  const sequence = Number(match[1]);
+  return Number.isSafeInteger(sequence) && sequence > 0 ? sequence : null;
+}
+
 function normalizeInventoryId(value: string) {
   return value.trim().toUpperCase();
 }
@@ -31,12 +41,9 @@ export function getTakenInventoryIds(resguardos: Resguardo[]) {
 
 export function getNextInventoryId(resguardos: Resguardo[]) {
   const highestSequence = resguardos.reduce((highest, resguardo) => {
-    const match = resguardo.idInventario?.trim().match(INVENTORY_PATTERN);
-    const sequence = match ? Number(match[1]) : 0;
+    const sequence = parseInventorySequence(resguardo.idInventario) ?? 0;
 
-    return Number.isSafeInteger(sequence) && sequence > highest
-      ? sequence
-      : highest;
+    return sequence > highest ? sequence : highest;
   }, 0);
 
   return formatInventoryId(highestSequence + 1);

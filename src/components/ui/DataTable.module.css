@@ -78,8 +78,15 @@
 .table thead th {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   background: var(--surface-muted);
+  /* Let clicks reach row actions that scroll under the sticky header
+     on short monitors; interactive header children still receive hits. */
+  pointer-events: none;
+}
+
+.table thead th > * {
+  pointer-events: auto;
 }
 
 .table th,
@@ -149,4 +156,30 @@
 
 .emptyCell {
   padding: var(--space-6) var(--space-4) !important;
+}
+
+@media (max-width: 47.99rem) {
+  .wrapper {
+    max-height: min(34rem, 70dvh);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.7rem 0.85rem;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    width: max-content;
+  }
 }

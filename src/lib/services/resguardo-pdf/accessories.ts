@@ -1,5 +1,5 @@
 import type { PreviewResguardoDraft, Resguardo } from "@/lib/types/api";
-import { getMarcaLabel } from "@/lib/utils/format";
+import { getMarcaLabel, getModeloLabel } from "@/lib/utils/format";
 
 export interface AccesorioPdfItem {
   accesorio?: string;
@@ -8,7 +8,7 @@ export interface AccesorioPdfItem {
   numeroSerie?: string;
 }
 
-/** Completa marca/modelo del listado guardado con lo capturado en el draft. */
+/** Completa marca/modelo del detalle (o del draft) para el PDF. */
 export function buildAccesorioItems(
   resguardo: Resguardo,
   draft: PreviewResguardoDraft,
@@ -27,8 +27,16 @@ export function buildAccesorioItems(
 
       return {
         accesorio: detalle.accesorio?.descAccesorio || fallback?.accesorioLabel,
-        marca: getMarcaLabel(detalle.accesorio?.marca) || fallback?.marcaLabel,
-        modelo: detalle.accesorio?.modelo || fallback?.modeloLabel,
+        marca:
+          getMarcaLabel(detalle.marca) ||
+          getMarcaLabel(detalle.accesorio?.marca) ||
+          fallback?.marcaLabel,
+        modelo:
+          getModeloLabel(detalle.modelo) ||
+          (typeof detalle.accesorio?.modelo === "string"
+            ? detalle.accesorio.modelo
+            : "") ||
+          fallback?.modeloLabel,
         numeroSerie: detalle.numeroSerie || fallback?.numeroSerie,
       };
     });

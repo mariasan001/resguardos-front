@@ -68,12 +68,146 @@
 .primaryLink {
   color: var(--color-ink-900);
   font-weight: var(--font-weight-semibold);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actionsHeader,
 .actionsCell {
   width: 1%;
   white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+.desktopTable {
+  display: none;
+}
+
+.mobileFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.mobileList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mobileEmpty {
+  min-height: 12rem;
+  display: grid;
+  place-items: center;
+}
+
+.mobileCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-alt);
+}
+
+.mobileCardTop {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.mobileCardCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.mobileCardTitle {
+  color: var(--color-ink-900);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.mobileCardMeta {
+  color: var(--color-ink-600);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.mobileCardActions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.mobileCardFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.mobileCardFacts div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mobileCardFacts dt {
+  color: var(--color-ink-500);
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mobileCardFacts dd {
+  margin: 0;
+  color: var(--color-ink-800);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+@media (max-width: 47.99rem) {
+  .tableCard {
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: var(--space-3);
+  }
+
+  .primaryLink {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+}
+
+@media (min-width: 48rem) {
+  .mobileFilters,
+  .mobileList,
+  .mobileEmpty {
+    display: none;
+  }
+
+  .desktopTable {
+    display: block;
+  }
 }
 
 .pagination {
@@ -221,6 +355,30 @@
 .paginationDisabled {
   opacity: 0.45;
   pointer-events: none;
+}
+
+@media (max-width: 47.99rem) {
+  .primaryAction,
+  .filterButton,
+  .secondaryAction {
+    width: 100%;
+  }
+
+  .paginationControls,
+  .paginationNav {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .paginationPages {
+    justify-content: center;
+  }
+
+  .paginationButton {
+    min-width: 2.15rem;
+    min-height: 1.9rem;
+    font-size: var(--text-xs);
+  }
 }
 
 @media (min-width: 48rem) {

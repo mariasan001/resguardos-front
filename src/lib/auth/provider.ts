@@ -12,18 +12,28 @@ export async function authenticateUser(
   username: string,
   password: string,
 ): Promise<AuthUser | null> {
-  const response = await fetch(`${getBackendBaseUrl()}/api/auth/login`, {
-    method: "POST",
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      username: username.trim(),
-      password,
-    }),
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${getBackendBaseUrl()}/api/auth/login`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: username.trim(),
+        password,
+      }),
+    });
+  } catch (error) {
+    throw new ApiError(
+      "No se pudo conectar con el servidor de autenticación.",
+      503,
+      error,
+    );
+  }
 
   const payload = (await response.json().catch(() => null)) as
     | BackendLoginResponse

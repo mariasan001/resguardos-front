@@ -1,9 +1,8 @@
 import type { Accesorio, Resguardo } from "@/lib/types/api";
 
 /**
- * El backend suele devolver el accesorio del detalle solo con id y descripcion.
- * Marca y modelo se toman del catalogo para no conservar valores viejos o
- * incorrectos (p. ej. el modelo del equipo pegado en todos los detalles).
+ * Completa solo la descripcion del tipo de accesorio desde el catalogo.
+ * Marca y modelo viven en el detalle del resguardo, no en el catalogo.
  */
 export function completeResguardoAccesorios(
   resguardo: Resguardo,
@@ -34,9 +33,6 @@ export function completeResguardoAccesorios(
           ...detalle.accesorio,
           descAccesorio:
             detalle.accesorio?.descAccesorio || catalogItem.descAccesorio,
-          marca: catalogItem.marca ?? detalle.accesorio?.marca,
-          modelo: catalogItem.modelo ?? detalle.accesorio?.modelo,
-          idMarca: catalogItem.idMarca ?? detalle.accesorio?.idMarca,
         },
       };
     }),

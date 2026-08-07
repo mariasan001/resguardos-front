@@ -148,8 +148,8 @@ export async function generateResguardoPdf({
   doc.text("Tarjeta de Resguardo de Cómputo", FIRST_PAGE_LEFT, 34.2);
 
   let y = drawCompactMetaRow(doc, 37.4, [
-    { label: "Folio", value: folioId },
-    { label: "Inventario", value: inventoryId },
+    { label: "Inventario interno", value: folioId },
+    { label: "Inventario SICOPA", value: inventoryId },
     { label: "Estatus", value: estadoLabel },
     { label: "Asignación", value: assignmentDate },
   ]);

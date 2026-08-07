@@ -169,7 +169,7 @@ export function drawNormativeHeader(doc: jsPDF) {
 
   setFont(doc, "normal", 8.5);
   doc.text(
-    '"2025. Bicentenario de la vida municipal en el Estado de Mexico"',
+    '"2026. Bicentenario de la vida municipal en el Estado de Mexico"',
     PAGE_WIDTH / 2,
     40,
     { align: "center" },

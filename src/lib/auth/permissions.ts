@@ -51,6 +51,7 @@ export function canAccessPath(role: UserRole, pathname: string) {
 export type ApiCapability =
   | "createResguardo"
   | "readResguardo"
+  | "listResguardos"
   | "updateResguardo"
   | "manageFirma"
   | "updateUserEmail"
@@ -61,6 +62,8 @@ export type ApiCapability =
 const API_CAPABILITY_ROLES: Record<ApiCapability, readonly UserRole[]> = {
   createResguardo: OPERATIONAL_ROLES,
   readResguardo: OPERATIONAL_ROLES,
+  /** GET /api/resguardos/all y /count: solo admin (matriz backend). */
+  listResguardos: ADMIN_ONLY_ROLES,
   updateResguardo: ADMIN_ONLY_ROLES,
   manageFirma: OPERATIONAL_ROLES,
   updateUserEmail: OPERATIONAL_ROLES,

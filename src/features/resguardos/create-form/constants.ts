@@ -9,7 +9,6 @@ export const REQUIRED_FORM_FIELDS: Array<{
   label: string;
   section: SectionKey;
 }> = [
-  { key: "idInventario", label: "Inventario", section: "equipo" },
   { key: "marcaId", label: "Marca", section: "equipo" },
   { key: "tipoBienId", label: "Tipo de bien", section: "equipo" },
   { key: "modeloId", label: "Modelo", section: "equipo" },
@@ -18,7 +17,6 @@ export const REQUIRED_FORM_FIELDS: Array<{
   { key: "sistemaOperativoId", label: "Sistema operativo", section: "tecnico" },
   { key: "colorMaterialId", label: "Color o material", section: "tecnico" },
   { key: "ip", label: "IP", section: "tecnico" },
-  { key: "mac", label: "MAC", section: "tecnico" },
   { key: "usuarioTitularId", label: "Usuario titular", section: "responsable" },
   {
     key: "usuarioResguardaId",

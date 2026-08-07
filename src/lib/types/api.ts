@@ -21,8 +21,11 @@ export interface AppUser {
 export interface Accesorio {
   id?: number;
   descAccesorio?: string;
+  /** @deprecated Capturar marca en DetalleResguardo. */
   marca?: CatMarca | string | null;
+  /** @deprecated Capturar modelo en DetalleResguardo. */
   modelo?: string | null;
+  /** @deprecated Usar DetalleResguardo.idMarca. */
   idMarca?: number;
 }
 
@@ -59,7 +62,11 @@ export interface CatMarca {
 export interface DetalleResguardo {
   id?: number;
   accesorio?: Accesorio;
+  marca?: CatMarca | string;
+  modelo?: CatModelo | string;
   numeroSerie?: string;
+  idMarca?: number;
+  idModelo?: number;
 }
 
 export interface Resguardo {
