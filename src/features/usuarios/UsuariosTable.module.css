@@ -1,0 +1,16 @@
+.primaryLink {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-900);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  text-align: left;
+}
+
+.primaryLink:hover {
+  color: var(--color-ink-800);
+  text-decoration: underline;
+}

@@ -1,0 +1,104 @@
+.form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spanFull {
+    grid-column: 1 / -1;
+  }
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  color: var(--color-ink-700);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.required {
+  color: var(--color-wine-700);
+}
+
+.input {
+  min-height: 3rem;
+  width: 100%;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-ink-900);
+  font-size: var(--text-sm);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.input:disabled,
+.input[readonly] {
+  background: var(--surface-muted);
+  color: var(--color-ink-600);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.secondaryButton {
+  min-height: 2.75rem;
+  padding: 0 var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  color: var(--color-ink-800);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.secondaryButton:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.button {
+  min-height: 2.75rem;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-button-700);
+  color: var(--color-white);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.error {
+  color: var(--color-danger-600);
+  font-size: var(--text-xs);
+}

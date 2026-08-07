@@ -5,6 +5,7 @@ import {
   FilePlus2,
   Files,
   LayoutDashboard,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +34,11 @@ const ADMIN_ITEMS = [
     href: "/resguardos/nuevo",
     label: "Nuevo resguardo",
     icon: FilePlus2,
+  },
+  {
+    href: "/usuarios",
+    label: "Usuarios",
+    icon: Users,
   },
   {
     href: "/catalogos",

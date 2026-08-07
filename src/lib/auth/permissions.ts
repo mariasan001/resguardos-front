@@ -57,7 +57,9 @@ export type ApiCapability =
   | "updateUserEmail"
   | "sendResguardoEmail"
   | "readCatalogos"
-  | "readLogs";
+  | "readLogs"
+  | "readAppUsers"
+  | "manageAppUsers";
 
 const API_CAPABILITY_ROLES: Record<ApiCapability, readonly UserRole[]> = {
   createResguardo: OPERATIONAL_ROLES,
@@ -70,6 +72,10 @@ const API_CAPABILITY_ROLES: Record<ApiCapability, readonly UserRole[]> = {
   sendResguardoEmail: OPERATIONAL_ROLES,
   readCatalogos: OPERATIONAL_ROLES,
   readLogs: ADMIN_ONLY_ROLES,
+  /** Listado/consulta AppUser: ADMIN y ENCARGADO según backend. */
+  readAppUsers: OPERATIONAL_ROLES,
+  /** Crear/actualizar AppUser: solo ADMIN. */
+  manageAppUsers: ADMIN_ONLY_ROLES,
 };
 
 export function rolesForApiCapability(capability: ApiCapability) {

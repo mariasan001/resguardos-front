@@ -49,10 +49,18 @@ describe("canUseApiCapability", () => {
       "sendResguardoEmail",
       "updateUserEmail",
       "readCatalogos",
+      "readAppUsers",
     ] as const) {
       expect(canUseApiCapability(USER_ROLES.admin, capability)).toBe(true);
       expect(canUseApiCapability(USER_ROLES.encargado, capability)).toBe(true);
     }
+  });
+
+  it("permite manageAppUsers solo a admin", () => {
+    expect(canUseApiCapability(USER_ROLES.admin, "manageAppUsers")).toBe(true);
+    expect(canUseApiCapability(USER_ROLES.encargado, "manageAppUsers")).toBe(
+      false,
+    );
   });
 });
 

@@ -3,14 +3,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/session";
 import { USER_ROLES } from "@/lib/auth/types";
 
-interface UsuarioDetailPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function UsuarioDetailPage({
-  params,
-}: UsuarioDetailPageProps) {
+export default async function NuevoUsuarioPage() {
   await requireRole([USER_ROLES.admin]);
-  await params;
   redirect("/usuarios");
 }

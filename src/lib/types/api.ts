@@ -18,6 +18,33 @@ export interface AppUser {
   puesto?: Puesto;
 }
 
+export interface AppUserWritePayload {
+  neyemp?: string;
+  nombre: string;
+  email: string;
+  necads: string;
+  neccat: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
+export type AppUserPage = PageResponse<AppUser>;
+
+export interface AppUsersQuery {
+  page?: number;
+  size?: number;
+  sort?: string;
+  search?: string;
+}
+
 export interface Accesorio {
   id?: number;
   descAccesorio?: string;

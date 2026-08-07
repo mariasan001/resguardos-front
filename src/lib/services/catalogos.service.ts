@@ -3,6 +3,7 @@ import "server-only";
 import { serverBackendRequest } from "@/lib/api/server-backend";
 import type {
   Accesorio,
+  Adscripcion,
   CatalogosBundle,
   CatColorMaterial,
   CatMarca,
@@ -45,6 +46,10 @@ export function getProcesadores() {
 
 export function getPuestos() {
   return serverBackendRequest<Puesto[]>("/api/catalogos/puestos");
+}
+
+export function getAdscripciones() {
+  return serverBackendRequest<Adscripcion[]>("/api/catalogos/adscripciones");
 }
 
 export function getSistemasOperativos() {

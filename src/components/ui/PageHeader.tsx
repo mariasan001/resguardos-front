@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import MotionItem from "@/components/ui/MotionItem";
 import styles from "@/components/ui/PageHeader.module.css";
@@ -7,9 +8,10 @@ import styles from "@/components/ui/PageHeader.module.css";
 interface PageHeaderProps {
   eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   actionHref?: string;
   actionLabel?: string;
+  action?: ReactNode;
   compact?: boolean;
   plain?: boolean;
 }
@@ -20,6 +22,7 @@ export default function PageHeader({
   description,
   actionHref,
   actionLabel,
+  action,
   compact = false,
   plain = false,
 }: PageHeaderProps) {
@@ -37,12 +40,16 @@ export default function PageHeader({
           </span>
         ) : null}
         <h2 className={`${styles.title} ${compact ? styles.titleCompact : ""}`}>{title}</h2>
-        <p className={`${styles.description} ${compact ? styles.descriptionCompact : ""}`}>
-          {description}
-        </p>
+        {description ? (
+          <p className={`${styles.description} ${compact ? styles.descriptionCompact : ""}`}>
+            {description}
+          </p>
+        ) : null}
       </div>
 
-      {actionHref && actionLabel ? (
+      {action ? (
+        action
+      ) : actionHref && actionLabel ? (
         <Link href={actionHref} className={`${styles.action} ${compact ? styles.actionCompact : ""}`}>
           {actionLabel}
           <ArrowRight size={16} strokeWidth={2} />
