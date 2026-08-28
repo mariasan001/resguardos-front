@@ -12,8 +12,27 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import type { OptionItem, SelectOptionsSource } from "@/lib/types/api";
-import styles from "@/features/resguardos/FormSelect.module.css";
+import styles from "@/components/ui/SearchableSelect.module.css";
+
+export interface SearchableOption {
+  value: string;
+  label: string;
+  helper?: string;
+}
+
+interface SearchableSelectProps {
+  name: string;
+  options: SearchableOption[];
+  defaultValue?: string;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+  required?: boolean;
+  invalid?: boolean;
+  disabled?: boolean;
+  id?: string;
+  onChange?: (value: string) => void;
+}
 
 function normalize(value: string) {
   return value
@@ -23,8 +42,8 @@ function normalize(value: string) {
     .trim();
 }
 
-/** Los catálogos repiten la misma descripción con varias claves. */
-function dedupeOptions(options: OptionItem[]) {
+/** Quita repetidos: los catálogos traen el mismo nombre con varias claves. */
+function dedupeByLabel(options: SearchableOption[]) {
   const seen = new Set<string>();
 
   return options.filter((option) => {
@@ -39,44 +58,40 @@ function dedupeOptions(options: OptionItem[]) {
   });
 }
 
-interface FormSelectProps {
-  label: string;
-  name: string;
-  source: SelectOptionsSource;
-  value: string;
-  className?: string;
-  required?: boolean;
-  invalid?: boolean;
-  onChange: (value: string) => void;
-}
-
-export default function FormSelect({
-  label,
+export default function SearchableSelect({
   name,
-  source,
-  value,
-  className,
+  options,
+  defaultValue = "",
+  placeholder = "Selecciona una opción",
+  searchPlaceholder = "Escribe para buscar",
+  emptyMessage = "Sin coincidencias",
   required = false,
   invalid = false,
+  disabled = false,
+  id,
   onChange,
-}: FormSelectProps) {
-  const listboxId = `${useId()}-listbox`;
+}: SearchableSelectProps) {
+  const generatedId = useId();
+  const listboxId = `${id ?? generatedId}-listbox`;
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
+
+  const [value, setValue] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
 
-  const isUnavailable = source.state !== "ready";
-  const uniqueOptions = useMemo(
-    () => dedupeOptions(source.options),
-    [source.options],
-  );
+  const uniqueOptions = useMemo(() => dedupeByLabel(options), [options]);
 
-  const visibleOptions = useMemo(() => {
+  const selectedOption =
+    uniqueOptions.find((option) => option.value === value) ??
+    options.find((option) => option.value === value) ??
+    null;
+
+  const filteredOptions = useMemo(() => {
     const normalizedQuery = normalize(query);
 
     if (!normalizedQuery) {
@@ -90,15 +105,6 @@ export default function FormSelect({
     );
   }, [query, uniqueOptions]);
 
-  const selectedOption =
-    source.options.find((option) => option.value === value) ?? null;
-  const placeholder =
-    source.state === "error"
-      ? "No disponible"
-      : source.state === "empty"
-        ? "Sin registros"
-        : "Selecciona una opcion";
-
   const updatePosition = useCallback(() => {
     const trigger = triggerRef.current;
 
@@ -108,11 +114,11 @@ export default function FormSelect({
 
     const rect = trigger.getBoundingClientRect();
     const margin = 8;
-    const width = Math.max(rect.width, 12 * 16);
-    const height = popoverRef.current?.offsetHeight ?? 12 * 16;
+    const width = Math.max(rect.width, 14 * 16);
+    const height = popoverRef.current?.offsetHeight ?? 16 * 16;
     const left = Math.min(
       Math.max(rect.left, margin),
-      window.innerWidth - width - margin,
+      Math.max(window.innerWidth - width - margin, margin),
     );
     const spaceBelow = window.innerHeight - rect.bottom - margin;
     const shouldFlip = spaceBelow < height && rect.top > spaceBelow;
@@ -135,7 +141,7 @@ export default function FormSelect({
     updatePosition();
     const frame = window.requestAnimationFrame(updatePosition);
     return () => window.cancelAnimationFrame(frame);
-  }, [isOpen, updatePosition, visibleOptions.length]);
+  }, [isOpen, updatePosition, filteredOptions.length]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -154,37 +160,48 @@ export default function FormSelect({
         return;
       }
 
-      closeMenu();
+      close();
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        closeMenu();
-        triggerRef.current?.focus();
+        event.stopPropagation();
+        close();
+        triggerRef.current?.focus({ preventScroll: true });
       }
     }
 
     document.addEventListener("pointerdown", handlePointerDown, true);
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown, true);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
   }, [isOpen, updatePosition]);
 
-  function closeMenu() {
+  useEffect(() => {
+    if (!isOpen || activeIndex < 0) {
+      return;
+    }
+
+    const list = listRef.current;
+    const item = list?.children[activeIndex] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, isOpen]);
+
+  function close() {
     setIsOpen(false);
     setQuery("");
     setActiveIndex(-1);
   }
 
   function open() {
-    if (isUnavailable) {
+    if (disabled) {
       return;
     }
 
@@ -194,28 +211,10 @@ export default function FormSelect({
   }
 
   function commit(nextValue: string) {
-    onChange(nextValue);
-    closeMenu();
+    setValue(nextValue);
+    onChange?.(nextValue);
+    close();
     triggerRef.current?.focus({ preventScroll: true });
-  }
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
-    if (isUnavailable) {
-      return;
-    }
-
-    if (event.key === "Escape") {
-      closeMenu();
-      return;
-    }
-
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-
-      if (!isOpen) {
-        open();
-      }
-    }
   }
 
   function handleSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -224,17 +223,17 @@ export default function FormSelect({
       const direction = event.key === "ArrowDown" ? 1 : -1;
 
       setActiveIndex((current) => {
-        if (!visibleOptions.length) {
+        if (!filteredOptions.length) {
           return -1;
         }
 
         const next = current + direction;
 
         if (next < 0) {
-          return visibleOptions.length - 1;
+          return filteredOptions.length - 1;
         }
 
-        return next >= visibleOptions.length ? 0 : next;
+        return next >= filteredOptions.length ? 0 : next;
       });
       return;
     }
@@ -242,8 +241,8 @@ export default function FormSelect({
     if (event.key === "Enter") {
       event.preventDefault();
       const option =
-        visibleOptions[activeIndex] ??
-        (visibleOptions.length === 1 ? visibleOptions[0] : undefined);
+        filteredOptions[activeIndex] ??
+        (filteredOptions.length === 1 ? filteredOptions[0] : undefined);
 
       if (option) {
         commit(option.value);
@@ -270,7 +269,7 @@ export default function FormSelect({
                 type="text"
                 className={styles.searchInput}
                 value={query}
-                placeholder="Escribe para buscar"
+                placeholder={searchPlaceholder}
                 autoComplete="off"
                 aria-controls={listboxId}
                 aria-autocomplete="list"
@@ -282,30 +281,9 @@ export default function FormSelect({
               />
             </div>
 
-            {visibleOptions.length ? (
+            {filteredOptions.length ? (
               <ul ref={listRef} className={styles.list} role="listbox" id={listboxId}>
-                {!query ? (
-                  <li>
-                    <button
-                      type="button"
-                      className={styles.option}
-                      data-active={activeIndex === -1 || undefined}
-                      data-selected={!selectedOption || undefined}
-                      role="option"
-                      aria-selected={!selectedOption}
-                      onMouseEnter={() => setActiveIndex(-1)}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => commit("")}
-                    >
-                      <span className={styles.optionLabel}>{placeholder}</span>
-                      {!selectedOption ? (
-                        <Check size={14} strokeWidth={2.4} aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  </li>
-                ) : null}
-
-                {visibleOptions.map((option, index) => {
+                {filteredOptions.map((option, index) => {
                   const isSelected = option.value === value;
 
                   return (
@@ -338,70 +316,43 @@ export default function FormSelect({
                 })}
               </ul>
             ) : (
-              <p className={styles.empty}>Sin coincidencias</p>
+              <p className={styles.empty}>{emptyMessage}</p>
             )}
           </div>,
           document.body,
         )
       : null;
 
-  return (
-    <div className={`${styles.fieldBlock} ${className ?? ""}`}>
-      <span className={styles.label} id={`${listboxId}-label`}>
-        {label}
-        {required ? (
-          <span className={styles.requiredMark} aria-hidden="true">
-            {" "}
-            *
-          </span>
-        ) : null}
-      </span>
-      <input type="hidden" name={name} value={value} />
+    return (
+    <>
+      <input type="hidden" name={name} value={value} required={required} />
 
-      <div className={styles.control}>
-        <button
-          ref={triggerRef}
-          type="button"
-          className={styles.trigger}
-          data-empty={!selectedOption || undefined}
-          data-invalid={invalid || undefined}
-          disabled={isUnavailable}
-          onClick={() => (isOpen ? setIsOpen(false) : open())}
-          onKeyDown={handleKeyDown}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-controls={isOpen ? listboxId : undefined}
-          aria-labelledby={`${listboxId}-label`}
-        >
-          <span className={styles.triggerCopy}>
-            <span className={styles.triggerLabel}>
-              {selectedOption?.label ?? placeholder}
-            </span>
-            {selectedOption?.helper ? (
-              <span className={styles.triggerHelper}>{selectedOption.helper}</span>
-            ) : null}
-          </span>
-          <ChevronDown
-            size={15}
-            strokeWidth={2}
-            className={styles.chevron}
-            data-open={isOpen || undefined}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
+      <button
+        ref={triggerRef}
+        id={id}
+        type="button"
+        className={styles.trigger}
+        data-empty={!selectedOption || undefined}
+        data-invalid={invalid || undefined}
+        disabled={disabled}
+        onClick={() => (isOpen ? close() : open())}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? listboxId : undefined}
+      >
+        <span className={styles.triggerLabel}>
+          {selectedOption?.label ?? placeholder}
+        </span>
+        <ChevronDown
+          size={15}
+          strokeWidth={2}
+          className={styles.chevron}
+          data-open={isOpen || undefined}
+          aria-hidden="true"
+        />
+      </button>
 
       {popover}
-
-      {source.message ? (
-        <span
-          className={`${styles.hint} ${
-            source.state === "error" ? styles.hintError : ""
-          }`}
-        >
-          {source.message}
-        </span>
-      ) : null}
-    </div>
+    </>
   );
 }

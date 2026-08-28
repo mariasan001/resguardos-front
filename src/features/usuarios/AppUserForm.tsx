@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useMemo, useRef } from "react";
 
+import SearchableSelect from "@/components/ui/SearchableSelect";
 import {
   createAppUserAction,
   updateAppUserAction,
@@ -56,6 +57,24 @@ export default function AppUserForm({
 
   const defaultNecads = user?.adscripcion?.necads ?? "";
   const defaultNeccat = user?.puesto?.id ?? "";
+
+  const adscripcionOptions = useMemo(
+    () =>
+      adscripciones.map((item) => ({
+        value: item.necads ?? "",
+        label: item.desAds || item.necads || "",
+      })),
+    [adscripciones],
+  );
+
+  const puestoOptions = useMemo(
+    () =>
+      puestos.map((item) => ({
+        value: String(item.id ?? ""),
+        label: item.des_neccat || String(item.id ?? ""),
+      })),
+    [puestos],
+  );
 
   return (
     <form action={formAction} className={styles.form}>
@@ -126,51 +145,41 @@ export default function AppUserForm({
           ) : null}
         </label>
 
-        <label className={styles.field}>
+        <div className={styles.field}>
           <span className={styles.label}>
             Adscripción <span className={styles.required}>*</span>
           </span>
-          <select
-            className={styles.input}
+          <SearchableSelect
             name="necads"
+            options={adscripcionOptions}
             defaultValue={defaultNecads}
-            aria-invalid={Boolean(state.fieldErrors?.necads)}
+            placeholder="Selecciona una adscripción"
+            searchPlaceholder="Escribe para buscar una adscripción"
+            invalid={Boolean(state.fieldErrors?.necads)}
             required
-          >
-            <option value="">Selecciona una adscripción</option>
-            {adscripciones.map((item) => (
-              <option key={item.necads} value={item.necads ?? ""}>
-                {item.desAds || item.necads}
-              </option>
-            ))}
-          </select>
+          />
           {state.fieldErrors?.necads ? (
             <span className={styles.error}>{state.fieldErrors.necads}</span>
           ) : null}
-        </label>
+        </div>
 
-        <label className={styles.field}>
+        <div className={styles.field}>
           <span className={styles.label}>
             Puesto <span className={styles.required}>*</span>
           </span>
-          <select
-            className={styles.input}
+          <SearchableSelect
             name="neccat"
+            options={puestoOptions}
             defaultValue={defaultNeccat}
-            aria-invalid={Boolean(state.fieldErrors?.neccat)}
+            placeholder="Selecciona un puesto"
+            searchPlaceholder="Escribe para buscar un puesto"
+            invalid={Boolean(state.fieldErrors?.neccat)}
             required
-          >
-            <option value="">Selecciona un puesto</option>
-            {puestos.map((item) => (
-              <option key={item.id} value={item.id ?? ""}>
-                {item.des_neccat || item.id}
-              </option>
-            ))}
-          </select>
+          />
           {state.fieldErrors?.neccat ? (
             <span className={styles.error}>{state.fieldErrors.neccat}</span>
           ) : null}
-        </label>
+        </div>
       </div>
 
       <div className={styles.actions}>

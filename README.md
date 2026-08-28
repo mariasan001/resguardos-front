@@ -24,7 +24,7 @@ AUTH_SECRET=change-this-secret-before-production
 | Comando | Uso |
 |---------|-----|
 | `npm run dev` | Dev (localhost:3000) |
-| `npm run dev:lan` | Dev en red (`:3001`) |
+| `npm run dev:lan` | Dev en red (`:3000`) |
 | `npm run build` / `start` | Producción |
 | `npm run lint` | ESLint |
 | `npm run test` | Vitest |
