@@ -2,7 +2,7 @@
  * React DevTools (installHook.js) reporta en consola el error
  * "We are cleaning up async info that was not on the parent Suspense boundary"
  * al navegar con Next 16 / React 19. Es un bug abierto de la extensión
- * (vercel/next.js#84973): no ocurre sin la extensión ni en producción.
+
  */
 const KNOWN_MARKERS = [
   "react instrumentation encountered an error",
