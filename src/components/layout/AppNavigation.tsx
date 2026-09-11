@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Archive,
   BookOpen,
   FilePlus2,
   Files,
@@ -28,6 +29,12 @@ const ADMIN_ITEMS = [
     href: "/resguardos",
     label: "Resguardos",
     icon: Files,
+    exact: true,
+  },
+  {
+    href: "/bajas",
+    label: "Bajas",
+    icon: Archive,
     exact: true,
   },
   {

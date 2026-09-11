@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import AuthenticatedShell from "@/components/layout/AuthenticatedShell";
 import { requireSession } from "@/lib/auth/session";
 
-export default async function ResguardosLayout({
+export default async function ResguardosListLayout({
   children,
 }: {
   children: ReactNode;

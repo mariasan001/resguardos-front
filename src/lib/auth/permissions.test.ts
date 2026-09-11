@@ -21,9 +21,14 @@ describe("canAccessPath", () => {
     ).toBe(true);
     expect(canAccessPath(USER_ROLES.encargado, "/resguardos/42")).toBe(true);
     expect(canAccessPath(USER_ROLES.encargado, "/resguardos")).toBe(false);
+    expect(canAccessPath(USER_ROLES.encargado, "/bajas")).toBe(false);
     expect(canAccessPath(USER_ROLES.encargado, "/")).toBe(false);
     expect(canAccessPath(USER_ROLES.encargado, "/usuarios")).toBe(false);
     expect(canAccessPath(USER_ROLES.encargado, "/catalogos")).toBe(false);
+  });
+
+  it("permite al admin la sección de bajas", () => {
+    expect(canAccessPath(USER_ROLES.admin, "/bajas")).toBe(true);
   });
 });
 

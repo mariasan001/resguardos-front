@@ -1,13 +1,12 @@
 import ResguardoListPage from "@/features/resguardos/list";
 
-interface ResguardosPageProps {
+interface BajasPageProps {
   searchParams: Promise<{
     q?: string;
     titular?: string;
     adscripcion?: string;
     fechaAsignacion?: string;
     fechaActualizacion?: string;
-    estado?: string;
     page?: string;
     size?: string;
     sort?: string;
@@ -15,6 +14,6 @@ interface ResguardosPageProps {
   }>;
 }
 
-export default function ResguardosPage({ searchParams }: ResguardosPageProps) {
-  return <ResguardoListPage mode="all" searchParams={searchParams} />;
+export default function BajasPage({ searchParams }: BajasPageProps) {
+  return <ResguardoListPage mode="bajas" searchParams={searchParams} />;
 }

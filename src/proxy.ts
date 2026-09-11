@@ -46,6 +46,8 @@ export const config = {
     "/",
     "/login",
     "/resguardos/:path*",
+    "/bajas",
+    "/bajas/:path*",
     "/usuarios/:path*",
     "/catalogos/:path*",
   ],

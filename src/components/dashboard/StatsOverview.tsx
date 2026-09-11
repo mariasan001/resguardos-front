@@ -15,6 +15,9 @@ interface StatsOverviewProps {
 }
 
 function defaultFilterHref(estado?: string) {
+  if (estado === "3") {
+    return "/bajas";
+  }
   return estado ? `/resguardos?estado=${estado}` : "/resguardos";
 }
 
@@ -24,16 +27,17 @@ export default function StatsOverview({
   activeEstado = "",
   buildFilterHref = defaultFilterHref,
 }: StatsOverviewProps) {
+  const dadosDeBaja = countByEstadoId(resguardos, 3);
+  const vigentes = resguardos.length - dadosDeBaja;
   const activos = countByEstadoId(resguardos, 1);
   const titularesConResguardoActivo = countActiveHolders(resguardos);
   const modificados = countByEstadoId(resguardos, 2);
-  const dadosDeBaja = countByEstadoId(resguardos, 3);
 
   const registrosHref = buildFilterHref();
   const modificadosHref =
     activeEstado === "2" ? registrosHref : buildFilterHref("2");
-  const bajaHref =
-    activeEstado === "3" ? registrosHref : buildFilterHref("3");
+  // Bajas es sección propia: el KPI siempre lleva a /bajas (no “limpia” el filtro).
+  const bajaHref = buildFilterHref("3");
 
   return (
     <section className={styles.kpis} aria-label="Indicadores principales">
@@ -46,8 +50,8 @@ export default function StatsOverview({
       />
       <StatCard
         label="Registros"
-        value={String(resguardos.length)}
-        helper={`Resguardos capturados, ${activos} vigentes en ${titularesConResguardoActivo} titulares`}
+        value={String(vigentes)}
+        helper={`${activos} vigentes en ${titularesConResguardoActivo} titulares · ${resguardos.length} capturados`}
         icon="resguardos"
         tone="success"
         href={registrosHref}
@@ -56,17 +60,17 @@ export default function StatsOverview({
       <StatCard
         label="Modificados"
         value={String(modificados)}
-        helper={`Resguardos modificados, de ${resguardos.length} registros`}
+        helper={`De ${vigentes} registros activos`}
         icon="modificados"
         tone="warning"
-        progress={toPercentage(modificados, resguardos.length)}
+        progress={toPercentage(modificados, vigentes)}
         href={modificadosHref}
         selected={activeEstado === "2"}
       />
       <StatCard
         label="Dados de baja"
         value={String(dadosDeBaja)}
-        helper={`Resguardos dados de baja, de ${resguardos.length} registros`}
+        helper={`De ${resguardos.length} registros capturados`}
         icon="baja"
         tone="danger"
         progress={toPercentage(dadosDeBaja, resguardos.length)}
