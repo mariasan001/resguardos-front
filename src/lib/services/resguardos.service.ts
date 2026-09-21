@@ -42,6 +42,36 @@ async function readBlobResponse(response: Response) {
   );
 }
 
+async function readQrBlobResponse(response: Response) {
+  if (response.ok) {
+    return response.blob();
+  }
+
+  const payload = await response.text();
+
+  if (response.status === 404) {
+    throw new ApiError(
+      "No se encontro el resguardo para generar el QR.",
+      response.status,
+      payload,
+    );
+  }
+
+  if (response.status === 422) {
+    throw new ApiError(
+      "La informacion del resguardo es demasiado grande para el codigo QR.",
+      response.status,
+      payload,
+    );
+  }
+
+  throw new ApiError(
+    payload.trim() || "No fue posible obtener el codigo QR del resguardo.",
+    response.status,
+    payload,
+  );
+}
+
 /** Cliente: siempre pasa por rutas Next autenticadas. */
 export function getResguardoById(id: number) {
   return fetch(`/api/resguardos/${id}`, {
@@ -159,4 +189,15 @@ export function getResguardoFirma(resguardoId: number) {
       Accept: "image/png, image/jpeg, */*;q=0.8",
     },
   }).then(readBlobResponse);
+}
+
+/** PNG del QR dinámico. Requiere sesión; no usar en <img src> directo. */
+export function getResguardoQr(resguardoId: number) {
+  return fetch(`/api/resguardos/${resguardoId}/qr`, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      Accept: "image/png, */*;q=0.8",
+    },
+  }).then(readQrBlobResponse);
 }

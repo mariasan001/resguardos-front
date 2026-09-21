@@ -127,6 +127,8 @@ export interface Resguardo {
   firmaSizeBytes?: number;
   fechaFirma?: string;
   firmaUrl?: string;
+  /** URL relativa del QR dinámico (no se guarda en BD). Ej. /api/resguardos/25/qr */
+  qrUrl?: string;
   /** Solo en PUT: usuario que modifica, para bitácora. No se persiste en el resguardo. */
   usuarioModifica?: string;
 }

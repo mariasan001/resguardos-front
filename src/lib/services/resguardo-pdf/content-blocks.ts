@@ -77,11 +77,13 @@ function drawPersonLead(
   y: number,
   name: string,
   details: string[],
+  textWidth = FIRST_PAGE_WIDTH,
 ) {
   const currentY = ensureContentPageSpace(doc, y, 12);
   setFont(doc, "bold", 11);
   doc.setTextColor(...TEXT_COLOR);
-  doc.text(name, FIRST_PAGE_LEFT, currentY + 3.2);
+  const nameLines = measureWrappedLines(doc, name, textWidth, "bold", 11);
+  doc.text(nameLines[0] ?? name, FIRST_PAGE_LEFT, currentY + 3.2);
 
   const detail = details
     .filter((item) => item && item !== EMPTY_VALUE)
@@ -92,7 +94,7 @@ function drawPersonLead(
     const lines = measureWrappedLines(
       doc,
       detail,
-      FIRST_PAGE_WIDTH,
+      textWidth,
       "normal",
       6.8,
     );
@@ -108,26 +110,56 @@ export function drawCompactFields(
   y: number,
   title: string,
   fields: Array<[string, string]>,
-  options?: { leadName?: string; leadDetails?: string[] },
+  options?: {
+    leadName?: string;
+    leadDetails?: string[];
+    sideImageDataUrl?: string;
+    sideImageSize?: number;
+  },
 ) {
   let currentY = drawSectionLabel(doc, y, title);
+  const leadStartY = currentY;
+  const qrSize = options?.sideImageSize ?? 36;
+  const hasSideImage = Boolean(options?.sideImageDataUrl);
+  const qrBottom = hasSideImage ? leadStartY + qrSize : 0;
+  const leadTextWidth = hasSideImage
+    ? Math.max(FIRST_PAGE_WIDTH - qrSize - 8, 80)
+    : FIRST_PAGE_WIDTH;
 
   if (options?.leadName) {
     currentY = drawPersonLead(
       doc,
-      currentY,
+      leadStartY,
       options.leadName,
       options.leadDetails ?? [],
+      leadTextWidth,
     );
   }
 
+  if (options?.sideImageDataUrl) {
+    doc.addImage(
+      options.sideImageDataUrl,
+      "PNG",
+      FIRST_PAGE_RIGHT - qrSize,
+      leadStartY,
+      qrSize,
+      qrSize,
+    );
+    // No empujar currentY hasta debajo del QR: los datos siguen junto al nombre.
+    currentY = Math.max(currentY, leadStartY + 2);
+  }
+
   const colGap = 10;
-  const colWidth = (FIRST_PAGE_WIDTH - colGap) / 2;
   const lineHeight = 3.3;
 
   for (let index = 0; index < fields.length; index += 2) {
     const left = fields[index];
     const right = fields[index + 1];
+    const overlapsQr = hasSideImage && currentY < qrBottom - 0.5;
+    const usableWidth = overlapsQr
+      ? Math.max(FIRST_PAGE_WIDTH - qrSize - 8, 70)
+      : FIRST_PAGE_WIDTH;
+    const colWidth = (usableWidth - colGap) / 2;
 
     const leftValueLines = left
       ? measureWrappedLines(doc, left[1], colWidth, "bold", 7.6)
@@ -168,6 +200,10 @@ export function drawCompactFields(
     }
 
     currentY += rowHeight + 0.8;
+  }
+
+  if (hasSideImage) {
+    currentY = Math.max(currentY, qrBottom + 1.5);
   }
 
   return currentY + 1.8;

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { CheckCircle2, Eraser, PenLine, Signature, X } from "lucide-react";
 import type { RefObject } from "react";
+import { createPortal } from "react-dom";
 
 import styles from "@/features/resguardos/ResguardoRowActions.module.css";
 
@@ -43,12 +44,12 @@ export default function ResguardoSignatureModal({
   onClearCapture,
   onSaveSignature,
 }: ResguardoSignatureModalProps) {
-  if (!open) {
+  if (!open || typeof document === "undefined") {
     return null;
   }
 
-  return (
-    <div className={styles.modalOverlay} role="presentation">
+  return createPortal(
+    <div className={styles.modalOverlay} role="presentation" onClick={onClose}>
       <div
         className={styles.modal}
         role="dialog"
@@ -162,6 +163,7 @@ export default function ResguardoSignatureModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

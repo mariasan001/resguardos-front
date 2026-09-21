@@ -1,7 +1,10 @@
 import { jsPDF } from "jspdf";
 
+import { ApiError } from "@/lib/api/errors";
 import { FIXED_ASSIGN_USER_NAME } from "@/lib/constants/assigner";
 import type { Accesorio, PreviewResguardoDraft, Resguardo } from "@/lib/types/api";
+import { getResguardoQr } from "@/lib/services/resguardos.service";
+import { blobToDataUrl } from "@/lib/utils/file";
 import {
   formatTitleCase,
   getEstadoLabel,
@@ -52,6 +55,28 @@ export interface GenerateResguardoPdfParams {
   draft: PreviewResguardoDraft;
   resguardo: Resguardo;
   accesoriosCatalogo?: Accesorio[];
+  /** Si se omite, se intenta obtener el QR autenticado del backend. */
+  qrDataUrl?: string;
+}
+
+async function resolveQrDataUrl(
+  resguardoId: number,
+  provided?: string,
+): Promise<string | undefined> {
+  if (provided) {
+    return provided;
+  }
+
+  try {
+    const qrBlob = await getResguardoQr(resguardoId);
+    return blobToDataUrl(qrBlob);
+  } catch (error) {
+    // El PDF sigue siendo útil sin QR (p. ej. 422 por payload demasiado grande).
+    if (error instanceof ApiError && [404, 422].includes(error.status)) {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 export async function generateResguardoPdf({
@@ -59,6 +84,7 @@ export async function generateResguardoPdf({
   draft,
   resguardo: storedResguardo,
   accesoriosCatalogo,
+  qrDataUrl: qrDataUrlParam,
 }: GenerateResguardoPdfParams) {
   const resguardo = completeResguardoAccesorios(
     storedResguardo,
@@ -72,6 +98,7 @@ export async function generateResguardoPdf({
     firmaEntregaDataUrl,
     poppinsRegular,
     poppinsBold,
+    qrDataUrl,
   ] = await Promise.all([
     getAssetDataUrl("/img/logos.png"),
     getAssetDataUrl("/img/fondo.jpg"),
@@ -79,6 +106,7 @@ export async function generateResguardoPdf({
     getAssetDataUrl("/img/firma2.png"),
     getBinaryAsset("/fonts/Poppins-Regular.ttf"),
     getBinaryAsset("/fonts/Poppins-Bold.ttf"),
+    resolveQrDataUrl(createdResguardoId, qrDataUrlParam),
   ]);
   const [trimmedTitularSignatureDataUrl, trimmedEntregaSignatureDataUrl] =
     await Promise.all([
@@ -191,6 +219,8 @@ export async function generateResguardoPdf({
         titularPuesto,
         titularEmail === EMPTY_VALUE ? "" : titularEmail,
       ],
+      sideImageDataUrl: qrDataUrl,
+      sideImageSize: 36,
     },
   );
 
