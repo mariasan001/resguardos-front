@@ -49,13 +49,12 @@ export default function ResguardoSignatureModal({
   }
 
   return createPortal(
-    <div className={styles.modalOverlay} role="presentation" onClick={onClose}>
+    <div className={styles.modalOverlay} role="presentation">
       <div
         className={styles.modal}
         role="dialog"
         aria-modal="true"
         aria-labelledby="firma-modal-title"
-        onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.modalHeader}>
           <div>

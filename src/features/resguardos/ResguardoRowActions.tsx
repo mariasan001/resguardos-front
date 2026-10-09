@@ -1,7 +1,7 @@
 "use client";
 
 import { MoreHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import styles from "@/features/resguardos/ResguardoRowActions.module.css";
 import { ApiError, getApiErrorMessage } from "@/lib/api/errors";
@@ -53,21 +53,6 @@ export default function ResguardoRowActions({
     active: signatureOpen && signatureCaptureOpen,
     onBeginStroke: () => setSignatureUploadError(null),
   });
-
-  useEffect(() => {
-    if (!signatureOpen) {
-      return;
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setSignatureOpen(false);
-      }
-    }
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [signatureOpen]);
 
   async function handleViewSignature() {
     setOpen(false);

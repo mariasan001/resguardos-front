@@ -52,21 +52,10 @@ export default function AppUserModal({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        if (!isControlled) {
-          setInternalOpen(false);
-        }
-        onOpenChange?.(false);
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
     };
-  }, [isControlled, onOpenChange, open]);
+  }, [open]);
 
   return (
     <>
@@ -82,17 +71,12 @@ export default function AppUserModal({
       ) : null}
 
       {open ? (
-        <div
-          className={styles.overlay}
-          role="presentation"
-          onClick={() => setOpen(false)}
-        >
+        <div className={styles.overlay} role="presentation">
           <div
             className={styles.modal}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            onClick={(event) => event.stopPropagation()}
           >
             <header className={styles.header}>
               <div>

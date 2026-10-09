@@ -39,7 +39,7 @@
 }
 
 .modal {
-  width: min(40rem, 100%);
+  width: min(48rem, 100%);
   max-height: min(88vh, 52rem);
   display: grid;
   gap: 1rem;
@@ -48,7 +48,8 @@
   border-radius: 1.2rem;
   background: var(--surface-card);
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .header {

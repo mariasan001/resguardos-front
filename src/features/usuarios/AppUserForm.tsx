@@ -145,7 +145,7 @@ export default function AppUserForm({
           ) : null}
         </label>
 
-        <div className={styles.field}>
+        <div className={`${styles.field} ${styles.spanFull}`}>
           <span className={styles.label}>
             Adscripción <span className={styles.required}>*</span>
           </span>
@@ -163,7 +163,7 @@ export default function AppUserForm({
           ) : null}
         </div>
 
-        <div className={styles.field}>
+        <div className={`${styles.field} ${styles.spanFull}`}>
           <span className={styles.label}>
             Puesto <span className={styles.required}>*</span>
           </span>

@@ -339,6 +339,7 @@ export default function SearchableSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={isOpen ? listboxId : undefined}
+        title={selectedOption?.label}
       >
         <span className={styles.triggerLabel}>
           {selectedOption?.label ?? placeholder}
